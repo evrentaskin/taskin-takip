@@ -1,0 +1,20 @@
+TAŞKIN TAKİP V9.1 - OTURMA PLANI 1. AŞAMA + ORTAK ETİKETLER
+
+1) Supabase SQL Editor'da şu dosyayı çalıştırın:
+   supabase/migrations/012_shared_student_profile_tags.sql
+
+2) Bu paketi mevcut DENEME proje klasörünüzün üzerine, klasör yollarını koruyarak kopyalayın.
+
+3) Proje klasöründe:
+   npm install
+   npm run dev
+
+4) Kontrol:
+   - Öğrenci Profili açılıyor.
+   - Eklenen ortak etiket diğer öğrencilerin profilinde de görünüyor.
+   - Etikete tıklayınca öğrenci için seçiliyor/seçim kalkıyor.
+   - Etiketin çarpısına basınca tüm öğrencilerden kaldırılıyor.
+   - Sol menüde Oturma Planı var.
+   - Sınıf seçme, sütun/sıra düzenleme ve Kaydet çalışıyor.
+
+Not: .env dosyası pakete dahil değildir. Kendi çalışan .env dosyanızı kullanın.

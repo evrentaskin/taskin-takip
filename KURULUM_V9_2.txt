@@ -1,0 +1,14 @@
+TAŞKIN TAKİP V9.2 YAMA
+
+1) Bu paketin içindeki src ve supabase klasörlerini mevcut DENEME proje klasörüne kopyalayın.
+2) Dosya değiştirme sorusunda "Değiştir" seçeneğini kullanın.
+3) Supabase SQL Editor'da şu dosyayı bir kez çalıştırın:
+   supabase/migrations/013_profile_tags_and_double_seats.sql
+4) Proje klasöründe:
+   npm run dev
+5) Kontrol edin:
+   - Her fiziksel sırada iki öğrenci koltuğu var.
+   - Öğrenciler iki koltuk arasında sürüklenebiliyor ve yer değiştirebiliyor.
+   - Öğrenci Profili etiketleri kutucuk şeklinde görünüyor.
+   - Yeni etiket bütün öğrencilerde görünüyor.
+   - Çöp kutusuyla etiket tüm öğrencilerden silinebiliyor.

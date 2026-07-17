@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as XLSX from 'xlsx'
 import {
-  Alert, Avatar, Box, Button, Chip, CircularProgress, Dialog, DialogActions,
+  Alert, Avatar, Box, Button, Checkbox, Chip, CircularProgress, Dialog, DialogActions,
   DialogContent, DialogTitle, IconButton, LinearProgress, MenuItem, Paper,
   Snackbar, Stack, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, TextField, Typography
 } from '@mui/material'
 import {
-  Add, Close, Computer, ContentCopy, Delete, Download, Edit, Groups, Key, PhoneAndroid, PictureAsPdf, Refresh, Save, TableView, Today, UploadFile, Visibility, VisibilityOff, WarningAmber
+  Add, Close, Computer, ContentCopy, Delete, Download, Edit, Groups, Key, Person, PhoneAndroid, PictureAsPdf, Refresh, Save, TableView, Today, UploadFile, Visibility, VisibilityOff, WarningAmber
 } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
 import { isValidUsername, toAuthSafeUsername, USERNAME_HELP } from '../utils/username'
@@ -76,6 +76,12 @@ export default function StudentsPage() {
   const [form, setForm] = useState(emptyStudent)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [passwordDialog, setPasswordDialog] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [profileStudent, setProfileStudent] = useState(null)
+  const [studentProfile, setStudentProfile] = useState({ gender:'', wears_glasses:false, height_group:'normal', talkative:false, hardworking:false, needs_support:false, front_row:false, notes:'', tags:[] })
+  const [tagInput, setTagInput] = useState('')
+  const [profileTags, setProfileTags] = useState([])
+  const [tagSaving, setTagSaving] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -102,7 +108,7 @@ export default function StudentsPage() {
   const [importResult, setImportResult] = useState(null)
   const fileInputRef = useRef(null)
 
-  useEffect(() => { loadClasses(); loadTodayLogins() }, [])
+  useEffect(() => { loadClasses(); loadTodayLogins(); loadProfileTags() }, [])
   useEffect(() => {
     const refresh = () => loadTodayLogins()
     const timer = window.setInterval(refresh, 60000)
@@ -288,6 +294,106 @@ export default function StudentsPage() {
       password: ''
     })
     setDialogOpen(true)
+  }
+
+  async function loadProfileTags() {
+    const { data: authData } = await supabase.auth.getUser()
+    if (!authData.user) return
+
+    // İlk kullanımda önerilen etiketleri bir kez oluşturur. Kullanıcı daha sonra
+    // bunları silebilir; silinen etiketler yeniden eklenmez.
+    const initResult = await supabase.rpc('initialize_student_profile_tags')
+    if (initResult.error && !String(initResult.error.message || '').includes('initialize_student_profile_tags')) {
+      console.warn('Etiket başlangıcı yapılamadı', initResult.error)
+    }
+
+    const { data, error } = await supabase
+      .from('student_profile_tags')
+      .select('id,label')
+      .eq('teacher_id', authData.user.id)
+      .order('label')
+    if (error) {
+      // Migration henüz çalıştırılmadıysa öğrenciler ekranının geri kalanı çalışmaya devam etsin.
+      if (!String(error.message || '').includes('student_profile_tags')) setError(error.message)
+      return
+    }
+    setProfileTags(data || [])
+  }
+
+  async function openProfile(student) {
+    setProfileStudent(student)
+    setProfileOpen(true)
+    setTagInput('')
+    const { data, error } = await supabase.from('student_profiles').select('*').eq('student_id', student.id).maybeSingle()
+    if (error) { setError(error.message); return }
+    setStudentProfile({ gender:'', wears_glasses:false, height_group:'normal', talkative:false, hardworking:false, needs_support:false, front_row:false, notes:'', tags:[], ...(data || {}) })
+  }
+
+  async function saveProfile() {
+    if (!profileStudent) return
+    setSaving(true)
+    const normalizedTags = (studentProfile.tags || []).map(x => String(x).toLocaleLowerCase('tr-TR'))
+    const hasTag = (...labels) => labels.some(label => normalizedTags.includes(label.toLocaleLowerCase('tr-TR')))
+    const payload = {
+      ...studentProfile,
+      // Eski sütunları etiketlerle eş zamanlı tutuyoruz. Böylece akıllı dağıtım
+      // hem yeni etiket sistemini hem de önceki kayıtları kullanabilir.
+      wears_glasses: hasTag('Gözlüklü'),
+      height_group: hasTag('Kısa boylu') ? 'short' : (hasTag('Uzun boylu') ? 'tall' : 'normal'),
+      talkative: hasTag('Çok konuşuyor'),
+      hardworking: hasTag('Çalışkan'),
+      needs_support: hasTag('Ders desteğine ihtiyacı var', 'Ders çalışmıyor'),
+      front_row: hasTag('Ön sırada oturmalı'),
+      gender: studentProfile.gender || null,
+      student_id: profileStudent.id,
+      updated_at: new Date().toISOString()
+    }
+    delete payload.created_at
+    const { error } = await supabase.from('student_profiles').upsert(payload, { onConflict: 'student_id' })
+    setSaving(false)
+    if (error) setError(error.message)
+    else { setProfileOpen(false); setMessage('Öğrenci profili kaydedildi.') }
+  }
+
+  function toggleProfileTag(label) {
+    setStudentProfile(p => {
+      const tags = p.tags || []
+      return { ...p, tags: tags.includes(label) ? tags.filter(x => x !== label) : [...tags, label] }
+    })
+  }
+
+  async function addTag() {
+    const label = tagInput.trim().replace(/\s+/g, ' ')
+    if (!label) return
+    const existing = profileTags.find(t => t.label.toLocaleLowerCase('tr-TR') === label.toLocaleLowerCase('tr-TR'))
+    if (existing) {
+      if (!(studentProfile.tags || []).includes(existing.label)) toggleProfileTag(existing.label)
+      setTagInput('')
+      return
+    }
+    setTagSaving(true)
+    const { data: authData } = await supabase.auth.getUser()
+    const { data, error } = await supabase
+      .from('student_profile_tags')
+      .insert({ teacher_id: authData.user.id, label })
+      .select('id,label')
+      .single()
+    setTagSaving(false)
+    if (error) { setError(error.message); return }
+    setProfileTags(tags => [...tags, data].sort((a,b) => a.label.localeCompare(b.label, 'tr')))
+    setStudentProfile(p => ({ ...p, tags: [...new Set([...(p.tags || []), data.label])] }))
+    setTagInput('')
+  }
+
+  async function deleteProfileTag(tag) {
+    if (!window.confirm(`“${tag.label}” etiketi tüm öğrencilerden silinsin mi?`)) return
+    setTagSaving(true)
+    const { error } = await supabase.rpc('delete_student_profile_tag', { p_tag_id: tag.id })
+    setTagSaving(false)
+    if (error) { setError(error.message); return }
+    setProfileTags(tags => tags.filter(x => x.id !== tag.id))
+    setStudentProfile(p => ({ ...p, tags: (p.tags || []).filter(x => x !== tag.label) }))
+    setMessage(`“${tag.label}” etiketi silindi.`)
   }
 
   async function invokeAccount(body) {
@@ -773,7 +879,7 @@ export default function StudentsPage() {
       }
 
       purgeClassLocalData(selectedClass, studentIds)
-      window.dispatchEvent(new window.Event('taskin-exams-updated'))
+      window.dispatchEvent(new Event('taskin-exams-updated'))
       window.dispatchEvent(new Event('taskin-lgs-online-updated'))
       setStudents([])
       setCredentialsVersion(value => value + 1)
@@ -972,6 +1078,7 @@ export default function StudentsPage() {
                   Kullanıcı adı: {s.username || 'yok'}
                 </Typography>
               </Box>
+              <Button size="small" variant="outlined" startIcon={<Person />} onClick={() => openProfile(s)}>Profili Aç</Button>
               <IconButton onClick={() => openEdit(s)} aria-label="Düzenle"><Edit /></IconButton>
               <IconButton onClick={() => { openEdit(s); setPasswordDialog(true) }} aria-label="Şifre değiştir"><Key /></IconButton>
               <IconButton color="error" onClick={() => deleteStudent(s)} aria-label="Sil"><Delete /></IconButton>
@@ -1252,6 +1359,45 @@ export default function StudentsPage() {
             {importing ? 'Öğrenciler Ekleniyor…' : `${importRows.length || 0} Öğrenciyi Ekle`}
           </Button>
         </DialogActions>
+      </Dialog>
+
+      <Dialog open={profileOpen} onClose={() => setProfileOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle fontWeight={950}>Öğrenci Profili — {profileStudent?.first_name} {profileStudent?.last_name}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField select label="Cinsiyet" value={studentProfile.gender || ''} onChange={e => setStudentProfile(p => ({...p, gender:e.target.value}))}>
+              <MenuItem value="">Belirtilmedi</MenuItem><MenuItem value="female">Kız</MenuItem><MenuItem value="male">Erkek</MenuItem>
+            </TextField>
+            <Box>
+              <Typography fontWeight={900} sx={{ mb: .5 }}>Öğrenci Etiketleri</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.25 }}>
+                Burada oluşturduğun etiketler bütün öğrencilerin profilinde kutucuk olarak görünür. Bu öğrenciye uygun olanları işaretleyebilirsin.
+              </Typography>
+              <Stack direction={{ xs:'column', sm:'row' }} spacing={1} sx={{ mb: 1.5 }}>
+                <TextField fullWidth label="Yeni etiket adı" placeholder="Örn. Gözlüklü" value={tagInput} onChange={e=>setTagInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addTag()}}}/>
+                <Button variant="outlined" startIcon={<Add/>} onClick={addTag} disabled={tagSaving || !tagInput.trim()}>Etiket Ekle</Button>
+              </Stack>
+              <Box sx={{ display:'grid', gridTemplateColumns:{ xs:'1fr', sm:'1fr 1fr' }, gap:1 }}>
+                {profileTags.map(tag => {
+                  const selected = (studentProfile.tags || []).includes(tag.label)
+                  return <Paper key={tag.id} variant="outlined" sx={{ px:1, py:.5, display:'flex', alignItems:'center', minHeight:48, borderRadius:2 }}>
+                    <Checkbox checked={selected} onChange={() => toggleProfileTag(tag.label)} disabled={tagSaving}/>
+                    <Typography sx={{ flex:1, fontWeight:selected ? 800 : 500 }}>{tag.label}</Typography>
+                    <IconButton size="small" color="error" title="Etiketi bütün öğrencilerden sil" onClick={() => deleteProfileTag(tag)} disabled={tagSaving}>
+                      <Delete fontSize="small"/>
+                    </IconButton>
+                  </Paper>
+                })}
+              </Box>
+              {(studentProfile.tags || []).filter(label => !profileTags.some(tag => tag.label === label)).map(label =>
+                <Chip sx={{ mt:1, mr:1 }} key={label} label={label} color="primary" onDelete={() => toggleProfileTag(label)} />
+              )}
+              {!profileTags.length && !(studentProfile.tags || []).length && <Alert severity="info">Henüz etiket yok. Yukarıdan ilk etiketi ekleyebilirsin.</Alert>}
+            </Box>
+            <TextField multiline minRows={3} label="Öğretmen notu" value={studentProfile.notes || ''} onChange={e => setStudentProfile(p => ({...p,notes:e.target.value}))}/>
+          </Stack>
+        </DialogContent>
+        <DialogActions><Button onClick={() => setProfileOpen(false)}>Vazgeç</Button><Button variant="contained" startIcon={<Save/>} onClick={saveProfile} disabled={saving}>Kaydet</Button></DialogActions>
       </Dialog>
 
       <Dialog open={passwordDialog} onClose={() => !saving && setPasswordDialog(false)} fullWidth maxWidth="xs">

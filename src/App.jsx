@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   AppBar, Avatar, Box, Button, CircularProgress, Divider, Drawer,
   IconButton, List, ListItemButton, ListItemIcon, ListItemText,
   Toolbar, Typography
 } from '@mui/material'
 import {
-  Campaign, Dashboard, EmojiEvents, Folder, Groups, Logout, Menu, NoteAlt, Psychology, Quiz, School, Settings, Star, Storage
+  Campaign, Dashboard, EmojiEvents, EventSeat, Folder, Groups, Logout, Menu, NoteAlt, Psychology, Quiz, School, Settings, Star, Storage
 } from '@mui/icons-material'
 import { supabase } from './services/supabase'
 import LoginPage from './pages/LoginPage'
@@ -24,6 +24,7 @@ import AnnouncementsPage from './pages/AnnouncementsPage'
 import StudentHomePage from './pages/StudentHomePage'
 import ReportsPage from './pages/ReportsPage'
 import StudentDetailPage from './pages/StudentDetailPage'
+import SeatingPlanPage from './pages/SeatingPlanPage'
 
 const drawerWidth = 258
 
@@ -34,6 +35,64 @@ export default function App() {
   const [page, setPage] = useState('Ana Sayfa')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState(null)
+  const pageRef = useRef(page)
+
+  useEffect(() => {
+    pageRef.current = page
+  }, [page])
+
+  useEffect(() => {
+    const disableSuggestions = (root = document) => {
+      root.querySelectorAll?.('input, textarea').forEach((field) => {
+        if (field.type === 'file' || field.type === 'checkbox' || field.type === 'radio') return
+        field.setAttribute('autocomplete', field.type === 'password' ? 'new-password' : 'off')
+        field.setAttribute('autocorrect', 'off')
+        field.setAttribute('autocapitalize', 'none')
+        field.setAttribute('spellcheck', 'false')
+        field.setAttribute('data-form-type', 'other')
+      })
+      root.querySelectorAll?.('form').forEach((form) => form.setAttribute('autocomplete', 'off'))
+    }
+
+    disableSuggestions()
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            disableSuggestions(node)
+            if (node.matches?.('input, textarea, form')) disableSuggestions(node.parentElement || document)
+          }
+        })
+      })
+    })
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const isMobile = window.matchMedia('(max-width: 899px)').matches
+    if (!isMobile) return undefined
+
+    const handlePopState = () => {
+      if (pageRef.current !== 'Ana Sayfa') {
+        setPage('Ana Sayfa')
+        setSelectedStudentId(null)
+        setMobileOpen(false)
+      }
+      // Ana sayfadayken ikinci geri basışında tarayıcının normal çıkışına izin verilir.
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  useEffect(() => {
+    const isMobile = window.matchMedia('(max-width: 899px)').matches
+    if (!isMobile || page === 'Ana Sayfa') return
+    if (!window.history.state?.taskinPageGuard) {
+      window.history.pushState({ taskinPageGuard: true }, '', window.location.href)
+    }
+  }, [page])
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -76,6 +135,7 @@ export default function App() {
     ['Yorum', Psychology],
     ['Duyuru', Campaign],
     ['Raporlar', Storage],
+    ['Oturma Planı', EventSeat],
     ['Ayarlar', Settings],
   ]
 
@@ -118,7 +178,7 @@ export default function App() {
           </IconButton>
           <Typography variant="h6" fontWeight={900}>{page}</Typography>
           <Box sx={{ flex: 1 }} />
-          <Typography variant="caption" fontWeight={800}>V7.4</Typography>
+          <Typography variant="caption" fontWeight={800}>V9.1</Typography>
         </Toolbar>
       </AppBar>}
 
@@ -154,6 +214,8 @@ export default function App() {
           <StudentDetailPage studentId={selectedStudentId} onBack={() => setPage('Ana Sayfa')} />
         ) : page === 'Öğrenciler' ? (
           <StudentsPage />
+        ) : page === 'Oturma Planı' ? (
+          <SeatingPlanPage />
         ) : page === 'LGS Grubu' ? (
           <LgsPage />
         ) : page === 'Ödevler' ? (

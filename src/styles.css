@@ -1784,3 +1784,84 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
     padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
 }
+
+/* V9 Öğrenci Profili + Akıllı Oturma Planı */
+.seating-toolbar,.seating-rules{padding:16px;border-radius:20px!important;margin-bottom:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.seating-toolbar .MuiTextField-root{min-width:180px}.seating-workspace{display:grid;grid-template-columns:260px minmax(0,1fr);gap:14px;align-items:start}
+.student-pool{padding:14px;border-radius:20px!important;display:flex;flex-direction:column;gap:8px;position:sticky;top:86px;max-height:75vh;overflow:auto}
+.student-pool .MuiChip-root{justify-content:flex-start;cursor:grab}.seating-print{padding:18px;border-radius:20px!important;overflow:auto;background:#fff}
+.print-title{text-align:center;display:flex;flex-direction:column;margin-bottom:12px}.print-title b{font-size:20px}.print-title span{font-weight:900;font-size:17px}.print-title small{color:#546e7a}
+.board{border:3px solid #263238;padding:9px;text-align:center;font-weight:900;border-radius:6px;margin:0 auto 10px;max-width:65%}.teacher-desk{border:2px solid #555;padding:7px;text-align:center;font-weight:800;border-radius:6px;margin:0 auto 18px;max-width:220px}
+.seat-columns{display:flex;gap:18px;justify-content:center;align-items:flex-start;min-width:max-content}.seat-column{display:flex;flex-direction:column;gap:12px;min-width:210px}.column-tools{display:flex;gap:4px;align-items:center}.column-tools .MuiTextField-root{width:100px}
+.double-desk{display:grid;grid-template-columns:1fr 1fr;border:3px solid #607d8b;border-radius:12px;background:#eaf1f3;overflow:hidden;min-height:76px}.desk-seat{min-width:96px;min-height:72px;padding:8px 22px 7px;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;background:#f8fbfc;font-weight:800}.desk-seat+ .desk-seat{border-left:2px solid #90a4ae}.desk-seat>span{color:#90a4ae;font-weight:600}.seat-student{cursor:grab;line-height:1.15}.seat-student small{display:block;font-weight:500;margin-top:3px}.desk-seat button{position:absolute;border:0;background:transparent;cursor:pointer;padding:2px}.seat-lock{left:2px;top:2px}.seat-remove{right:4px;top:0;font-size:18px}.desk-seat svg{font-size:15px}.add-column{align-self:center}
+@media(max-width:899px){.seating-workspace{grid-template-columns:1fr}.student-pool{position:static;max-height:none;flex-direction:row;flex-wrap:wrap}.seat-columns{justify-content:flex-start}.seat-column{min-width:190px}.desk-seat{min-width:86px}}
+@media print{
+ body *{visibility:hidden!important}.seating-print,.seating-print *{visibility:visible!important}.seating-print{position:absolute!important;left:0;top:0;width:100%!important;height:100%!important;border:0!important;box-shadow:none!important;padding:8mm!important;overflow:hidden!important}.column-tools,.add-column,.desk-seat button{display:none!important}.seat-columns{gap:6mm!important;justify-content:center!important;min-width:0!important}.seat-column{min-width:0!important;flex:1!important;gap:3mm!important}.double-desk{min-height:15mm!important}.desk-seat{min-width:0!important;min-height:14mm!important;padding:2mm!important;font-size:9pt!important;break-inside:avoid}.board{margin-bottom:3mm!important}.teacher-desk{margin-bottom:4mm!important}.print-title{margin-bottom:3mm!important}.print-title b{font-size:15pt!important}.print-title span{font-size:12pt!important}
+ @page{size:A4 landscape;margin:0}
+}
+
+
+/* V9.3 Mobil kullanım düzeltmeleri */
+@media (max-width: 1000px) {
+  .school-exam-table-wrap {
+    position: relative;
+  }
+  .school-exam-table-head,
+  .school-exam-row {
+    grid-template-columns: 64px 180px 125px 125px 120px 120px;
+  }
+  .school-exam-table-head > :nth-child(1),
+  .school-exam-row > :nth-child(1) {
+    position: sticky;
+    left: 0;
+    z-index: 4;
+  }
+  .school-exam-table-head > :nth-child(2),
+  .school-exam-row > :nth-child(2) {
+    position: sticky;
+    left: 76px;
+    z-index: 3;
+  }
+  .school-exam-table-head > :nth-child(1),
+  .school-exam-table-head > :nth-child(2) {
+    background: #6750a4;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+  }
+  .school-exam-row > :nth-child(1),
+  .school-exam-row > :nth-child(2) {
+    background: #fff;
+  }
+  .school-exam-row:nth-child(even) > :nth-child(1),
+  .school-exam-row:nth-child(even) > :nth-child(2) {
+    background: #faf9fe;
+  }
+  .school-exam-name {
+    padding-right: 8px;
+    box-shadow: 8px 0 12px -12px rgba(34, 28, 62, .9);
+  }
+}
+
+@media (max-width: 599px) {
+  .exam-create-buttons {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px !important;
+    width: 100%;
+  }
+  .exam-create-buttons .MuiButton-root {
+    width: 100%;
+    min-width: 0 !important;
+    padding: 8px 6px !important;
+    font-size: .72rem !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+  }
+  .exam-create-buttons .MuiButton-startIcon {
+    margin-right: 4px !important;
+  }
+  .exam-create-buttons .MuiButton-startIcon svg {
+    font-size: 18px !important;
+  }
+}

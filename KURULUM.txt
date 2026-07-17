@@ -1,0 +1,13 @@
+Taşkın Takip V9.3 Mobil Düzeltmeler
+
+1) Bu klasördeki src klasörünü çalışan DENEME projenizin ana klasörüne kopyalayın.
+2) Dosya değiştirme sorusuna "Değiştir" deyin.
+3) Proje klasöründe: npm run dev
+4) Kontrol edin:
+   - Sınav Notları: öğrenci adı yatay kaydırmada sabit
+   - Telefon geri: önce Ana Sayfa, sonra çıkış
+   - Oturma Planı: Raporlar'dan sonra
+   - Giriş: Beni hatırla
+   - Deneme butonları: telefonda yan yana
+
+Bu güncelleme için Supabase SQL çalıştırmanız gerekmez.
