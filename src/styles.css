@@ -1,0 +1,1786 @@
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+
+.app, .login-page, .student-home {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(116,87,255,.23), transparent 30%),
+    radial-gradient(circle at 90% 20%, rgba(24,183,201,.18), transparent 30%),
+    linear-gradient(145deg, #f8f7ff, #eef4ff);
+}
+.topbar { color:#252840 !important; background:rgba(255,255,255,.72) !important; backdrop-filter:blur(18px); }
+.drawer { min-height:100%; display:flex; flex-direction:column; padding:14px 10px; background:rgba(255,255,255,.84); }
+.brand { display:flex; align-items:center; gap:12px; padding:6px 8px 12px; }
+.brand-logo, .login-logo { background:linear-gradient(135deg,#7457ff,#18b7c9) !important; }
+.nav-item { border-radius:16px !important; margin:3px 0 !important; }
+.nav-item.Mui-selected { color:white !important; background:linear-gradient(135deg,#7457ff,#8c4fff) !important; }
+.nav-item.Mui-selected .MuiListItemIcon-root { color:white !important; }
+.main { min-height:100vh; padding:16px; }
+.page-head { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:14px; margin-bottom:18px; }
+.glass { border:1px solid rgba(255,255,255,.85); background:rgba(255,255,255,.72); backdrop-filter:blur(18px); box-shadow:0 16px 40px rgba(60,53,104,.10); border-radius:24px; }
+.filter { display:grid; grid-template-columns:1fr; gap:12px; padding:14px; margin-bottom:16px; }
+.grid { display:grid; gap:12px; }
+.student { display:flex; align-items:center; gap:10px; padding:12px; }
+.empty { min-height:280px; display:grid; place-items:center; align-content:center; text-align:center; gap:8px; padding:24px; }
+.two { display:grid; grid-template-columns:1fr; gap:12px; }
+.ai-fab { position:fixed; right:18px; bottom:18px; width:56px; height:56px; border-radius:50%; display:grid; place-items:center; color:white; background:linear-gradient(135deg,#7457ff,#18b7c9); }
+.login-page, .student-home { display:grid; place-items:center; padding:18px; }
+.login-card, .student-home-card { width:min(100%,460px); padding:30px 22px; text-align:center; background:rgba(255,255,255,.75); backdrop-filter:blur(24px); border-radius:30px; box-shadow:0 24px 60px rgba(63,50,130,.18); }
+.login-logo { width:72px !important; height:72px !important; margin:0 auto 18px; }
+.loader { min-height:100vh; display:grid; place-items:center; }
+.loader.compact { min-height:280px; }
+@media (min-width:600px) {
+  .filter { grid-template-columns:260px 1fr; }
+  .two { grid-template-columns:1fr 1fr; }
+  .grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (min-width:900px) {
+  .topbar { margin-left:258px; width:calc(100% - 258px) !important; }
+  .main { margin-left:258px; padding:24px 30px; }
+}
+@media (min-width:1250px) {
+  .grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+
+.exam-card { display:flex; align-items:center; gap:12px; padding:16px; }
+.exam-icon { width:46px; height:46px; display:grid; place-items:center; border-radius:16px; color:white; background:linear-gradient(135deg,#7457ff,#18b7c9); }
+
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.dashboard-stat,
+.module-card {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+.dashboard-stat {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+}
+.dashboard-stat strong {
+  display: block;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+.dashboard-stat small {
+  display: block;
+  margin-top: 6px;
+  color: #656780;
+}
+.dashboard-icon,
+.module-icon {
+  display: grid;
+  place-items: center;
+  color: white;
+  background: linear-gradient(135deg,#7457ff,#18b7c9);
+}
+.dashboard-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 17px;
+}
+.dashboard-modules {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.module-card {
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  padding: 16px;
+  text-align: center;
+}
+.module-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+}
+.dashboard-stat:hover,
+.module-card:hover {
+  transform: translateY(-2px);
+}
+@media (min-width: 600px) {
+  .dashboard-stats { grid-template-columns: repeat(2, 1fr); }
+  .dashboard-modules { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 1100px) {
+  .dashboard-stats { grid-template-columns: repeat(4, 1fr); }
+}
+
+
+.main-home {
+  padding: 4px 0 24px;
+}
+.home-shell {
+  min-height: calc(100vh - 8px);
+}
+.home-topbar {
+  min-height: 76px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-radius: 26px;
+}
+.home-menu-button {
+  width: 44px;
+  height: 44px;
+  color: #4f46e5 !important;
+  background: rgba(255,255,255,.82) !important;
+}
+.home-search-area {
+  min-width: 0;
+}
+.home-search {
+  width: min(290px, 32vw);
+}
+.home-find-button {
+  color: #00708a !important;
+  background: #dff7ff !important;
+  box-shadow: none !important;
+}
+.home-exit-button {
+  color: #c40000 !important;
+  background: #ffe3e3 !important;
+  box-shadow: none !important;
+}
+.home-class-tabs {
+  padding: 14px 2px;
+  overflow-x: auto;
+}
+.home-class-chip {
+  min-width: 48px;
+  height: 40px;
+  border: 1px solid rgba(103,80,164,.18);
+  border-radius: 20px;
+  color: #4f46b8;
+  background: rgba(255,255,255,.72);
+  font-weight: 900;
+  cursor: pointer;
+}
+.home-class-chip.active {
+  color: white;
+  border-color: transparent;
+  background: linear-gradient(135deg,#7457ff,#18b7c9);
+  box-shadow: 0 10px 22px rgba(70,90,200,.24);
+}
+.home-content {
+  min-height: 320px;
+  padding: 18px;
+  border-radius: 26px;
+}
+.home-loading {
+  min-height: 250px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  text-align: center;
+}
+.home-student-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.home-student-card {
+  border: 1px solid rgba(116,87,255,.12);
+  border-radius: 20px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 6px 12px;
+  text-align: left;
+  background: rgba(255,255,255,.78);
+  cursor: pointer;
+}
+.home-student-card strong {
+  grid-row: span 2;
+  align-self: center;
+  font-size: 1.25rem;
+  color: #6750a4;
+}
+.home-student-card span {
+  font-weight: 900;
+}
+.home-student-card small {
+  color: #6b6b7a;
+}
+@media (max-width: 700px) {
+  .home-topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .home-search-area {
+    width: 100%;
+  }
+  .home-search {
+    width: 100%;
+    flex: 1;
+  }
+  .home-find-button span {
+    display: none;
+  }
+}
+@media (min-width: 720px) {
+  .home-student-grid {
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+}
+@media (min-width: 1100px) {
+  .home-student-grid {
+    grid-template-columns: repeat(3, minmax(0,1fr));
+  }
+}
+
+.settings-grid { display:grid; grid-template-columns:1fr; gap:14px; }
+.settings-card { padding:20px; }
+.settings-term-card { margin-top:14px; }
+.class-check-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:2px 8px; margin-bottom:12px; }
+.term-grid { display:grid; grid-template-columns:1fr; gap:12px; }
+@media (min-width:800px) {
+  .settings-grid { grid-template-columns:1fr 1fr; }
+  .class-check-grid { grid-template-columns:repeat(6,minmax(0,1fr)); }
+  .term-grid { grid-template-columns:1.2fr 1fr 1fr; }
+}
+
+
+.month-students-card,
+.chart-card,
+.ai-support-section,
+.movement-card,
+.action-card {
+  padding: 20px;
+}
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.section-cup,
+.ai-heading-icon {
+  font-size: 42px !important;
+  color: #f0a500;
+}
+.ranking-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 9px;
+}
+.ranking-row {
+  min-height: 50px;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.68);
+  border: 1px solid rgba(116,87,255,.08);
+}
+.ranking-row.rank-1 {
+  background: linear-gradient(100deg, rgba(255,220,103,.30), rgba(255,255,255,.75));
+  border-color: rgba(240,165,0,.25);
+}
+.rank-number {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #6750a4;
+  background: rgba(116,87,255,.10);
+  font-weight: 950;
+}
+.rank-1 .rank-number {
+  color: #a66600;
+  background: rgba(255,203,59,.25);
+}
+.two-dashboard-cards,
+.dashboard-chart-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+.metric-card {
+  min-height: 108px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+.metric-card > svg {
+  width: 48px;
+  height: 48px;
+  padding: 11px;
+  border-radius: 16px;
+  color: white;
+  background: linear-gradient(135deg,#7457ff,#18b7c9);
+}
+.metric-card strong {
+  display: block;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+.metric-card small {
+  display: block;
+  margin-top: 7px;
+  color: #696b7d;
+}
+.action-card {
+  min-height: 174px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.action-card .MuiButton-root {
+  margin-top: auto;
+}
+.online-card {
+  background:
+    radial-gradient(circle at 92% 12%, rgba(24,183,201,.18), transparent 35%),
+    rgba(255,255,255,.72);
+}
+.chart-wrap {
+  margin-top: 14px;
+}
+.chart-wrap svg {
+  width: 100%;
+  min-height: 255px;
+  overflow: visible;
+}
+.chart-grid {
+  stroke: rgba(80,80,110,.12);
+  stroke-width: 1;
+}
+.chart-axis {
+  stroke: rgba(50,50,80,.35);
+  stroke-width: 1.4;
+}
+.chart-axis-text,
+.chart-label,
+.chart-title {
+  fill: #68697a;
+  font-size: 11px;
+}
+.chart-title {
+  font-weight: 800;
+}
+.chart-line {
+  stroke: #7457ff;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.chart-dot {
+  fill: #18b7c9;
+  stroke: white;
+  stroke-width: 3;
+}
+.chart-value {
+  fill: #4c3ec9;
+  font-size: 11px;
+  font-weight: 900;
+}
+.chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: #696b7d;
+  font-size: 12px;
+}
+.legend-line {
+  width: 26px;
+  height: 4px;
+  border-radius: 4px;
+  background: #7457ff;
+}
+.empty-chart {
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  text-align: center;
+}
+.bar-chart {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 8px;
+  min-height: 286px;
+  margin-top: 14px;
+}
+.bar-y-title {
+  align-self: center;
+  justify-self: center;
+  transform: rotate(-90deg);
+  font-size: 12px;
+  font-weight: 900;
+  color: #696b7d;
+}
+.bar-plot {
+  position: relative;
+  min-height: 250px;
+  padding-left: 48px;
+  padding-bottom: 44px;
+}
+.bar-grid-row {
+  position: relative;
+  height: 25%;
+  display: flex;
+  align-items: flex-start;
+}
+.bar-grid-row span {
+  position: absolute;
+  left: -48px;
+  top: -7px;
+  width: 40px;
+  text-align: right;
+  font-size: 10px;
+  color: #77798a;
+}
+.bar-grid-row i {
+  width: 100%;
+  border-top: 1px solid rgba(80,80,110,.12);
+}
+.bars {
+  position: absolute;
+  inset: 0 0 44px 48px;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+}
+.bar-item {
+  width: 26%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+.bar-item strong {
+  margin-bottom: 7px;
+  font-size: 12px;
+}
+.bar-column {
+  width: min(72px, 70%);
+  min-height: 6px;
+  border-radius: 13px 13px 3px 3px;
+}
+.bar-low { background: linear-gradient(180deg,#ff8b8b,#ef5350); }
+.bar-avg { background: linear-gradient(180deg,#84d6ff,#42a5f5); }
+.bar-high { background: linear-gradient(180deg,#7fe4bc,#26a66c); }
+.bar-item small {
+  position: absolute;
+  bottom: -31px;
+  font-weight: 800;
+  color: #656779;
+}
+.ai-support-section {
+  background:
+    radial-gradient(circle at 90% 10%, rgba(116,87,255,.19), transparent 35%),
+    radial-gradient(circle at 10% 80%, rgba(24,183,201,.12), transparent 32%),
+    rgba(255,255,255,.72);
+}
+.ai-card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.ai-support-card {
+  border: 1px solid rgba(116,87,255,.14);
+  border-radius: 18px;
+  padding: 18px;
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  background: rgba(255,255,255,.72);
+  cursor: pointer;
+  font: inherit;
+}
+.ai-support-card strong {
+  color: #4d3bbf;
+}
+.ai-support-card span {
+  color: #696b7d;
+  font-size: 13px;
+}
+.movement-card h6 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.movement-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+.movement-list > div {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.67);
+}
+.movement-list span {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #6750a4;
+  background: rgba(116,87,255,.10);
+  font-weight: 900;
+}
+.movement-list em {
+  font-style: normal;
+  color: #5f6173;
+}
+@media (min-width: 760px) {
+  .two-dashboard-cards,
+  .dashboard-chart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ai-card-grid {
+    grid-template-columns: repeat(3, minmax(0,1fr));
+  }
+}
+
+/* LGS V6.4 teacher dashboard */
+.lgs-dashboard-page{max-width:1500px;margin:0 auto}.lgs-dashboard-head{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-bottom:18px}.lgs-exam-columns,.dashboard-chart-grid{display:grid;grid-template-columns:1fr;gap:14px}.lgs-list-panel,.lgs-chart-card{padding:20px}.lgs-list-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto;align-items:center;gap:8px;padding:14px 0;border-top:1px solid rgba(90,90,120,.12)}.lgs-list-row:first-of-type{margin-top:8px}.lgs-list-row b,.lgs-list-row small{display:block}.lgs-list-row small{margin-top:4px;color:#737487}.lgs-countdown-card{display:flex;align-items:center;gap:14px;padding:18px}.lgs-countdown-card>svg{color:#7457ff}.lgs-countdown-card strong{margin-left:auto;font-size:1.7rem;color:#5b43d6}.lgs-line-chart{width:100%;height:240px;margin-top:12px}.lgs-line-chart line{stroke:rgba(80,80,110,.16)}.lgs-line-chart polyline{stroke:#7457ff;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.lgs-line-chart circle{fill:#18b7c9;stroke:#fff;stroke-width:3}.lgs-line-chart text{font-size:11px;fill:#6c6d80}.lgs-bars{display:grid;gap:13px;margin-top:22px}.lgs-bar-row{display:grid;grid-template-columns:92px 1fr;gap:10px;align-items:center}.lgs-bar-row>span{font-weight:800;font-size:13px}.lgs-bar-row i{height:30px;border-radius:999px;background:#eef0f7;position:relative;overflow:hidden;font-style:normal}.lgs-bar-row b{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#7457ff,#18b7c9)}.lgs-bar-row em{position:absolute;right:10px;top:6px;font-style:normal;font-size:12px;font-weight:900}.movement-card.positive em{color:#168b5b}.movement-card.negative em{color:#d63c4a}.lgs-dashboard-page .action-card{padding:20px}.lgs-dashboard-page .metric-card{padding:20px}.lgs-dashboard-page .two-dashboard-cards{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:800px){.lgs-exam-columns,.dashboard-chart-grid,.lgs-dashboard-page .two-dashboard-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.lgs-list-row{grid-template-columns:1fr auto auto}.lgs-list-row .MuiChip-root{grid-column:1/-1;justify-self:start}.lgs-dashboard-head .MuiButton-root{width:100%}}
+.lgs-countdown-hero{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:18px;padding:22px 24px;border:1px solid rgba(116,87,255,.18);background:linear-gradient(115deg,rgba(116,87,255,.16),rgba(24,183,201,.12),rgba(255,255,255,.82))}.lgs-countdown-hero .countdown-icon{width:62px;height:62px;border-radius:20px;display:grid;place-items:center;background:linear-gradient(135deg,#7457ff,#18b7c9);color:white}.lgs-countdown-hero .countdown-icon svg{font-size:34px}.lgs-countdown-hero .MuiTypography-overline{color:#654bd5;letter-spacing:.12em}.online-answer-sections{display:grid;gap:16px}.online-answer-lesson{padding:16px;border-radius:18px;background:rgba(242,243,251,.9);border:1px solid rgba(92,83,160,.12)}.online-answer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.online-answer-row{display:grid;grid-template-columns:28px repeat(4,38px) minmax(88px,1fr);gap:6px;align-items:center;padding:7px;background:#fff;border-radius:12px}.online-answer-row>.MuiButton-root{min-width:38px;padding:5px}.online-answer-row>.MuiTextField-root{min-width:0}
+@media(max-width:800px){.lgs-countdown-hero{grid-template-columns:auto 1fr}.lgs-countdown-hero>.MuiButton-root{grid-column:1/-1;width:100%}.online-answer-grid{grid-template-columns:1fr}}
+@media(max-width:520px){.online-answer-row{grid-template-columns:24px repeat(4,34px);}.online-answer-row>.MuiTextField-root{grid-column:2/-1}.online-answer-row>.MuiButton-root{min-width:34px}}
+
+/* V6.4 LGS öğrenci kartları ve detay ekranı */
+.lgs-student-card-grid { display:grid; grid-template-columns:1fr; gap:14px; }
+.lgs-student-card { border:0; cursor:pointer; font:inherit; text-align:left; padding:18px; display:grid; grid-template-columns:auto 1fr; gap:12px; transition:.2s ease; }
+.lgs-student-card:hover { transform:translateY(-3px); box-shadow:0 20px 46px rgba(60,53,104,.16); }
+.lgs-student-avatar { background:linear-gradient(135deg,#7457ff,#18b7c9) !important; }
+.lgs-student-title strong,.lgs-student-title small { display:block; }
+.lgs-student-title strong { font-size:1.05rem; }
+.lgs-student-title small { color:#707286; margin-top:3px; }
+.lgs-student-metrics { grid-column:1/-1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.lgs-student-metrics span { padding:10px; border-radius:14px; background:rgba(116,87,255,.06); }
+.lgs-student-metrics small,.lgs-student-metrics b { display:block; }
+.lgs-student-metrics small { color:#737589; font-size:.72rem; }
+.lgs-student-metrics b { margin-top:3px; }
+.lgs-progress-line { grid-column:1/-1; display:flex; justify-content:space-between; color:#656780; font-size:.82rem; }
+.lgs-student-card .MuiLinearProgress-root { grid-column:1/-1; height:8px; border-radius:10px; }
+.lgs-target-list { display:grid; grid-template-columns:1fr; gap:10px; }
+.lgs-student-detail-head { padding:16px; display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:center; }
+.lgs-student-results-table { max-width:100%; overflow-x:auto; }
+.lgs-student-results-table table { min-width:1700px; }
+.lgs-student-results-table .MuiTableHead-root .MuiTableCell-root { background:#9fc5e8; color:#0e2238; border:1px solid #263746; font-weight:900; white-space:nowrap; }
+.lgs-student-results-table .MuiTableBody-root .MuiTableCell-root { border:1px solid #39454f; white-space:nowrap; }
+.lgs-student-results-table .alt-row { background:#f3ad7e; }
+.lgs-student-results-table .average-row { background:#b9f0cd; }
+.student-column-chart { min-height:230px; margin-top:18px; display:flex; align-items:flex-end; justify-content:space-around; gap:8px; padding:12px 4px 0; border-bottom:1px solid rgba(40,40,70,.2); }
+.student-column-chart>div { flex:1; min-width:45px; display:grid; justify-items:center; gap:8px; }
+.student-column-chart>div>span { height:170px; display:flex; flex-direction:column-reverse; align-items:center; gap:5px; }
+.student-column-chart i { width:38px; max-height:150px; border-radius:10px 10px 2px 2px; background:linear-gradient(180deg,#7457ff,#18b7c9); }
+.student-column-chart b { font-size:.75rem; }
+.student-column-chart small { font-size:.68rem; text-align:center; color:#626477; min-height:34px; }
+.lgs-study-section { padding:20px; }
+.lgs-plan-progress { display:flex; justify-content:space-between; margin-bottom:6px; font-weight:800; }
+.lgs-plan-grid { display:grid; grid-template-columns:1fr; gap:9px; }
+.lgs-plan-item { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:8px; padding:10px; border-radius:14px; background:rgba(255,255,255,.70); border:1px solid rgba(116,87,255,.10); cursor:pointer; }
+.lgs-plan-item.done { background:rgba(80,190,130,.12); opacity:.82; }
+.lgs-plan-item b,.lgs-plan-item span,.lgs-plan-item small { display:block; }
+.lgs-plan-item span { margin-top:2px; }
+.lgs-plan-item small { margin-top:3px; color:#727487; }
+@media (min-width:700px) {
+  .lgs-student-card-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .lgs-target-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .lgs-plan-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (min-width:1200px) { .lgs-student-card-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:650px) {
+  .lgs-student-detail-head { grid-template-columns:auto 1fr; }
+  .lgs-student-detail-head .MuiChip-root { grid-column:1/-1; justify-self:start; }
+  .student-column-chart { overflow-x:auto; justify-content:flex-start; }
+  .student-column-chart>div { min-width:72px; }
+}
+
+/* V6.4 LGS kilitli modül güncellemeleri */
+.online-error-list{margin:8px 0 0;padding-left:20px;max-height:180px;overflow:auto}.online-error-list button{border:0;background:transparent;color:#b42318;text-align:left;cursor:pointer;padding:2px 0}.online-answer-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.online-answer-column{display:grid;gap:7px}.online-answer-row.field-error{outline:2px solid #ef5350;outline-offset:2px;border-radius:10px}.lgs-archive-panel{padding:20px;border-radius:24px}.lgs-archive-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}.lgs-archive-item{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid rgba(109,92,231,.18);border-radius:16px;padding:12px;background:rgba(255,255,255,.56)}.lgs-archive-item b,.lgs-archive-item small{display:block}.lgs-archive-item small{color:#68708f;margin-top:4px}.lgs-plan-days{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.lgs-plan-day{border:1px solid rgba(109,92,231,.16);background:rgba(255,255,255,.56);border-radius:16px;padding:12px}.lgs-plan-day>p small{color:#6d718d;font-weight:600}.lgs-plan-day .lgs-plan-item{margin-top:8px}.lgs-student-metrics{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+@media(max-width:900px){.lgs-archive-grid,.lgs-plan-days{grid-template-columns:1fr}.lgs-student-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:700px){.online-answer-columns{grid-template-columns:1fr}.lgs-archive-item{align-items:flex-start;flex-direction:column}}
+.lgs-ai-analysis{padding:18px;border-radius:20px}.lgs-ai-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}.lgs-ai-grid>div{background:rgba(109,92,231,.08);border-radius:12px;padding:12px}.lgs-ai-grid small,.lgs-ai-grid b{display:block}.lgs-ai-grid small{color:#6b708e;margin-bottom:5px}@media(max-width:800px){.lgs-ai-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* V6.4 Ödevler Modülü */
+.homework-page { padding-bottom: 48px; }
+.homework-head { align-items: flex-start; }
+.homework-classbar { padding: 14px; margin-bottom: 18px; display: grid; grid-template-columns: minmax(220px, 360px) 1fr; gap: 16px; align-items: center; }
+.homework-class-summary { display: flex; align-items: center; gap: 10px; justify-self: end; color: #5e4fd1; }
+.homework-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.homework-card { padding: 16px; display: grid; grid-template-columns: 52px 1fr; gap: 14px; }
+.homework-card-icon { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 17px; color: #fff; background: linear-gradient(135deg,#7457ff,#18b7c9); }
+.homework-card-body { min-width: 0; display: grid; gap: 12px; }
+.homework-description { color: #62647b; line-height: 1.5; white-space: pre-wrap; }
+.homework-dates { display: flex; flex-wrap: wrap; gap: 12px; color: #676981; font-size: .84rem; }
+.homework-dates span { display: inline-flex; align-items: center; gap: 5px; }
+.homework-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.homework-stats span { padding: 9px 10px; border-radius: 12px; background: #f2f2f8; font-size: .78rem; display: flex; justify-content: space-between; }
+.homework-stats .done { color: #138a50; background:#dff6e9; }
+.homework-stats .missing { color:#c62828; background:#ffe1e1; }
+.homework-stats .absent { color:#d36b00; background:#fff0d2; }
+.homework-card-actions { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+.homework-student-picker { padding: 14px; border-radius: 18px !important; }
+.homework-picker-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.homework-picker-grid { display:grid; grid-template-columns:1fr; gap:8px; max-height:310px; overflow:auto; padding-right:4px; }
+.homework-student-choice { border:1px solid #deddea; border-radius:13px; background:#fff; padding:10px 12px; display:grid; grid-template-columns:52px 1fr auto; align-items:center; gap:8px; text-align:left; cursor:pointer; font:inherit; color:#303247; }
+.homework-student-choice span { font-weight:950; color:#6750a4; }
+.homework-student-choice.selected { border-color:#6c55e9; background:#f0edff; color:#4a3eb7; }
+.homework-control-summary { display:flex; flex-wrap:wrap; gap:8px; flex:0 0 auto; }
+.homework-control-content { overflow:hidden !important; display:flex; flex:1 1 auto; min-height:0; }
+.homework-control-layout { width:100%; height:100%; min-height:0; }
+.homework-control-layout > .MuiTextField-root { flex:0 0 auto; }
+.homework-control-list { display:grid; gap:8px; flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; padding-right:8px; scrollbar-gutter:stable; }
+.homework-control-row { padding:11px; border:1px solid #e1e0eb; border-radius:15px; display:grid; grid-template-columns:minmax(150px,1fr) auto; gap:12px; align-items:center; background:#fff; }
+.homework-control-student { display:grid; grid-template-columns:50px 1fr; align-items:center; gap:8px; }
+.homework-control-student strong { color:#6750a4; font-size:1rem; }
+.homework-status-buttons { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:7px; }
+.homework-status-buttons .MuiButton-root { min-width:112px; }
+@media (min-width: 720px) {
+  .homework-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .homework-picker-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .homework-stats { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+@media (max-width: 720px) {
+  .homework-classbar { grid-template-columns:1fr; }
+  .homework-class-summary { justify-self:start; }
+  .homework-control-row { grid-template-columns:1fr; }
+  .homework-status-buttons { justify-content:stretch; }
+  .homework-status-buttons .MuiButton-root { flex:1 1 30%; min-width:96px; }
+  .homework-card { grid-template-columns:1fr; }
+  .homework-card-icon { width:46px; height:46px; }
+}
+
+/* V6.4 Ödev kontrol görünürlük düzeltmesi */
+.homework-control-summary .MuiChip-root { min-height: 38px; font-size: .88rem; box-shadow: 0 5px 14px rgba(31, 33, 52, .12); }
+.homework-status-buttons .MuiButton-root { min-height: 43px; border-width: 1.5px; transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease; }
+.homework-status-buttons .MuiButton-root[aria-pressed="true"] { transform: translateY(-1px); }
+
+/* V6.4 Denemeler Modülü */
+.exams-page{display:grid;gap:18px}.exams-classbar{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:18px;align-items:center;padding:18px;border-radius:22px}.exam-action-grid,.exam-charts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.exam-action-card{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:22px;border-radius:24px}.exam-action-card>svg{font-size:42px;color:#5c49d8}.exam-action-card.online>svg{color:#167d6b}.exams-list-panel{border-radius:24px;overflow:hidden}.exam-list{padding:10px 18px 18px;display:grid;gap:10px}.exam-item{display:grid;grid-template-columns:minmax(240px,1fr) auto auto;gap:14px;align-items:center;padding:14px 16px;border:1px solid rgba(94,74,215,.12);border-radius:18px;background:rgba(255,255,255,.72)}.exam-item-main{display:flex;align-items:center;gap:12px}.exam-type-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:#eeebff;color:#604dd6}.exam-buttons{justify-content:flex-end}.dialog-close{position:absolute!important;right:10px;top:10px}.online-time-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.answer-key-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.answer-key-column{display:grid;gap:7px}.answer-key-row{display:grid;grid-template-columns:30px repeat(4,1fr);gap:7px;align-items:center;padding:7px;border-radius:12px;background:#f6f5ff}.student-input-row{display:grid;grid-template-columns:1fr 150px;gap:12px;align-items:center;padding:9px 11px;border-radius:13px;background:#f7f7fb}.result-entry-row{display:grid;grid-template-columns:minmax(180px,1fr) 110px 110px 80px;gap:10px;align-items:center;padding:9px 11px;border-radius:14px;background:#f7f7fb;border:1px solid transparent}.result-entry-row.invalid{border-color:#e53935;background:#fff1f1}.net-box{height:42px;border-radius:11px;background:#e9e6ff;display:grid;place-items:center}.net-box small,.net-box b{line-height:1}.live-student-row{display:flex;justify-content:space-between;gap:15px;align-items:center;padding:12px;border-radius:14px;background:#f7f7fb}.exam-chart-card{border-radius:24px;padding:20px;min-height:330px}.chart-card-head{display:flex;align-items:center;justify-content:space-between}.chart-card-head>svg{color:#604dd6}.exam-svg{width:100%;height:255px;margin-top:10px}.chart-gridline{stroke:#e7e5f3;stroke-width:1}.chart-line{stroke:#604dd6;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.chart-dot{fill:white;stroke:#604dd6;stroke-width:4}.chart-label,.chart-value,.chart-axis-title{font-size:11px;fill:#5d5871}.chart-value{font-weight:800}.chart-axis-title{font-weight:900}.success-chart{height:245px;position:relative;padding:15px 15px 28px 35px}.success-y-title{position:absolute;left:-18px;top:105px;transform:rotate(-90deg);font-weight:900;font-size:12px;color:#5d5871}.success-bars{height:190px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:end;border-bottom:1px solid #dcd9e9}.success-bar-item{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;text-align:center}.success-bar-track{height:160px;width:58px;display:flex;align-items:flex-end;justify-content:center}.success-bar{width:46px;border-radius:12px 12px 4px 4px;display:flex;justify-content:center;padding-top:7px;color:white}.success-bar.success{background:#07883f}.success-bar.danger{background:#d51f26}.success-bar.primary{background:#604dd6}.success-bar.warning{background:#ef6c00}.success-x-title{text-align:center;margin-top:7px!important;font-weight:900!important;font-size:12px!important;color:#5d5871}.empty.compact{min-height:170px}
+@media(max-width:900px){.exam-action-grid,.exam-charts-grid{grid-template-columns:1fr}.exam-item{grid-template-columns:1fr auto}.exam-buttons{grid-column:1/-1;justify-content:flex-start}.result-entry-row{grid-template-columns:1fr 90px 90px 70px}}
+@media(max-width:650px){.exams-classbar{grid-template-columns:1fr}.exam-action-card{grid-template-columns:auto 1fr}.exam-action-card button{grid-column:1/-1}.answer-key-grid,.online-time-grid{grid-template-columns:1fr}.result-entry-row{grid-template-columns:1fr 1fr}.result-entry-row>p{grid-column:1/-1}.live-student-row{align-items:flex-start;flex-direction:column}.success-bar-track{width:42px}.success-bar{width:34px}.success-bars{gap:4px}}
+
+/* V6.4 Artı Modülü */
+.plus-page{display:grid;gap:18px;padding-bottom:50px}.plus-head{align-items:flex-start}.plus-classbar{display:grid;grid-template-columns:minmax(250px,380px) 1fr;gap:18px;align-items:center;padding:16px 18px;border-radius:22px}.plus-class-summary{justify-self:end;display:flex;align-items:center;gap:10px;color:#6750a4}.plus-student-list{display:grid;grid-template-columns:1fr;gap:12px}.plus-student-card{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:16px;align-items:center;padding:15px 17px;border-radius:20px;transition:transform .16s ease,box-shadow .16s ease}.plus-student-card:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(61,47,118,.13)}.plus-number{width:54px;height:54px;border-radius:17px;display:grid;place-items:center;background:linear-gradient(135deg,#7357ff,#a264ff);color:#fff;font-weight:950;box-shadow:0 8px 18px rgba(103,80,164,.24)}.plus-student-info{display:grid;gap:7px;min-width:0}.plus-count-chip{font-weight:900!important;background:#f0eef8!important;color:#625b71!important}.plus-count-chip.active{background:#fff3c4!important;color:#8b5d00!important;box-shadow:0 4px 12px rgba(191,132,0,.15)}.plus-count-chip.active .MuiChip-icon{color:#f4a900!important}.plus-last-note{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:460px}.plus-card-actions{display:flex;gap:9px;align-items:center}.plus-card-actions .MuiButton-root{min-width:122px;min-height:44px;border-radius:14px;font-weight:950;box-shadow:none}.plus-give-btn{background:linear-gradient(135deg,#079447,#16b665)!important;color:#fff!important}.plus-give-btn:hover{box-shadow:0 8px 18px rgba(7,148,71,.28)!important}.plus-remove-btn{background:linear-gradient(135deg,#d92d3b,#f04455)!important;color:#fff!important}.plus-remove-btn:hover{box-shadow:0 8px 18px rgba(217,45,59,.25)!important}.plus-remove-btn.Mui-disabled{background:#ecebf1!important;color:#aaa6b4!important}
+@media(min-width:950px){.plus-student-list{grid-template-columns:repeat(2,minmax(0,1fr))}.plus-student-card{grid-template-columns:58px minmax(0,1fr);}.plus-card-actions{grid-column:1/-1;justify-content:flex-end}}
+@media(max-width:720px){.plus-classbar{grid-template-columns:1fr}.plus-class-summary{justify-self:start}.plus-student-card{grid-template-columns:52px minmax(0,1fr)}.plus-number{width:48px;height:48px}.plus-card-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.plus-card-actions .MuiButton-root{min-width:0}.plus-last-note{max-width:100%;white-space:normal}}
+
+/* V6.4 — Öğrenciler ve Artı modülünde tek sütun liste standardı */
+.students-single-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.students-single-list .student {
+  width: 100%;
+  min-height: 72px;
+  padding: 14px 16px;
+  border-radius: 18px;
+}
+@media (min-width: 950px) {
+  .plus-student-list { grid-template-columns: 1fr !important; }
+  .plus-student-card { grid-template-columns: 64px minmax(0,1fr) auto !important; }
+  .plus-card-actions { grid-column: auto !important; justify-content: flex-end; }
+}
+
+/* V6.4 Sınav Notları Modülü */
+.school-exams-page{display:grid;gap:18px;padding-bottom:54px}.school-exam-classbar{display:grid;grid-template-columns:minmax(260px,420px) 1fr;gap:20px;align-items:center;padding:17px 19px;border-radius:22px}.school-exam-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.school-exam-stat{display:flex;align-items:center;gap:13px;padding:17px;border-radius:20px}.school-exam-stat>svg{font-size:34px}.school-exam-stat.primary>svg{color:#6750a4}.school-exam-stat.success>svg{color:#07883f}.school-exam-stat.danger>svg{color:#d51f26}.school-exam-stat.warning>svg{color:#ef6c00}.school-exam-table-wrap{border-radius:24px;overflow:hidden}.school-exam-table-head,.school-exam-row{display:grid;grid-template-columns:70px minmax(220px,1.5fr) minmax(125px,.7fr) minmax(125px,.7fr) minmax(120px,.65fr) minmax(120px,.65fr);gap:12px;align-items:center}.school-exam-table-head{padding:15px 18px;background:linear-gradient(135deg,#6750a4,#7c66d8);color:#fff}.school-exam-table-head strong{font-size:.86rem}.school-exam-rows{display:grid}.school-exam-row{padding:12px 18px;border-bottom:1px solid #eceaf2;background:rgba(255,255,255,.76)}.school-exam-row:nth-child(even){background:#faf9fe}.school-exam-row:last-child{border-bottom:0}.school-exam-number{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:#eeeaff;color:#5c49d8;font-weight:950}.school-exam-name{display:grid;gap:2px}.school-exam-name small{color:#7b768a}.school-exam-row .MuiOutlinedInput-root{border-radius:13px;background:#fff}.school-exam-row .MuiInputBase-input{text-align:center;font-weight:900}.school-exam-average{min-height:42px;border-radius:13px;background:#eeebff;color:#5b49d1;display:grid;place-items:center;font-weight:950;font-size:1.04rem}.school-exam-status{font-weight:950!important;justify-self:start;align-self:center!important;height:32px!important;min-height:32px!important;max-height:32px!important;width:auto!important;min-width:78px!important}.school-exam-status .MuiChip-label{display:block!important;white-space:nowrap!important;line-height:32px!important;padding-top:0!important;padding-bottom:0!important}.school-exam-status.passed{background:#d9f4e5!important;color:#087a3e!important}.school-exam-status.failed{background:#ffe0e2!important;color:#bd1e29!important}.school-exam-status.empty{background:#ecebf1!important;color:#777281!important}.school-exam-savebar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 18px;background:#f8f7fc;border-top:1px solid #e9e7f1}
+@media(max-width:1000px){.school-exam-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.school-exam-table-wrap{overflow-x:auto}.school-exam-table-head,.school-exam-row{min-width:900px}}
+@media(max-width:650px){.school-exam-classbar{grid-template-columns:1fr}.school-exam-stats{grid-template-columns:1fr 1fr}.school-exam-savebar{align-items:stretch;flex-direction:column}.school-exam-savebar .MuiButton-root{width:100%}}
+
+/* V6.4 Projeler Modülü */
+.projects-page{display:grid;gap:20px}.project-classbar{display:grid;grid-template-columns:minmax(240px,1fr) auto;gap:18px;align-items:center;padding:18px 20px;border-radius:22px}.project-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.project-stat{display:flex;align-items:center;gap:14px;padding:18px;border-radius:20px}.project-stat>svg{width:46px;height:46px;padding:11px;border-radius:15px}.project-stat.primary>svg{background:#e8edff;color:#536dfe}.project-stat.success>svg{background:#e3f6eb;color:#168a4f}.project-stat.warning>svg{background:#fff0db;color:#d47b00}.project-list{display:grid;gap:13px}.project-row{display:grid;grid-template-columns:60px minmax(0,1fr) 120px auto;gap:18px;align-items:center;padding:17px 19px;border-radius:20px}.project-student-number{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#536dfe,#7c4dff);color:#fff;font-weight:950;display:grid;place-items:center}.project-main-info{min-width:0}.project-name{color:#4d5b89;margin-top:2px}.project-grade-box{text-align:center;padding:10px 12px;border-radius:15px;background:rgba(91,109,254,.07)}.project-grade-chip.passed{background:#dff5e8;color:#137846;font-weight:900}.project-grade-chip.failed{background:#fde5e5;color:#ba2e2e;font-weight:900}.project-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:900px){.project-row{grid-template-columns:52px minmax(0,1fr) 100px}.project-actions{grid-column:1/-1}.project-stats{grid-template-columns:1fr}.project-classbar{grid-template-columns:1fr}}
+@media(max-width:600px){.project-row{grid-template-columns:46px minmax(0,1fr);padding:14px}.project-grade-box{grid-column:1/-1;text-align:left;display:flex;align-items:center;gap:12px}.project-actions{justify-content:stretch}.project-actions .MuiButton-root{flex:1}.project-student-number{width:42px;height:42px}.projects-page .page-head{align-items:flex-start}.projects-page .page-head .MuiButton-root{white-space:nowrap}}
+
+/* V6.4 Yorumlar Modülü */
+.comments-page{display:grid;gap:20px;padding-bottom:52px}.comments-head{align-items:flex-start}.comment-classbar{display:grid;grid-template-columns:minmax(240px,1fr) auto;gap:18px;align-items:center;padding:18px 20px;border-radius:22px}.comment-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.comment-stat{display:flex;align-items:center;gap:14px;padding:18px;border-radius:20px}.comment-stat>svg{width:46px;height:46px;padding:11px;border-radius:15px}.comment-stat.primary>svg{background:#ece8ff;color:#6750a4}.comment-stat.success>svg{background:#e3f6eb;color:#168a4f}.comment-stat.warning>svg{background:#fff0db;color:#d47b00}.comment-list{display:grid;gap:13px}.comment-row{display:grid;grid-template-columns:60px minmax(0,1fr) auto;gap:18px;align-items:center;padding:17px 19px;border-radius:20px}.comment-student-number{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#6750a4,#8b73e6);color:#fff;font-weight:950;display:grid;place-items:center}.comment-main-info{min-width:0}.comment-text{margin-top:5px!important;white-space:pre-wrap;line-height:1.55!important;color:#3f3c49}.comment-expiry-chip{background:#fff0db!important;color:#9a5900!important;font-weight:850!important}.comment-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.comments-page .MuiDialog-paper{border-radius:22px}
+@media(max-width:900px){.comment-row{grid-template-columns:52px minmax(0,1fr)}.comment-actions{grid-column:1/-1}.comment-stats{grid-template-columns:1fr}.comment-classbar{grid-template-columns:1fr}}
+@media(max-width:600px){.comment-row{grid-template-columns:46px minmax(0,1fr);padding:14px}.comment-actions{justify-content:stretch}.comment-actions .MuiButton-root{flex:1}.comment-student-number{width:42px;height:42px}.comments-page .page-head{align-items:flex-start}.comments-page .page-head .MuiButton-root{white-space:nowrap}}
+
+/* V6.4 Duyurular Modülü */
+.announcements-page{display:grid;gap:20px;padding-bottom:54px}.announcement-head{align-items:flex-start}.announcement-classbar{display:grid;grid-template-columns:minmax(240px,1fr) auto;gap:18px;align-items:center;padding:18px 20px;border-radius:22px}.announcement-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.announcement-stat{display:flex;align-items:center;gap:14px;padding:18px;border-radius:20px}.announcement-stat>svg{width:46px;height:46px;padding:11px;border-radius:15px}.announcement-stat.primary>svg{background:#ece8ff;color:#6750a4}.announcement-stat.success>svg{background:#e3f6eb;color:#168a4f}.announcement-stat.warning>svg{background:#fff0db;color:#d47b00}.announcement-tabs{border-radius:18px;padding:4px 10px}.announcement-list{display:grid;gap:13px}.announcement-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center;padding:18px 20px;border-radius:22px}.announcement-icon{background:linear-gradient(135deg,#6750a4,#8b73e6)!important}.announcement-main{display:grid;gap:9px;min-width:0}.announcement-body{white-space:pre-wrap;line-height:1.55!important;color:#454151}.announcement-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.announcement-empty{min-height:180px;display:grid;place-items:center;align-content:center;gap:12px;color:#777184;border-radius:22px}.announcement-empty>svg{font-size:44px;color:#9b8ed1}.announcement-form{display:grid;gap:17px!important;padding-top:12px!important}.announcement-date-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.announcement-student-picker{display:grid;gap:8px;max-height:300px;overflow:auto;padding:13px;border:1px solid #e2dfee;border-radius:16px;background:#faf9fe}.announcement-student-option{display:grid;grid-template-columns:50px minmax(0,1fr) auto;align-items:center;gap:10px;border:1px solid #e5e1ef;border-radius:13px;background:#fff;padding:10px 12px;text-align:left;font:inherit;cursor:pointer}.announcement-student-option>span{font-weight:900;color:#6750a4}.announcement-student-option.selected{border-color:#6750a4;background:#f1edff}.announcement-student-option.selected>svg{color:#168a4f}.announcement-upload-box{display:flex;align-items:center;gap:13px;flex-wrap:wrap;padding:14px;border:1px dashed #aaa0d5;border-radius:16px;background:#faf9ff}.announcement-attachment-list{display:grid;gap:8px}.announcement-attachment-item,.announcement-download-row{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border-radius:14px!important}.announcement-attachment-item>svg,.announcement-download-row>svg{color:#6750a4}.announcement-preview{display:grid;gap:13px;padding:6px}.announcement-preview-body{white-space:pre-wrap;line-height:1.7!important}.announcement-preview-files{display:grid;gap:12px;margin-top:5px}.announcement-preview-image{display:grid;gap:8px;justify-items:start}.announcement-preview-image img{max-width:100%;max-height:440px;border-radius:16px;box-shadow:0 10px 28px rgba(40,32,80,.14)}
+@media(max-width:900px){.announcement-row{grid-template-columns:auto minmax(0,1fr)}.announcement-actions{grid-column:1/-1}.announcement-stats{grid-template-columns:1fr}.announcement-classbar{grid-template-columns:1fr}}
+@media(max-width:600px){.announcement-date-grid{grid-template-columns:1fr}.announcement-row{padding:14px}.announcement-actions{justify-content:stretch}.announcement-actions .MuiButton-root{flex:1}.announcement-head .MuiButton-root{white-space:nowrap}.announcement-attachment-item,.announcement-download-row{grid-template-columns:auto minmax(0,1fr)}.announcement-attachment-item .MuiButton-root,.announcement-download-row .MuiButton-root{grid-column:1/-1}}
+.student-panel-page{display:grid;gap:20px}.student-announcement-section{display:grid;gap:12px;width:min(980px,94vw);margin:0 auto}.student-announcement-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:16px 18px;border-radius:18px}.student-announcement-empty{padding:30px;text-align:center;color:#777184;border-radius:18px}@media(max-width:650px){.student-announcement-row{grid-template-columns:1fr}.student-announcement-row>.MuiStack-root{flex-wrap:wrap}}
+
+/* V6.4 Raporlar Modülü */
+.reports-page{padding-bottom:40px}.report-card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px}.report-menu-card{display:flex;gap:14px;align-items:center;padding:18px;cursor:pointer;border:2px solid transparent;transition:.2s}.report-menu-card>svg{font-size:34px;color:#1769aa}.report-menu-card.active{border-color:#1769aa;background:#edf6ff;transform:translateY(-2px)}.report-toolbar{display:flex;gap:10px;align-items:center;padding:14px;margin-bottom:18px;flex-wrap:wrap}.report-toolbar .MuiFormControl-root{min-width:180px}.print-report{background:#fff;border-radius:18px;padding:22px;box-shadow:0 10px 35px rgba(15,50,80,.08)}.report-letterhead{display:flex;align-items:center;gap:14px;border-bottom:3px solid #153b68;padding-bottom:14px;margin-bottom:16px}.report-logo{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:#153b68;color:#fff}.report-logo svg{font-size:34px}.report-meta{margin-left:auto;display:flex;flex-direction:column;text-align:right}.report-summary{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.report-table-wrap{overflow:auto}.report-table{width:100%;border-collapse:collapse;font-size:12px}.report-table th{background:#153b68;color:#fff;padding:9px 7px;white-space:nowrap}.report-table td{border:1px solid #d8e0ea;padding:7px;text-align:center}.report-table tbody tr:nth-child(odd){background:#ffffff}.report-table tbody tr:nth-child(even){background:#e8f0f7}.report-table tbody tr{break-inside:avoid;page-break-inside:avoid}.analysis-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}.mini-analysis{padding:14px;border:1px solid #dce5ef}.mini-analysis>p:first-child{display:flex;align-items:center;gap:6px}.mini-analysis>div{display:flex;justify-content:space-between;border-bottom:1px dashed #d9e0e8;padding:8px 0}.question-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;margin:16px 0}.question-box{aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}.question-box.good{background:#18864b}.question-box.mid{background:#e4a000}.question-box.bad{background:#d32f2f}.question-box b{font-size:18px}.question-box span{font-weight:900}.question-box small{font-size:9px}.report-footer{border-top:1px solid #ccd6e0;margin-top:18px;padding-top:8px;text-align:center;font-size:10px;color:#607080}
+@media(max-width:900px){.report-card-grid{grid-template-columns:repeat(2,1fr)}.question-grid{grid-template-columns:repeat(5,1fr)}.analysis-pair{grid-template-columns:1fr}}
+@media(max-width:560px){.report-card-grid{grid-template-columns:1fr}.report-toolbar .MuiFormControl-root{width:100%}.question-grid{grid-template-columns:repeat(4,1fr)}.report-letterhead{align-items:flex-start}.report-meta{font-size:11px}}
+@media print{body *{visibility:hidden}.print-report,.print-report *{visibility:visible}.print-report{position:absolute;left:0;top:0;width:100%;box-shadow:none;padding:0}.drawer,.topbar,.ai-fab{display:none!important}}
+
+/* V6.4 Rapor PDF düzenlemeleri */
+.report-logo{background:#fff!important;border:2px solid #0aa37f;overflow:hidden}
+.report-logo img{width:100%;height:100%;object-fit:contain;display:block}
+.report-table td.status-done{color:#18864b!important;font-weight:900}
+.report-table td.status-missing{color:#d32f2f!important;font-weight:900}
+.report-table td.status-absent{color:#ef7d00!important;font-weight:900}
+.pdf-report-page{background:#fff;position:relative;box-sizing:border-box}
+.online-pdf-report{padding:0!important;box-shadow:none!important;background:transparent!important}
+.online-pdf-report .pdf-report-page{width:200mm;height:277mm;padding:10mm 9mm 8mm;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;break-after:page;page-break-after:always;break-inside:avoid;page-break-inside:avoid}
+.online-pdf-report .pdf-page-content{flex:1}
+.online-pdf-report .report-footer{margin-top:auto}
+.online-pdf-report .report-table{font-size:11px}
+.online-pdf-report .report-table th{padding:7px 6px}
+.online-pdf-report .report-table td{padding:6px}
+.online-pdf-report .question-grid{grid-template-columns:repeat(10,1fr);gap:6px;margin:8px 0 12px}
+.online-pdf-report .question-box{min-height:58px;aspect-ratio:auto;border-radius:8px}
+.online-pdf-report .analysis-pair{margin:10px 0;gap:10px}
+.online-pdf-report .mini-analysis{padding:10px}
+.online-pdf-report .mini-analysis>div{padding:5px 0;font-size:11px}
+@media print{
+  .pdf-report-page{break-after:page;page-break-after:always}
+  .pdf-report-page:last-child{break-after:auto;page-break-after:auto}
+}
+
+.online-pdf-report .pdf-report-page:last-child{break-after:auto!important;page-break-after:auto!important}
+.report-letterhead,.report-table-wrap,.question-grid,.analysis-pair{break-inside:avoid;page-break-inside:avoid}
+
+/* V6.4.2 Taşkın Takip Sistemi kurumsal logo */
+.brand-logo-image{width:52px;height:52px;object-fit:contain;border-radius:12px;background:#fff;flex:0 0 auto}
+.login-brand-logo{display:block;width:min(230px,70vw);height:190px;object-fit:contain;margin:0 auto 8px}
+.student-brand-logo{display:block;width:min(190px,62vw);height:150px;object-fit:contain;margin:0 auto 10px}
+.home-brand-logo{width:50px;height:50px;object-fit:contain;border-radius:10px;background:#fff}
+.report-logo{width:72px!important;height:72px!important;border:0!important;border-radius:10px!important}
+.report-logo img{object-fit:contain!important}
+.brand-pdf-logo{width:66px;height:66px;object-fit:contain;display:block}
+@media(max-width:600px){.login-brand-logo{height:150px}.home-brand-logo{width:42px;height:42px}.report-logo{width:58px!important;height:58px!important}}
+
+/* V6.5 — Yeni kurumsal arayüz (yalnızca görünüm katmanı) */
+:root{
+  --ta-navy:#0d2f50;
+  --ta-navy-2:#153f68;
+  --ta-green:#16a36f;
+  --ta-green-dark:#0b7d54;
+  --ta-bg:#f3f6f8;
+  --ta-card:#ffffff;
+  --ta-line:#dfe7ed;
+  --ta-text:#162331;
+  --ta-muted:#657382;
+  --ta-shadow:0 12px 35px rgba(18,47,74,.08);
+}
+body{background:var(--ta-bg);color:var(--ta-text)}
+.app,.student-home{background:var(--ta-bg)}
+.glass{
+  background:rgba(255,255,255,.96)!important;
+  border:1px solid var(--ta-line)!important;
+  backdrop-filter:none!important;
+  box-shadow:var(--ta-shadow)!important;
+  border-radius:18px!important;
+}
+.drawer{
+  background:linear-gradient(180deg,#0b2948 0%,#123a63 60%,#0d3155 100%)!important;
+  color:#fff;
+  padding:18px 12px!important;
+}
+.drawer .brand{padding:5px 8px 18px!important;gap:11px!important}
+.drawer .brand-logo-image{width:48px;height:48px;background:#fff;border-radius:14px;padding:3px}
+.drawer .brand .MuiTypography-root:first-of-type{font-size:1rem;letter-spacing:.08em;color:#fff}
+.drawer .brand .MuiTypography-caption{color:#a9c8dc;letter-spacing:.08em;text-transform:uppercase}
+.drawer .MuiDivider-root{border-color:rgba(255,255,255,.12)}
+.drawer .MuiListItemIcon-root{min-width:42px;color:#a9c8dc}
+.drawer .MuiListItemText-primary{font-size:.93rem;font-weight:700}
+.nav-item{min-height:45px;border-radius:12px!important;margin:3px 0!important;color:#d9e6ef!important;transition:.18s ease!important}
+.nav-item:hover{background:rgba(255,255,255,.08)!important;transform:translateX(2px)}
+.nav-item.Mui-selected{
+  background:linear-gradient(135deg,var(--ta-green),#29b980)!important;
+  color:#fff!important;
+  box-shadow:0 8px 18px rgba(22,163,111,.22);
+}
+.drawer>.MuiButton-root{color:#cfe0ea;border:1px solid rgba(255,255,255,.15);border-radius:12px;margin:8px;padding:10px}
+.topbar{background:rgba(255,255,255,.94)!important;border-bottom:1px solid var(--ta-line);box-shadow:none!important;color:var(--ta-text)!important}
+.main{background:var(--ta-bg);padding:22px 26px 42px!important}
+.main-home{padding-top:18px!important}
+.ai-fab{display:none!important}
+.page-head{margin-bottom:20px}
+.page-head h4,.page-head h5,.page-head h6{color:var(--ta-navy)}
+.MuiButton-containedPrimary{background:var(--ta-navy)!important;box-shadow:none!important}
+.MuiButton-containedPrimary:hover{background:var(--ta-navy-2)!important}
+.MuiButton-containedSuccess,.MuiButton-containedSecondary{background:var(--ta-green)!important;box-shadow:none!important}
+.MuiButton-root{border-radius:11px!important}
+.MuiOutlinedInput-root{background:#fff;border-radius:11px!important}
+.MuiOutlinedInput-notchedOutline{border-color:#d5e0e7!important}
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{border-color:var(--ta-green)!important;border-width:2px!important}
+
+/* Giriş ekranı */
+.login-page{
+  background:
+    linear-gradient(120deg,rgba(13,47,80,.96),rgba(18,58,99,.92)),
+    radial-gradient(circle at 75% 15%,rgba(22,163,111,.35),transparent 35%);
+  position:relative;overflow:hidden;
+}
+.login-page:before,.login-page:after{content:"";position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.10)}
+.login-page:before{width:520px;height:520px;right:-180px;top:-190px}
+.login-page:after{width:340px;height:340px;left:-120px;bottom:-170px}
+.login-card{
+  width:min(94vw,430px)!important;
+  padding:32px 34px 34px!important;
+  background:#fff!important;
+  border:1px solid rgba(255,255,255,.6);
+  border-radius:24px!important;
+  box-shadow:0 30px 75px rgba(0,18,35,.34)!important;
+  position:relative;z-index:1;
+}
+.login-brand-logo{height:132px!important;width:min(190px,64vw)!important;margin-bottom:4px!important}
+.login-card h4{color:var(--ta-navy);font-size:2rem!important;letter-spacing:.04em!important}
+.login-card .MuiTypography-colorSuccessMain{color:var(--ta-green)!important;letter-spacing:.13em;font-size:.82rem}
+.login-card form{margin-top:6px}
+.login-card .MuiButton-contained{height:50px;background:linear-gradient(135deg,var(--ta-navy),var(--ta-navy-2))!important}
+
+/* Ana sayfa */
+.home-shell{max-width:1500px;margin:0 auto}
+.home-topbar{
+  border-radius:18px!important;
+  padding:12px 16px!important;
+  display:flex;justify-content:space-between;align-items:center;
+  position:sticky;top:12px;z-index:10;
+}
+.home-brand-logo{width:46px!important;height:46px!important;padding:2px;border:1px solid var(--ta-line)}
+.home-topbar .MuiTypography-root:first-of-type{color:var(--ta-navy);letter-spacing:.01em}
+.home-menu-button{display:none!important}
+.home-search{min-width:230px}
+.home-find-button{background:var(--ta-green)!important}
+.home-exit-button{background:#fff!important;color:#b33b3b!important;border:1px solid #efcece!important;box-shadow:none!important}
+.home-class-tabs{padding:16px 2px 12px;overflow:auto}
+.home-class-chip{
+  border:1px solid #ccd9e2;background:#fff;color:#405363;border-radius:999px;
+  padding:9px 17px;font-weight:800;white-space:nowrap;cursor:pointer;transition:.18s;
+}
+.home-class-chip:hover{border-color:var(--ta-green);color:var(--ta-green-dark)}
+.home-class-chip.active{background:var(--ta-navy);border-color:var(--ta-navy);color:#fff;box-shadow:0 7px 18px rgba(13,47,80,.18)}
+.month-students-card{padding:22px!important;border-left:5px solid var(--ta-green)!important}
+.section-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
+.section-heading h6{color:var(--ta-navy)}
+.section-cup{font-size:36px!important;color:#e7a917;background:#fff8dd;border-radius:12px;padding:7px;box-sizing:content-box}
+.ranking-list{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.ranking-row{
+  display:grid!important;grid-template-columns:auto 1fr!important;grid-template-rows:auto auto;
+  align-items:center!important;gap:2px 9px!important;padding:14px!important;
+  border:1px solid var(--ta-line)!important;border-radius:14px!important;background:#f9fbfc!important;
+}
+.ranking-row .rank-number{grid-row:1/3;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:#e8f1f6;color:var(--ta-navy);font-weight:900}
+.ranking-row strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ranking-row>span:last-child{font-size:.78rem;color:var(--ta-muted)}
+.ranking-row.rank-1{background:linear-gradient(145deg,#fffaf0,#fff)!important;border-color:#ead6a1!important}
+.ranking-row.rank-1 .rank-number{background:#f4c85d;color:#6b4b00}
+.two-dashboard-cards{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:16px!important}
+.metric-card,.action-card,.chart-card,.movement-card,.ai-support-section{padding:21px!important}
+.metric-card{display:flex;align-items:center;gap:15px;min-height:104px}
+.metric-card>svg{width:46px;height:46px;padding:11px;border-radius:14px;background:#e8f2f7;color:var(--ta-navy)}
+.metric-card:nth-child(2)>svg{background:#e5f6ef;color:var(--ta-green)}
+.metric-card strong{font-size:1.75rem;color:var(--ta-navy)}
+.metric-card small{display:block;color:var(--ta-muted);margin-top:4px}
+.action-card{min-height:168px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.action-card .MuiButton-root{margin-top:auto}
+.online-card{background:linear-gradient(145deg,#0e355b,#164a77)!important;color:#fff!important;border:0!important}
+.online-card .MuiTypography-colorTextSecondary{color:#c9dce9!important}
+.online-card .MuiButton-contained{background:var(--ta-green)!important}
+.dashboard-chart-grid{display:grid!important;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr)!important;gap:16px!important}
+.chart-card h6,.movement-card h6,.ai-support-section h6{color:var(--ta-navy)}
+.chart-grid{stroke:#e6edf2!important}.chart-axis{stroke:#9cb0bd!important}.chart-line{stroke:var(--ta-green)!important;stroke-width:4!important}.chart-dot{fill:#fff!important;stroke:var(--ta-green)!important;stroke-width:4!important}
+.ai-support-section{background:linear-gradient(135deg,#f1f7fa,#f7fbf9)!important}
+.ai-heading-icon{color:var(--ta-green)!important}
+.ai-card-grid{gap:12px!important}
+.ai-support-card{border:1px solid var(--ta-line)!important;border-radius:14px!important;background:#fff!important;padding:16px!important;transition:.18s}
+.ai-support-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(18,47,74,.08)}
+.ai-support-card strong{color:var(--ta-navy)!important}
+.movement-list>div{border-bottom:1px solid #edf1f4!important;padding:10px 0!important}
+.movement-list>div span{background:#e8f1f6!important;color:var(--ta-navy)!important}
+
+/* Modül kartları ve tablolar */
+.exam-card,.student,.report-menu-card,.dashboard-stat,.module-card{border:1px solid var(--ta-line)!important;background:#fff!important;box-shadow:0 8px 24px rgba(18,47,74,.055)!important}
+.exam-icon,.dashboard-icon,.module-icon{background:linear-gradient(135deg,var(--ta-navy),var(--ta-navy-2))!important}
+.report-menu-card.active{border-color:var(--ta-green)!important;background:#edf9f4!important}
+.report-menu-card>svg{color:var(--ta-green-dark)!important}
+.MuiTableHead-root .MuiTableCell-root{background:#eef3f6;color:var(--ta-navy);font-weight:900;border-bottom:1px solid #d6e1e7}
+.MuiTableBody-root .MuiTableRow-root:nth-of-type(even){background:#f8fafb}
+
+@media(max-width:1200px){.ranking-list{grid-template-columns:repeat(3,minmax(0,1fr))}.dashboard-chart-grid{grid-template-columns:1fr!important}}
+@media(max-width:900px){
+  .main{padding:16px!important}.home-menu-button{display:inline-flex!important}.home-topbar{position:relative;top:0;align-items:flex-start;gap:12px}.home-search-area{flex-wrap:wrap;justify-content:flex-end}.home-search{min-width:170px}.ranking-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .login-card{padding:26px 20px 28px!important}.home-topbar{display:grid!important}.home-search-area{width:100%;display:grid!important;grid-template-columns:1fr auto auto}.home-search{min-width:0}.two-dashboard-cards{grid-template-columns:1fr!important}.ranking-list{grid-template-columns:1fr}.month-students-card,.metric-card,.action-card,.chart-card,.movement-card,.ai-support-section{padding:16px!important}.main{padding:12px!important}
+}
+
+/* =========================================================
+   TAŞKIN TAKİP SİSTEMİ V7.0 — FERAH ÖĞRETMEN PANELİ
+   Yalnızca arayüz katmanı; veri ve işlev akışlarına dokunmaz.
+   ========================================================= */
+:root {
+  --v7-bg: #f2f8f5;
+  --v7-surface: #ffffff;
+  --v7-soft: #eef5f2;
+  --v7-line: #dce9e3;
+  --v7-text: #17352d;
+  --v7-muted: #71877f;
+  --v7-green: #12865f;
+  --v7-green-2: #55c49b;
+  --v7-navy: #133d5b;
+  --v7-red: #d83b3b;
+  --v7-amber: #d99718;
+  --v7-radius: 22px;
+  --v7-shadow: 0 16px 38px rgba(28, 72, 57, .09);
+}
+html { background: var(--v7-bg); }
+body { color: var(--v7-text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.app, .login-page, .student-home {
+  background:
+    radial-gradient(circle at 8% 2%, rgba(85,196,155,.08), transparent 26%),
+    linear-gradient(180deg, #f7fbf9 0%, var(--v7-bg) 100%) !important;
+}
+.MuiTypography-root, .MuiButton-root, .MuiInputBase-root, .MuiChip-root { font-family: inherit !important; }
+.MuiTypography-root { color: var(--v7-text); }
+.MuiTypography-colorTextSecondary, .MuiFormHelperText-root { color: var(--v7-muted) !important; }
+
+/* Sol menü */
+.drawer {
+  padding: 18px 12px !important;
+  background: rgba(255,255,255,.97) !important;
+  border-right: 1px solid var(--v7-line);
+}
+.brand { padding: 4px 8px 18px !important; }
+.brand-logo-image { width: 50px; height: 50px; object-fit: contain; border-radius: 14px; }
+.brand .MuiTypography-root:first-of-type { letter-spacing: .05em; color: var(--v7-navy); }
+.brand .MuiTypography-caption { color: var(--v7-green); font-weight: 800; letter-spacing: .04em; }
+.nav-item {
+  min-height: 46px;
+  margin: 4px 0 !important;
+  border-radius: 14px !important;
+  color: #49635a !important;
+  transition: .18s ease !important;
+}
+.nav-item .MuiListItemIcon-root { min-width: 40px; color: #6f8980; }
+.nav-item:hover { background: var(--v7-soft) !important; color: var(--v7-text) !important; transform: translateX(2px); }
+.nav-item.Mui-selected {
+  color: #fff !important;
+  background: linear-gradient(135deg, var(--v7-green), #1b9a71) !important;
+  box-shadow: 0 10px 24px rgba(18,134,95,.22);
+}
+
+/* Üst alan ve genel yüzeyler */
+.topbar {
+  color: var(--v7-text) !important;
+  background: rgba(247,251,249,.92) !important;
+  border-bottom: 1px solid var(--v7-line);
+  backdrop-filter: blur(16px);
+}
+.main { background: transparent; }
+.page-head { margin-bottom: 22px; }
+.page-head h4, .page-head h5, .page-head h6 { color: var(--v7-text); font-weight: 950 !important; letter-spacing: -.025em; }
+.glass, .MuiPaper-root.glass {
+  border: 1px solid rgba(220,233,227,.92) !important;
+  background: rgba(255,255,255,.97) !important;
+  backdrop-filter: none !important;
+  box-shadow: var(--v7-shadow) !important;
+  border-radius: var(--v7-radius) !important;
+}
+.MuiPaper-root { color: var(--v7-text); }
+.MuiDivider-root { border-color: var(--v7-line) !important; }
+.MuiButton-contained {
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, var(--v7-green), #1a9c71) !important;
+  box-shadow: 0 8px 20px rgba(18,134,95,.18) !important;
+  text-transform: none !important;
+  font-weight: 800 !important;
+}
+.MuiButton-outlined { border-color: #bfd7ce !important; color: var(--v7-green) !important; border-radius: 12px !important; text-transform: none !important; font-weight: 800 !important; }
+.MuiIconButton-root { color: #315f50; }
+.MuiTextField-root .MuiOutlinedInput-root, .MuiSelect-select { background: #fbfdfc; border-radius: 13px !important; }
+.MuiOutlinedInput-notchedOutline { border-color: #cfdfd9 !important; }
+.Mui-focused .MuiOutlinedInput-notchedOutline { border-color: var(--v7-green) !important; }
+
+/* Ana sayfa */
+.main-home { padding: 0 0 28px !important; }
+.home-shell { padding: 22px 26px 0; }
+.home-topbar {
+  min-height: 72px;
+  padding: 12px 16px !important;
+  border: 1px solid var(--v7-line);
+  border-radius: 18px !important;
+  background: rgba(255,255,255,.96) !important;
+  box-shadow: 0 8px 28px rgba(34,77,63,.07);
+}
+.home-menu-button { color: var(--v7-green) !important; background: var(--v7-soft) !important; }
+.home-find-button { color: var(--v7-green) !important; background: #dcf4e9 !important; }
+.home-exit-button { color: var(--v7-red) !important; background: #fff0f0 !important; }
+.home-class-tabs { padding: 18px 2px 15px; gap: 8px !important; }
+.home-class-chip {
+  min-width: 54px; height: 40px; border-color: var(--v7-line); border-radius: 12px;
+  color: #45675c; background: rgba(255,255,255,.9); font-weight: 900;
+}
+.home-class-chip.active { background: var(--v7-green); box-shadow: 0 8px 20px rgba(18,134,95,.2); }
+.home-content { padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+.home-student-grid { gap: 18px; }
+.home-student-card {
+  position: relative;
+  min-height: 142px;
+  padding: 18px;
+  grid-template-columns: 58px 1fr;
+  gap: 7px 14px;
+  border: 1px solid var(--v7-line);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(31,72,59,.07);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.home-student-card:hover { transform: translateY(-3px); box-shadow: 0 18px 34px rgba(31,72,59,.12); }
+.home-student-card strong {
+  width: 56px; height: 56px; display:grid; place-items:center; border-radius: 17px;
+  background: #dff3eb; color: var(--v7-green); font-size: 1rem;
+}
+.home-student-card span { color: var(--v7-text); font-size: 1.05rem; }
+.home-student-card small { color: var(--v7-muted); }
+
+/* Dashboard özel kartlar */
+.dashboard-stats { gap: 16px; }
+.dashboard-stat {
+  min-height: 112px; padding: 18px 20px;
+  border: 1px solid var(--v7-line) !important;
+  border-radius: 20px !important;
+  background: #fff !important;
+  box-shadow: 0 12px 28px rgba(31,72,59,.07) !important;
+}
+.dashboard-stat strong { color: var(--v7-text); font-size: 1.9rem; }
+.dashboard-stat small { color: var(--v7-muted); }
+.dashboard-icon, .module-icon, .exam-icon {
+  color: var(--v7-green) !important;
+  background: #dcf3e9 !important;
+}
+.dashboard-modules { gap: 16px; }
+.module-card {
+  min-height: 132px; border: 1px solid var(--v7-line) !important; border-radius: 20px !important;
+  background: #fff !important; box-shadow: 0 12px 28px rgba(31,72,59,.07) !important;
+}
+.module-card:hover, .dashboard-stat:hover { transform: translateY(-3px); box-shadow: 0 17px 34px rgba(31,72,59,.12) !important; }
+
+/* Deneme ve analiz panelleri */
+.exam-card, .month-students-card, .chart-card, .ai-support-section, .exam-chart-card {
+  border: 1px solid var(--v7-line) !important;
+  border-radius: 22px !important;
+  background: #fff !important;
+  box-shadow: var(--v7-shadow) !important;
+}
+.exam-card { padding: 18px 20px; }
+.exam-card .MuiTypography-root { color: var(--v7-text); }
+.chart-grid, .chart-gridline { stroke: #dce9e3 !important; }
+.chart-axis { stroke: #afc6bd !important; }
+.chart-line { stroke: var(--v7-green) !important; stroke-width: 5 !important; }
+.chart-dot { fill: #fff !important; stroke: var(--v7-green) !important; stroke-width: 5 !important; }
+.chart-value, .chart-label, .chart-axis-text, .chart-title, .chart-axis-title { fill: #5d776e !important; }
+.bar-column { border-radius: 14px 14px 5px 5px; }
+.bar-low { background: #ef8c8c !important; }
+.bar-avg { background: #efc66d !important; }
+.bar-high { background: linear-gradient(180deg,var(--v7-green-2),var(--v7-green)) !important; }
+
+/* Tablolar: yüksek kontrast + zebra */
+.MuiTableContainer-root { border: 1px solid var(--v7-line); border-radius: 18px; overflow: hidden; }
+.MuiTableHead-root .MuiTableCell-root {
+  color: #fff !important; background: var(--v7-navy) !important; font-weight: 900 !important; border-color: rgba(255,255,255,.12) !important;
+}
+.MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) { background: #fff; }
+.MuiTableBody-root .MuiTableRow-root:nth-of-type(even) { background: #f3f8f6; }
+.MuiTableBody-root .MuiTableCell-root { color: var(--v7-text) !important; border-color: var(--v7-line) !important; }
+
+/* Etiketler */
+.MuiChip-root { border-radius: 999px !important; font-weight: 800 !important; }
+.MuiChip-colorSuccess { color: #087b52 !important; background: #dff5e9 !important; }
+.MuiChip-colorError { color: #bd2f2f !important; background: #ffe5e5 !important; }
+.MuiChip-colorWarning { color: #9b6700 !important; background: #fff0c9 !important; }
+
+/* Giriş */
+.login-page { padding: 28px; }
+.login-card {
+  width: min(100%, 440px); padding: 34px 34px 32px;
+  border: 1px solid var(--v7-line);
+  border-radius: 26px;
+  background: rgba(255,255,255,.98) !important;
+  box-shadow: 0 25px 60px rgba(25,70,55,.13) !important;
+}
+.login-brand-logo { width: 132px; height: 132px; object-fit: contain; margin-bottom: 12px; }
+.login-card h4 { color: var(--v7-navy); letter-spacing: .08em; }
+.login-card .MuiTypography-colorSuccess { color: var(--v7-green) !important; letter-spacing: .14em; }
+
+.ai-fab { background: linear-gradient(135deg,var(--v7-green),var(--v7-navy)) !important; box-shadow: 0 12px 28px rgba(18,80,65,.28); }
+
+@media (max-width: 899px) {
+  .home-shell { padding: 14px 14px 0; }
+  .main { padding: 14px; }
+}
+@media (max-width: 600px) {
+  .login-page { padding: 14px; }
+  .login-card { padding: 26px 20px; border-radius: 22px; }
+  .home-topbar { border-radius: 16px !important; }
+  .page-head { align-items: flex-start; }
+}
+
+/* =========================================================
+   TAŞKIN TAKİP SİSTEMİ V7.1 — MİNT CAM TEMA
+   Beyaz olmayan zemin, yüksek kontrast ve yarı saydam yüzeyler
+   ========================================================= */
+:root{
+  --v71-bg-1:#d5e5df;
+  --v71-bg-2:#c6d8d2;
+  --v71-bg-3:#dce8e3;
+  --v71-card:rgba(239,246,243,.88);
+  --v71-card-strong:rgba(232,242,238,.96);
+  --v71-card-soft:rgba(218,234,228,.76);
+  --v71-line:rgba(76,116,103,.22);
+  --v71-text:#15372e;
+  --v71-muted:#58746a;
+  --v71-green:#167d5c;
+  --v71-green-2:#45aa84;
+  --v71-navy:#173f5d;
+  --v71-shadow:0 18px 44px rgba(26,68,55,.14);
+}
+html,body,#root{min-height:100%;background:var(--v71-bg-2)!important}
+body{
+  color:var(--v71-text)!important;
+  background:
+    radial-gradient(circle at 8% 4%,rgba(107,174,151,.30),transparent 30%),
+    radial-gradient(circle at 92% 10%,rgba(74,130,157,.22),transparent 28%),
+    linear-gradient(145deg,var(--v71-bg-1) 0%,var(--v71-bg-3) 48%,var(--v71-bg-2) 100%)!important;
+  background-attachment:fixed!important;
+}
+.app,.student-home,.main,.main-home,.login-page{
+  background:transparent!important;
+}
+.MuiTypography-root{color:var(--v71-text)}
+.MuiTypography-colorTextSecondary,.MuiFormHelperText-root{color:var(--v71-muted)!important}
+
+/* Cam yüzeyler */
+.glass,.MuiPaper-root.glass,.dashboard-stat,.module-card,.exam-card,.month-students-card,
+.chart-card,.ai-support-section,.exam-chart-card,.home-student-card,.home-topbar,
+.login-card,.student-home-card,.lgs-list-panel,.lgs-chart-card,.movement-card,
+.project-row,.comment-row,.announcement-row,.report-toolbar{
+  background:var(--v71-card)!important;
+  border:1px solid rgba(255,255,255,.48)!important;
+  box-shadow:var(--v71-shadow)!important;
+  backdrop-filter:blur(18px) saturate(118%)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(118%)!important;
+}
+.MuiPaper-root:not(.MuiMenu-paper):not(.MuiDialog-paper){
+  background-color:var(--v71-card)!important;
+}
+.MuiDialog-paper,.MuiMenu-paper{
+  background:#eaf3ef!important;
+  color:var(--v71-text)!important;
+}
+
+/* Sol menü ve üst çubuk */
+.drawer{
+  background:linear-gradient(180deg,rgba(220,235,229,.97),rgba(200,221,213,.96))!important;
+  border-right:1px solid var(--v71-line)!important;
+  box-shadow:10px 0 34px rgba(25,66,53,.10)!important;
+}
+.topbar{
+  background:rgba(216,232,226,.86)!important;
+  color:var(--v71-text)!important;
+  border-bottom:1px solid var(--v71-line)!important;
+  backdrop-filter:blur(20px)!important;
+}
+.nav-item{color:#365f52!important}
+.nav-item .MuiListItemIcon-root{color:#4e7468!important}
+.nav-item:hover{background:rgba(238,247,243,.70)!important;color:var(--v71-text)!important}
+.nav-item.Mui-selected{
+  background:linear-gradient(135deg,var(--v71-green),#299573)!important;
+  color:#fff!important;
+  box-shadow:0 10px 25px rgba(22,125,92,.25)!important;
+}
+.nav-item.Mui-selected .MuiListItemIcon-root{color:#fff!important}
+
+/* Formlar ve butonlar */
+.MuiTextField-root .MuiOutlinedInput-root,.MuiSelect-select,.MuiInputBase-root{
+  background:rgba(234,244,240,.82)!important;
+  color:var(--v71-text)!important;
+}
+.MuiOutlinedInput-notchedOutline{border-color:rgba(58,104,89,.28)!important}
+.Mui-focused .MuiOutlinedInput-notchedOutline{border-color:var(--v71-green)!important}
+.MuiInputLabel-root{color:#57766b!important}
+.MuiButton-contained{
+  background:linear-gradient(135deg,var(--v71-green),#299573)!important;
+  box-shadow:0 9px 22px rgba(22,125,92,.22)!important;
+}
+.MuiButton-outlined{color:var(--v71-green)!important;border-color:rgba(22,125,92,.42)!important;background:rgba(226,240,234,.48)!important}
+.MuiIconButton-root{color:#315f51!important}
+
+/* Ana sayfa ve kartlar */
+.home-class-chip{background:rgba(226,239,234,.82)!important;border-color:var(--v71-line)!important;color:#355e51!important}
+.home-class-chip.active{background:linear-gradient(135deg,var(--v71-green),#279370)!important;color:#fff!important}
+.home-student-card strong,.dashboard-icon,.module-icon,.exam-icon{
+  background:rgba(76,171,137,.18)!important;
+  color:var(--v71-green)!important;
+}
+.dashboard-stat,.module-card,.home-student-card{border-color:rgba(255,255,255,.42)!important}
+.dashboard-stat strong,.home-student-card span{color:var(--v71-text)!important}
+.home-student-card small,.dashboard-stat small{color:var(--v71-muted)!important}
+
+/* Grafik ve tablolar */
+.chart-grid,.chart-gridline{stroke:rgba(62,105,91,.20)!important}
+.chart-axis{stroke:rgba(54,92,80,.38)!important}
+.chart-line{stroke:var(--v71-green)!important}
+.chart-dot{fill:#e5f0ec!important;stroke:var(--v71-green)!important}
+.chart-value,.chart-label,.chart-axis-text,.chart-title,.chart-axis-title{fill:#486b60!important}
+.MuiTableContainer-root{border-color:var(--v71-line)!important;background:rgba(229,240,236,.76)!important}
+.MuiTableHead-root .MuiTableCell-root{background:var(--v71-navy)!important;color:#fff!important}
+.MuiTableBody-root .MuiTableRow-root:nth-of-type(odd){background:rgba(234,243,239,.92)!important}
+.MuiTableBody-root .MuiTableRow-root:nth-of-type(even){background:rgba(214,231,224,.88)!important}
+.MuiTableBody-root .MuiTableCell-root{color:var(--v71-text)!important;border-color:rgba(71,111,98,.19)!important}
+
+/* Giriş ekranı */
+.login-page{
+  background:
+    radial-gradient(circle at 18% 18%,rgba(72,157,126,.33),transparent 32%),
+    radial-gradient(circle at 85% 12%,rgba(51,106,140,.25),transparent 30%),
+    linear-gradient(145deg,#cbded7,#b9d1c8)!important;
+}
+.login-card{
+  background:rgba(230,241,237,.89)!important;
+  border:1px solid rgba(255,255,255,.56)!important;
+  box-shadow:0 28px 70px rgba(25,65,53,.22)!important;
+}
+.login-card h4{color:var(--v71-navy)!important}
+.login-card .MuiTypography-colorSuccess{color:var(--v71-green)!important}
+
+/* Rapor önizlemeleri baskıda beyaz kalır */
+.print-report,.pdf-report-page,.report-page,.online-pdf-page{background:#fff!important;backdrop-filter:none!important}
+
+@media(max-width:899px){
+  body{background-attachment:scroll!important}
+  .drawer{background:rgba(215,232,225,.98)!important}
+}
+
+/* =========================================================
+   V7.1.1 — KONTRAST VE OKUNABİLİRLİK DÜZELTMESİ
+   ========================================================= */
+:root{
+  --v711-page:#c9d9d3;
+  --v711-surface:#edf5f2;
+  --v711-surface-2:#ddebe6;
+  --v711-text:#102e27;
+  --v711-muted:#405f56;
+  --v711-border:rgba(34,84,68,.30);
+  --v711-green:#0f7655;
+  --v711-green-dark:#09543d;
+  --v711-navy:#123b59;
+}
+
+/* Kartları zeminden net ayır */
+.glass,.MuiPaper-root.glass,.dashboard-stat,.module-card,.exam-card,.month-students-card,
+.chart-card,.ai-support-section,.exam-chart-card,.home-student-card,.home-topbar,
+.login-card,.student-home-card,.lgs-list-panel,.lgs-chart-card,.movement-card,
+.project-row,.comment-row,.announcement-row,.report-toolbar,.action-card,.metric-card,
+.homework-card,.student,.filter,.empty{
+  background:rgba(239,247,244,.96)!important;
+  border:1px solid var(--v711-border)!important;
+  box-shadow:0 14px 34px rgba(17,55,44,.17)!important;
+}
+
+/* Tüm temel metinler */
+.MuiTypography-root,.MuiTableCell-root,.MuiListItemText-primary,
+.MuiFormLabel-root,.MuiInputBase-input,.MuiSelect-select{
+  color:var(--v711-text)!important;
+}
+.MuiTypography-colorTextSecondary,.MuiFormHelperText-root,.MuiListItemText-secondary,
+small,.muted,.subtitle{
+  color:var(--v711-muted)!important;
+}
+
+/* Dolu butonlar */
+.MuiButton-contained,.MuiFab-root,.MuiToggleButton-root.Mui-selected{
+  background:linear-gradient(135deg,var(--v711-green),var(--v711-green-dark))!important;
+  color:#fff!important;
+  border:1px solid rgba(5,67,47,.35)!important;
+  text-shadow:0 1px 1px rgba(0,0,0,.12);
+}
+.MuiButton-contained .MuiSvgIcon-root,.MuiFab-root .MuiSvgIcon-root{color:#fff!important}
+.MuiButton-contained:hover{filter:brightness(.94)}
+
+/* Çerçeveli ve metin butonları */
+.MuiButton-outlined{
+  color:var(--v711-navy)!important;
+  border:1.5px solid rgba(18,59,89,.55)!important;
+  background:#e7f0ed!important;
+}
+.MuiButton-outlined:hover{background:#d8e8e2!important;border-color:var(--v711-navy)!important}
+.MuiButton-text{color:var(--v711-navy)!important}
+.MuiIconButton-root{
+  color:var(--v711-navy)!important;
+  background:rgba(222,236,231,.88)!important;
+  border:1px solid rgba(30,76,61,.16)!important;
+}
+.MuiIconButton-root:hover{background:#cfe3dc!important}
+
+/* Devre dışı kontroller */
+.Mui-disabled{
+  opacity:.62!important;
+  -webkit-text-fill-color:#5e716b!important;
+}
+.MuiButton-contained.Mui-disabled{background:#a9bbb5!important;color:#334a43!important}
+
+/* Chip ve rozetler */
+.MuiChip-root{
+  background:#d8e9e3!important;
+  color:#173e34!important;
+  border:1px solid rgba(32,91,71,.20)!important;
+  font-weight:800!important;
+}
+.MuiChip-colorSuccess{background:#ccebdc!important;color:#075d3f!important}
+.MuiChip-colorError{background:#f6d5d5!important;color:#9f2222!important}
+.MuiChip-colorWarning{background:#f8e5b8!important;color:#7a4a00!important}
+.MuiChip-colorPrimary{background:#d3e3ee!important;color:#123b59!important}
+
+/* Form alanları */
+.MuiTextField-root .MuiOutlinedInput-root,.MuiSelect-select,.MuiInputBase-root{
+  background:#e8f2ee!important;
+  color:var(--v711-text)!important;
+}
+.MuiOutlinedInput-notchedOutline{border-color:rgba(30,79,63,.40)!important}
+.MuiInputLabel-root{color:#365e52!important}
+.MuiInputLabel-root.Mui-focused{color:var(--v711-green)!important}
+
+/* Menü okunabilirliği */
+.drawer{background:linear-gradient(180deg,#dbe9e4,#cbded7)!important}
+.nav-item{color:#244d42!important}
+.nav-item .MuiListItemIcon-root{color:#2f6657!important}
+.nav-item:hover{background:#e9f2ef!important}
+.nav-item.Mui-selected,.nav-item.Mui-selected:hover{
+  background:linear-gradient(135deg,var(--v711-green),#238363)!important;
+  color:#fff!important;
+}
+.nav-item.Mui-selected .MuiTypography-root,.nav-item.Mui-selected .MuiListItemText-primary,
+.nav-item.Mui-selected .MuiListItemIcon-root{color:#fff!important}
+
+/* Kart içindeki küçük kutular */
+.home-student-card span,.lgs-student-metrics span,.homework-stats span,
+.lgs-ai-grid>div,.summary-card,.online-answer-lesson,.lgs-plan-day,.lgs-archive-item{
+  background:#dcebe6!important;
+  color:var(--v711-text)!important;
+  border:1px solid rgba(29,80,63,.14)!important;
+}
+.dashboard-icon,.module-icon,.exam-icon,.homework-card-icon{
+  background:#cce4db!important;
+  color:var(--v711-green-dark)!important;
+}
+
+/* Tablo kontrastı */
+.MuiTableContainer-root{background:#e7f1ed!important;border:1px solid var(--v711-border)!important}
+.MuiTableHead-root .MuiTableCell-root{background:var(--v711-navy)!important;color:#fff!important}
+.MuiTableBody-root .MuiTableRow-root:nth-of-type(odd){background:#edf5f2!important}
+.MuiTableBody-root .MuiTableRow-root:nth-of-type(even){background:#dceae5!important}
+.MuiTableBody-root .MuiTableRow-root:hover{background:#cfe3dc!important}
+
+/* Üst çubuk ve sınıf seçimleri */
+.topbar{background:rgba(217,233,227,.96)!important;border-bottom:1px solid var(--v711-border)!important}
+.home-class-chip{background:#dceae5!important;color:#244d42!important;border-color:rgba(35,82,67,.25)!important}
+.home-class-chip.active{background:var(--v711-green)!important;color:#fff!important}
+
+/* Uyarı/başarı yazılarında güvenli kontrast */
+.MuiAlert-standardSuccess{background:#d3eadf!important;color:#07583d!important}
+.MuiAlert-standardError{background:#f3d9d9!important;color:#8d1d1d!important}
+.MuiAlert-standardWarning{background:#f6e6bd!important;color:#684100!important}
+.MuiAlert-standardInfo{background:#d6e6ef!important;color:#173f5d!important}
+
+/* Giriş kartı */
+.login-card{background:rgba(238,247,243,.97)!important}
+.login-card .MuiButton-contained{color:#fff!important}
+
+@media(max-width:899px){
+  .drawer{background:#d7e7e1!important}
+}
+
+/* V7.2 öğrenci kartı düzeni ve numarayla hızlı bulma */
+.lgs-student-section-head{align-items:flex-start;gap:18px}
+.lgs-student-search{display:flex;align-items:flex-start;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.lgs-student-search .MuiTextField-root{width:210px}
+.lgs-student-search .MuiButton-root{min-height:40px;padding-inline:22px}
+.lgs-student-card{grid-template-columns:52px minmax(0,1fr);align-content:start;min-height:292px;padding:20px;gap:14px;border:1px solid rgba(19,62,51,.16)!important}
+.lgs-student-avatar{width:48px!important;height:48px!important}
+.lgs-student-title{min-width:0;align-self:center}
+.lgs-student-title strong{font-size:1.08rem;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#102f28}
+.lgs-student-title small{font-size:.86rem;color:#536f68}
+.lgs-student-metrics{grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-top:2px}
+.lgs-student-metrics span{display:flex;flex-direction:column;justify-content:space-between;min-height:104px;padding:12px 11px;border:1px solid rgba(22,112,82,.16);background:#e9f3ef;border-radius:15px}
+.lgs-student-metrics small{font-size:.76rem;line-height:1.3;color:#516c65;min-height:38px}
+.lgs-student-metrics b{font-size:1.03rem;line-height:1.25;color:#122f28;overflow-wrap:anywhere}
+.lgs-progress-line{margin-top:2px;color:#526d67;font-size:.86rem;align-items:center}
+.lgs-progress-line b{color:#173f35}
+.lgs-student-card .MuiLinearProgress-root{background:#b7c9d4}
+.lgs-student-card .MuiLinearProgress-bar{background:linear-gradient(90deg,#18865f,#43b98b)}
+@media(max-width:1250px){.lgs-student-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.lgs-student-card{min-height:350px}}
+@media(max-width:760px){.lgs-student-section-head{display:block}.lgs-student-search{justify-content:flex-start;margin-top:14px}.lgs-student-search .MuiTextField-root{width:min(100%,280px)}.lgs-student-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.lgs-student-card{min-height:auto}.lgs-student-metrics span{min-height:92px}}
+
+/* V7.3 tüm sınıflarda öğrenci arama ve öğrenci detay raporu */
+.student-detail-report{background:#fff;border-radius:24px;padding:24px;color:#17352d;box-shadow:0 18px 45px rgba(22,58,49,.12)}
+.student-detail-header{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding-bottom:18px;border-bottom:2px solid #d9e9e3}
+.student-detail-header img{width:82px;height:82px;object-fit:contain}
+.student-detail-meta{display:flex;flex-direction:column;text-align:right;gap:4px}
+.student-summary-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:18px 0}
+.student-summary-box{background:#eef7f3;border:1px solid #cfe3db;border-radius:16px;padding:13px;display:flex;flex-direction:column;gap:4px;min-height:92px}
+.student-summary-box span{color:#11825f}.student-summary-box small{color:#506b63}.student-summary-box b{font-size:22px}
+.student-report-section{background:#fbfdfc;border:1px solid #dce9e4;border-radius:18px;padding:16px;margin-top:14px;break-inside:avoid}
+.student-report-section table{width:100%;border-collapse:collapse;font-size:13px}.student-report-section th{background:#174c3d;color:#fff;text-align:left;padding:9px}.student-report-section td{padding:9px;border-bottom:1px solid #dce8e4}.student-report-section tbody tr:nth-child(even){background:#eff6f3}
+.grade-chip-list{display:flex;gap:8px;flex-wrap:wrap}.student-comment{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #e1ebe7}.student-comment b{min-width:90px}
+@media(max-width:900px){.student-summary-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.student-detail-header{grid-template-columns:1fr;text-align:center}.student-detail-header img{margin:auto}.student-detail-meta{text-align:center}.student-summary-grid{grid-template-columns:repeat(2,1fr)}.student-detail-report{padding:12px}.student-report-section{overflow-x:auto}}
+@media print{.student-detail-report{box-shadow:none;border-radius:0;padding:0}.student-report-section{break-inside:avoid}.student-detail-report *{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+/* V7.4 Student Portal */
+.student-portal{min-height:100vh;background:linear-gradient(145deg,#edf7f2,#e9f0f7);color:#17324d}.student-portal-main{margin-left:260px;min-height:100vh}.student-topbar{position:sticky!important;top:0;z-index:20;background:rgba(245,250,248,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(23,50,77,.1);gap:12px}.student-portal-content{padding:28px;max-width:1500px;margin:auto}.student-drawer{height:100%;display:flex;flex-direction:column;padding:18px;background:linear-gradient(180deg,#153a5b,#102c45);color:#fff}.student-drawer-brand{display:flex;align-items:center;gap:12px;padding:8px 4px 20px}.student-drawer-brand img{width:58px;height:58px;object-fit:contain;border-radius:14px;background:white}.student-drawer .MuiDivider-root{border-color:rgba(255,255,255,.14)}.student-drawer .MuiListItemButton-root{border-radius:14px;margin:4px 0;color:#dbe9f3}.student-drawer .MuiListItemIcon-root{color:inherit;min-width:42px}.student-drawer .Mui-selected{background:#28a86b!important;color:white}.student-drawer .MuiButton-root{color:white;justify-content:flex-start}.student-welcome{padding:30px;border-radius:26px!important;background:linear-gradient(120deg,#153a5b,#236d68);color:white;display:flex;align-items:center;justify-content:space-between;overflow:hidden}.student-welcome h3{line-height:1.08}.student-motivation{margin-top:16px!important;font-size:1.15rem!important;color:#dff8eb}.student-welcome-icon{font-size:110px!important;opacity:.18}.student-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.student-summary-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.student-summary-card{border-radius:20px!important;padding:20px;display:flex;align-items:center;gap:15px;border:1px solid rgba(23,50,77,.1);background:rgba(255,255,255,.85)!important}.student-summary-card>span{width:52px;height:52px;border-radius:16px;display:grid;place-items:center}.student-summary-card.gold>span{background:#fff2c7;color:#9b6800}.student-summary-card.blue>span{background:#dceeff;color:#17619a}.student-summary-card.green>span{background:#dff5e8;color:#087d42}.student-summary-card.purple>span{background:#ebe4ff;color:#6345aa}.student-large-grid,.student-info-grid,.student-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.student-action-card,.student-info-card,.student-chart-card,.student-ai-card,.student-table-card{padding:22px;border-radius:22px!important;background:rgba(255,255,255,.88)!important;border:1px solid rgba(23,50,77,.1)}.student-action-card{min-height:240px;display:flex;flex-direction:column;gap:12px}.student-action-card .MuiButton-root{margin-top:auto;align-self:flex-start}.student-card-title{display:flex;align-items:center;gap:12px}.student-card-title>.MuiSvgIcon-root{color:#178b58}.student-countdown{font-size:2rem!important;font-weight:950;color:#153a5b}.student-mini-row{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid #e2ece8}.student-mini-row:last-child{border:0}.student-comment{font-size:1.1rem!important;line-height:1.7!important;margin:15px 0!important}.student-ai-card{background:linear-gradient(120deg,rgba(232,249,239,.95),rgba(226,239,250,.95))!important}.student-page-title{display:flex;align-items:center;justify-content:space-between;gap:20px}.student-table-wrap{overflow:auto}.student-data-table{width:100%;border-collapse:collapse;min-width:760px}.student-data-table th{background:#173f5f;color:white;text-align:left;padding:14px}.student-data-table td{padding:14px;border-bottom:1px solid #dbe7e2}.student-data-table tbody tr:nth-child(even){background:#f0f7f4}.student-data-table td small{display:block;color:#5d7180;margin-top:4px}.student-svg-chart{width:100%;height:290px}.student-svg-chart line{stroke:#d8e5e0;stroke-width:1}.student-svg-chart polyline{fill:none;stroke:#178b58;stroke-width:4}.student-svg-chart circle{fill:#fff;stroke:#178b58;stroke-width:4}.student-svg-chart text{text-anchor:middle;fill:#17324d;font-weight:800;font-size:12px}.student-svg-chart text.axis{font-size:10px}.student-bars{height:260px;display:flex;align-items:flex-end;justify-content:space-around;gap:18px;padding-top:25px}.student-bar{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:70px}.student-bar i{display:block;width:54px;background:linear-gradient(#28a86b,#176f79);border-radius:12px 12px 3px 3px;margin:8px 0}.student-bar small{font-weight:850;text-align:center}.student-empty{min-height:130px;display:grid;place-items:center;align-content:center;color:#687d88;gap:8px}.student-report-print{position:fixed;left:-99999px;top:0;width:760px;background:white;color:#111;padding:30px}.student-report-letter{display:flex;align-items:center;gap:20px;border-bottom:3px solid #178b58;padding-bottom:15px}.student-report-letter img{width:100px}.student-report-letter h1{margin:0}.student-report-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0}.student-report-card{border:1px solid #ccd9d4;border-radius:10px;padding:15px}.student-report-card h3{margin-top:0}.student-report-print table{width:100%;border-collapse:collapse;margin-bottom:20px}.student-report-print th,.student-report-print td{border:1px solid #cbd5d1;padding:8px}.student-report-print th{background:#173f5f;color:white}
+@media(max-width:1100px){.student-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:899px){.student-portal-main{margin-left:0}.student-portal-content{padding:18px}.student-large-grid,.student-info-grid,.student-chart-grid{grid-template-columns:1fr}.student-welcome h3{font-size:2rem}.student-welcome-icon{display:none}}@media(max-width:600px){.student-summary-grid,.student-summary-grid.two{grid-template-columns:1fr}.student-topbar .MuiButton-startIcon+span{display:none}.student-welcome{padding:22px}.student-welcome h3{font-size:1.55rem}.student-page-title{align-items:flex-start;flex-direction:column}}
+
+/* V7.4.1 öğrenci paneli doğruluk ve okunabilirlik düzeltmeleri */
+.student-drawer .MuiListItemButton-root,
+.student-drawer .MuiListItemButton-root .MuiTypography-root,
+.student-drawer .MuiListItemButton-root .MuiListItemText-primary,
+.student-drawer .MuiListItemButton-root .MuiSvgIcon-root{
+  color:#eef8ff!important;
+  opacity:1!important;
+  font-weight:800!important;
+}
+.student-drawer .MuiListItemButton-root:hover{background:rgba(255,255,255,.10)!important}
+.student-drawer .MuiListItemButton-root.Mui-selected,
+.student-drawer .MuiListItemButton-root.Mui-selected:hover{background:#28b877!important;color:#071f18!important}
+.student-drawer .MuiListItemButton-root.Mui-selected .MuiTypography-root,
+.student-drawer .MuiListItemButton-root.Mui-selected .MuiListItemText-primary,
+.student-drawer .MuiListItemButton-root.Mui-selected .MuiSvgIcon-root{color:#071f18!important}
+.student-drawer-brand .MuiTypography-root{color:#fff!important}
+.student-drawer-brand .MuiTypography-caption{color:#d9ebf7!important}
+.student-bar b,.student-bar small{color:#17324d!important}
+.student-summary-card .MuiTypography-caption{color:#345263!important}
+
+/* V7.4.2 LGS öğrenci paneli */
+.lgs-student-shell{min-height:100vh;display:grid;grid-template-columns:270px 1fr;background:linear-gradient(135deg,#dcebe6,#e7eff5)}
+.lgs-student-sidebar{display:flex;flex-direction:column;padding:24px 18px;background:#123d5a;color:#fff;min-height:100vh;position:sticky;top:0}
+.lgs-student-sidebar .brand,.lgs-student-sidebar .MuiTypography-root,.lgs-student-sidebar .MuiListItemIcon-root,.lgs-student-sidebar .MuiButton-root{color:#fff!important}
+.lgs-student-sidebar .MuiListItemButton-root{border-radius:14px;margin:4px 0;color:#fff}.lgs-student-sidebar .MuiListItemButton-root.Mui-selected{background:#2fb276!important}
+.lgs-student-main{padding:30px;min-width:0}.lgs-welcome,.lgs-panel,.lgs-metric{border:1px solid rgba(30,75,69,.16);background:rgba(248,253,251,.86)!important;backdrop-filter:blur(14px);border-radius:24px!important}
+.lgs-welcome{padding:30px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}.lgs-welcome svg{color:#169267}
+.lgs-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px}.lgs-metric{padding:20px}.lgs-dashboard-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.lgs-panel{padding:24px;min-height:390px}.lgs-progress{height:14px;background:#d6e4df;border-radius:999px;overflow:hidden}.lgs-progress i{display:block;height:100%;background:linear-gradient(90deg,#168d65,#59c99b);border-radius:999px}
+@media(max-width:900px){.lgs-student-shell{grid-template-columns:1fr}.lgs-student-sidebar{position:relative;min-height:auto}.lgs-summary-grid{grid-template-columns:repeat(2,1fr)}.lgs-dashboard-grid{grid-template-columns:1fr}.lgs-student-main{padding:18px}}
+
+/* V7.5 LGS öğrenci paneli revizyonu */
+.lgs-summary-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+.lgs-medal-chip{margin-top:16px!important;background:#fff4c7!important;color:#6d4d00!important;font-weight:900!important}
+.lgs-axis-chart{width:100%;height:300px;margin-top:12px;overflow:visible}.lgs-axis-chart line{stroke:#50697a;stroke-width:1.3}.lgs-axis-chart .grid{stroke:#c8d6de;stroke-dasharray:4 5;stroke-width:1}.lgs-axis-chart .main-line{fill:none;stroke:#2563eb;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.lgs-axis-chart text{fill:#274359;font-size:12px;font-weight:700}.lgs-axis-chart .value{font-size:11px}.lgs-axis-chart .xlabel{font-size:10px}
+.lgs-comparison-chart{height:285px;display:flex;align-items:flex-end;justify-content:space-around;gap:18px;padding:25px 20px 8px}.lgs-comparison-item{height:100%;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px}.lgs-comparison-item b{font-size:14px}.lgs-comparison-item .bar{height:210px;width:64px;background:#e2e9ee;border-radius:14px 14px 4px 4px;display:flex;align-items:flex-end;overflow:hidden}.lgs-comparison-item .bar i{display:block;width:100%;border-radius:12px 12px 0 0}.lgs-comparison-item span{font-size:12px;font-weight:900;text-align:center}
+.lgs-ai-panel{margin-top:18px;padding:24px;border-radius:24px!important;border:1px solid #b9d9ca;background:linear-gradient(135deg,#f0fbf5,#edf5ff)!important;line-height:1.75}.lgs-ai-panel .MuiTypography-caption{display:block;margin-top:10px;color:#527080}
+.lgs-detailed-table{border-collapse:collapse;min-width:1900px;width:100%;font-size:12px}.lgs-detailed-table th,.lgs-detailed-table td{border:1px solid #c7d4dc;padding:8px 6px;text-align:center;vertical-align:middle}.lgs-detailed-table thead th{background:#173f5f;color:#fff;font-weight:950;position:sticky;top:0;z-index:2}.lgs-detailed-table tbody tr:nth-child(even){background:#edf7f2}.lgs-detailed-table tbody tr:hover{background:#dcefe6}.lgs-average-row td{background:#c7ead7!important;font-weight:950;border-top:3px solid #188b5c}.lgs-arrow{display:block;font-size:9px;font-weight:900;margin-top:3px}.lgs-arrow.up{color:#138447}.lgs-arrow.down{color:#d12b35}.lgs-arrow.neutral{color:#71808c}
+.lgs-student-plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.lgs-student-plan-day{padding:18px;border-radius:18px!important;border:1px solid #c8d9d2;background:rgba(255,255,255,.88)!important}.lgs-student-plan-item{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;border-top:1px solid #dde7e2;padding:10px 0;cursor:pointer}.lgs-student-plan-item span,.lgs-student-plan-item small{display:block}.lgs-student-plan-item small{color:#607584;margin-top:3px}.lgs-student-plan-item.done{opacity:.65}.lgs-student-plan-item.done span{text-decoration:line-through}
+@media(max-width:1200px){.lgs-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:700px){.lgs-summary-grid{grid-template-columns:1fr 1fr}.lgs-student-plan-grid{grid-template-columns:1fr}}
+
+/* V7.0.2 - LGS online deneme canlı takip */
+.lgs-live-dialog{border-radius:24px!important;background:#edf7f2!important;overflow:hidden}
+.lgs-live-title{display:flex!important;align-items:center;justify-content:space-between;padding:20px 28px!important;border-bottom:1px solid #cbded5;background:#f2faf6}
+.lgs-live-title h5{color:#163f34}.lgs-live-title p{color:#5d746d;margin-top:3px}.lgs-live-close{border:1px solid #c4dad1!important;background:#eaf5f0!important}
+.lgs-live-content{padding:20px 28px!important}.lgs-live-list{display:grid;gap:10px}
+.lgs-live-row{display:grid;grid-template-columns:62px minmax(230px,1.3fr) repeat(3,minmax(125px,.7fr)) minmax(260px,1fr);align-items:center;gap:14px;background:#fff;border:1px solid #d6e5df;border-radius:17px;padding:16px 18px;min-height:92px;box-shadow:0 5px 18px rgba(23,67,53,.05)}
+.lgs-live-number{width:48px;height:54px;display:grid;place-items:center;border-radius:11px;background:#f0f8f4;border:1px solid #d4e5de;font-size:22px;font-weight:950;color:#145b43}
+.lgs-live-student{min-width:0}.lgs-live-student>p:first-child{font-size:18px;color:#173b31;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lgs-live-state{display:flex;align-items:center;gap:9px;color:#46645a!important;font-size:14px!important;margin-top:5px!important}.lgs-live-state i{width:10px;height:10px;border-radius:50%;background:#a7b6b0}.lgs-live-row.active .lgs-live-state i{background:#16a36d}.lgs-live-row.finished .lgs-live-state i{background:#2775d8}
+.lgs-live-metric{display:flex;align-items:center;gap:10px;padding:0 12px;border-left:1px solid #dce8e3;color:#159365}.lgs-live-metric svg{font-size:22px}.lgs-live-metric span{display:flex;flex-direction:column;color:#465e57;font-size:13px}.lgs-live-metric b{color:#138a5e;font-size:16px;margin-top:4px;white-space:nowrap}.lgs-live-metric em{font-style:normal;color:#5c6c67;font-weight:500;margin-left:5px}.lgs-live-metric.score b{color:#216bd6}
+.lgs-live-waiting-space{grid-column:3/6}.lgs-live-reset{justify-self:end!important;min-height:47px!important;border-color:#a9c3b8!important;color:#187454!important;font-weight:900!important;border-radius:13px!important;text-transform:none!important}.lgs-live-reset.Mui-disabled{color:#98a7a1!important;border-color:#bdccc6!important;background:#f2f5f4!important}
+.lgs-live-actions{justify-content:space-between!important;padding:14px 28px 18px!important;border-top:1px solid #cbded5}.lgs-live-actions p{color:#4d685f;font-size:13px}.lgs-live-actions button{min-width:120px;font-weight:900}
+@media(max-width:1100px){.lgs-live-row{grid-template-columns:52px minmax(190px,1fr) repeat(3,minmax(110px,.7fr));}.lgs-live-reset{grid-column:2/-1;justify-self:stretch!important}.lgs-live-waiting-space{grid-column:3/-1}}
+@media(max-width:760px){.lgs-live-content{padding:12px!important}.lgs-live-row{grid-template-columns:45px 1fr;padding:13px;gap:10px}.lgs-live-number{width:42px;height:46px}.lgs-live-student>p:first-child{font-size:16px}.lgs-live-metric,.lgs-live-waiting-space{grid-column:1/-1;border-left:0;border-top:1px solid #e1ebe7;padding:9px 0 0}.lgs-live-reset{grid-column:1/-1}.lgs-live-actions{align-items:flex-start!important;flex-direction:column!important}.lgs-live-actions button{width:100%}}
+
+/* V7.0.3 - LGS öğrenci online deneme başlatma ekranı */
+.lgs-online-student-card{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:18px;padding:20px 22px;margin:18px 0;border:1px solid #bcd9cf;border-radius:24px;background:linear-gradient(135deg,rgba(239,251,246,.98),rgba(231,244,255,.92));box-shadow:0 13px 34px rgba(20,70,62,.08)}
+.lgs-online-student-icon{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:#d9f5e7;color:#0d8754}.lgs-online-student-icon svg{font-size:34px}.lgs-online-student-info{display:grid;gap:2px}.lgs-online-student-status{display:flex;align-items:center;gap:12px}.lgs-online-student-status .MuiButton-root{min-width:155px;min-height:46px;border-radius:14px;font-weight:950}
+.lgs-online-runner-title{display:flex;justify-content:space-between;align-items:center;gap:15px;background:#123f58;color:#fff}.lgs-online-runner-title .MuiChip-root{background:#e5f8ee;color:#0b7045;font-weight:900}.lgs-online-runner-content{background:#edf5f2;padding:20px!important}.lgs-online-question-section{padding:18px;margin-bottom:16px;border:1px solid #c8ddd6;border-radius:20px;background:#fff}.lgs-online-question-section>h6{margin-bottom:14px;color:#153b35}.lgs-online-question-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.lgs-online-question{display:grid;grid-template-columns:30px 1fr;align-items:center;gap:8px;padding:10px;border-radius:14px;background:#f2f7f5;border:1px solid #d8e6e1}.lgs-online-question>b{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:#dcebe6;color:#174c3e}.lgs-online-question .MuiButton-root{min-width:34px;padding:4px 7px;font-weight:900}.lgs-online-runner-actions{padding:14px 22px!important;justify-content:space-between;background:#fff}.lgs-online-runner-actions .MuiButton-root{min-height:46px;border-radius:14px;font-weight:950}
+@media(max-width:900px){.lgs-online-student-card{grid-template-columns:auto 1fr}.lgs-online-student-status{grid-column:1/-1;justify-content:space-between}.lgs-online-question-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.lgs-online-question-grid{grid-template-columns:1fr}.lgs-online-student-card{grid-template-columns:1fr}.lgs-online-student-icon{display:none}.lgs-online-student-status{align-items:stretch;flex-direction:column}.lgs-online-runner-title{align-items:flex-start;flex-direction:column}.lgs-online-question{grid-template-columns:28px 1fr}.lgs-online-question .MuiStack-root{flex-wrap:wrap}}
+
+/* V7.0.4 - 5/6/7/8 öğrenci online deneme ekranı */
+.student-online-question-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:4px}
+.student-online-question{display:grid;grid-template-columns:36px 1fr;align-items:center;gap:10px;padding:12px;border:1px solid #cbded7;border-radius:14px;background:#f4faf7}
+.student-online-question>b{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#dcefe7;color:#164b3d;font-size:16px}
+.student-online-question .MuiButton-root{min-width:38px;font-weight:900}
+@media(max-width:650px){.student-online-question-grid{grid-template-columns:1fr}.student-online-question .MuiStack-root{flex-wrap:wrap}}
+
+/* V7.0.5: Öğrenci online deneme cevaplama ekranı */
+.online-exam-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  display: flex;
+  flex-direction: column;
+  background: #eef5f2;
+  color: #132f3f;
+}
+.online-exam-header,
+.online-exam-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid #cbdad4;
+  box-shadow: 0 5px 20px rgba(20, 55, 70, .08);
+}
+.online-exam-footer {
+  border-top: 1px solid #cbdad4;
+  border-bottom: 0;
+}
+.online-exam-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px;
+}
+.online-exam-screen .student-online-question-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+.online-exam-screen .student-online-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #c9d9d3;
+  background: #fff;
+  border-radius: 12px;
+}
+.lgs-online-lesson-section {
+  margin-bottom: 26px;
+}
+.lgs-online-lesson-section > .MuiTypography-root {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #1c8b63;
+}
+@media (max-width: 700px) {
+  .online-exam-header, .online-exam-footer { padding: 12px; align-items: flex-start; flex-direction: column; }
+  .online-exam-body { padding: 12px; }
+  .online-exam-screen .student-online-question-grid { grid-template-columns: 1fr; }
+  .online-exam-footer .MuiButton-root { width: 100%; }
+}
+
+/* V7.0.8 online sınav: 1–10 sol, 11–20 sağ; her soru tek satır */
+.student-online-two-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;padding:4px}
+.student-online-column{display:flex;flex-direction:column;gap:10px}
+.student-online-two-columns .student-online-question{grid-template-columns:42px minmax(0,1fr);width:100%}
+.student-online-two-columns .student-online-question .MuiStack-root{justify-content:flex-end}
+@media(max-width:800px){.student-online-two-columns{grid-template-columns:1fr}.student-online-two-columns .student-online-question .MuiStack-root{justify-content:flex-start;flex-wrap:wrap}}
+
+
+/* V7.1.0 - Online sınav sayaç, LGS 4 satır sütun düzeni */
+.online-exam-header .MuiChip-colorWarning{background:#fff3cd!important;color:#7a5200!important;border:1px solid #f0cf74!important;font-weight:950!important;font-variant-numeric:tabular-nums}
+.lgs-online-four-row-grid{display:grid;grid-template-rows:repeat(4,minmax(58px,auto));grid-auto-flow:column;grid-auto-columns:minmax(260px,1fr);gap:10px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:thin}
+.lgs-online-four-row-grid .student-online-question{min-width:260px;width:100%}
+@media(max-width:700px){.lgs-online-four-row-grid{grid-template-rows:none;grid-auto-flow:row;grid-template-columns:1fr;overflow-x:visible}.lgs-online-four-row-grid .student-online-question{min-width:0}}
+
+/* V8 görsel düzenlemeleri */
+.exam-create-buttons .MuiButton-root{border-radius:11px!important;padding:8px 14px!important;font-weight:900!important;text-transform:none!important;box-shadow:0 7px 18px rgba(22,125,107,.22)!important}
+.dashboard-chart-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:stretch!important}
+.dashboard-chart-grid>*{min-width:0;height:100%}
+.chart-line{stroke:#7b3ff2!important;stroke-width:6!important;filter:drop-shadow(0 2px 3px rgba(123,63,242,.28))}
+.chart-dot{fill:#fff!important;stroke:#ff7a18!important;stroke-width:5!important}
+.chart-value{fill:#5a2abf!important;font-weight:950!important}
+.drawer{min-height:100vh!important;background:#3f4652!important;color:#fff!important;display:flex!important;flex-direction:column!important}
+.drawer .MuiTypography-root,.drawer .MuiListItemText-primary{color:#f7f8fa!important}
+.drawer .MuiListItemIcon-root{color:#dfe4ea!important}
+.drawer .nav-item.Mui-selected{background:#f57c00!important;color:#fff!important;box-shadow:0 8px 20px rgba(0,0,0,.18)!important}
+.drawer .nav-item:nth-of-type(2).Mui-selected{background:#e53935!important}
+.drawer .nav-item:nth-of-type(3).Mui-selected{background:#1976d2!important}
+.drawer .nav-item:nth-of-type(4).Mui-selected{background:#2e7d32!important}
+.drawer .nav-item:nth-of-type(5).Mui-selected{background:#7b1fa2!important}
+.glass,.MuiPaper-root.glass,.metric-card,.action-card,.chart-card,.exam-item,.lgs-list-panel,.lgs-archive-panel{background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(248,244,255,.92))!important;border:2px solid rgba(123,63,242,.22)!important;border-top:6px solid #ff8a20!important;box-shadow:0 12px 30px rgba(57,47,92,.12)!important}
+.metric-card:nth-child(2n),.action-card:nth-child(2n),.chart-card:nth-child(2n){border-color:rgba(25,118,210,.25)!important;border-top-color:#1976d2!important;background:linear-gradient(145deg,#fff,rgba(227,242,253,.75))!important}
+@media(max-width:900px){.dashboard-chart-grid{grid-template-columns:1fr!important}.exam-create-buttons{justify-content:flex-start!important;flex-wrap:wrap!important}}
+
+/* V8 final kararlılık ve yerleşim düzeltmeleri */
+.drawer{height:100vh!important;min-height:100vh!important;overflow:hidden!important;padding:8px 8px!important}
+.drawer .brand{padding:2px 6px 8px!important}
+.drawer .brand-logo-image{width:42px!important;height:42px!important}
+.drawer .MuiDivider-root{margin:4px 0!important}
+.drawer .MuiList-root{padding:2px 6px!important;overflow:hidden!important}
+.drawer .nav-item{min-height:36px!important;margin:1px 0!important;border-radius:10px!important}
+.drawer .nav-item .MuiListItemIcon-root{min-width:36px!important}
+.drawer .nav-item .MuiListItemText-primary{font-size:.82rem!important;line-height:1.1!important}
+.drawer>.MuiButton-root{margin:4px 6px!important;padding:7px!important;color:#fff!important;background:rgba(255,255,255,.08)!important}
+.chart-label{font-size:10px!important;font-weight:850!important;fill:#263238!important}
+.chart-wrap svg{overflow:visible}
+.ai-support-card{cursor:pointer}
+.answer-review-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.answer-review-item{display:grid;grid-template-columns:34px 1fr;gap:4px 10px;align-items:center;padding:10px;border:1px solid #d9dce5;border-radius:14px;background:#fff}.answer-review-item>b{grid-row:1/4;font-size:18px;text-align:center}.answer-review-item span{font-size:12px}.answer-review-item.correct{border-color:#34a853;background:#effbf2}.answer-review-item.wrong{border-color:#e55353;background:#fff1f1}.answer-review-item.blank{background:#f4f5f8}.answer-review-item .MuiChip-root{justify-self:start}.lgs-answer-review{display:grid;gap:18px}.answer-review-lesson{padding:14px;border-radius:18px;background:#f7f7fb}@media(max-width:800px){.answer-review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:480px){.answer-review-grid{grid-template-columns:1fr}}
+.answer-review-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.answer-review-item{display:grid;grid-template-columns:34px 1fr;gap:4px 10px;align-items:center;padding:10px;border:1px solid #d9dce5;border-radius:14px;background:#fff}.answer-review-item>b{grid-row:1/4;font-size:18px;text-align:center}.answer-review-item span{font-size:12px}.answer-review-item.correct{border-color:#34a853;background:#effbf2}.answer-review-item.wrong{border-color:#e55353;background:#fff1f1}.answer-review-item.blank{background:#f4f5f8}.answer-review-item .MuiChip-root{justify-self:start}.lgs-answer-review{display:grid;gap:18px}.answer-review-lesson{padding:14px;border-radius:18px;background:#f7f7fb}@media(max-width:800px){.answer-review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:480px){.answer-review-grid{grid-template-columns:1fr}}
+
+/* V8 canlı takip: tüm öğrenci bilgileri ve işlemler masaüstünde tek satır */
+.lgs-live-row{grid-template-columns:54px minmax(190px,1.15fr) repeat(3,minmax(108px,.62fr)) minmax(300px,auto)!important;gap:10px!important;min-height:78px!important;padding:11px 14px!important;overflow:hidden}
+.lgs-live-number{width:44px!important;height:48px!important;font-size:20px!important}
+.lgs-live-student>p:first-child{font-size:16px!important}
+.lgs-live-state{font-size:13px!important;margin-top:3px!important}
+.lgs-live-metric{padding:0 8px!important;gap:7px!important;min-width:0}
+.lgs-live-metric svg{font-size:19px!important;flex:0 0 auto}
+.lgs-live-metric span{font-size:12px!important;min-width:0}
+.lgs-live-metric b{font-size:15px!important;margin-top:2px!important}
+.lgs-live-row-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:300px;white-space:nowrap;overflow:hidden}
+.lgs-live-row-actions .MuiButton-root{min-height:42px!important;min-width:138px!important;padding:7px 12px!important;border-radius:12px!important;text-transform:none!important;font-weight:900!important;white-space:nowrap!important;font-size:13px!important}
+.lgs-live-answer{border-color:#8ba9ba!important;color:#153f5c!important}
+.lgs-live-reset{justify-self:auto!important;min-width:138px!important}
+.lgs-live-waiting-space{grid-column:3/6!important}
+
+.live-student-row{display:grid!important;grid-template-columns:minmax(260px,1fr) auto!important;gap:14px!important;align-items:center!important;min-height:70px;overflow:hidden}
+.live-student-main{min-width:0}.live-student-main p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-student-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;white-space:nowrap}
+.live-student-actions .MuiButton-root{white-space:nowrap;min-width:132px;text-transform:none;font-weight:850}
+
+@media(max-width:1180px){
+  .lgs-live-dialog{max-width:calc(100vw - 18px)!important;margin:9px!important}
+  .lgs-live-content{overflow-x:auto!important}
+  .lgs-live-list{min-width:1050px}
+  .lgs-live-row{grid-template-columns:50px 190px repeat(3,118px) 300px!important}
+  .lgs-live-reset{grid-column:auto!important;justify-self:auto!important}
+}
+@media(max-width:760px){
+  .lgs-live-list{min-width:980px}
+  .lgs-live-row{grid-template-columns:46px 180px repeat(3,110px) 290px!important;min-height:72px!important}
+  .lgs-live-metric,.lgs-live-waiting-space{grid-column:auto!important;border-top:0!important;border-left:1px solid #e1ebe7!important;padding:0 6px!important}
+  .lgs-live-row-actions{grid-column:auto!important}
+  .live-student-row{grid-template-columns:minmax(210px,1fr) auto!important;align-items:center!important}
+}
+
+/* V8 Ödev kontrol: tek kaydırma ve durum renkleri */
+.homework-control-dialog .MuiDialog-paper { display:flex; flex-direction:column; }
+.homework-control-dialog .MuiDialogTitle-root,
+.homework-control-dialog .MuiDialogActions-root { flex:0 0 auto; }
+.homework-status-buttons .MuiButton-root:nth-child(1)[aria-pressed="true"] { background:#07883f !important; border-color:#07883f !important; color:#fff !important; }
+.homework-status-buttons .MuiButton-root:nth-child(2)[aria-pressed="true"] { background:#d51f26 !important; border-color:#d51f26 !important; color:#fff !important; }
+.homework-status-buttons .MuiButton-root:nth-child(3)[aria-pressed="true"] { background:#ef6c00 !important; border-color:#ef6c00 !important; color:#fff !important; }
+@media(max-width:720px){
+  .homework-control-dialog .MuiDialog-paper { height:92vh !important; max-height:92vh !important; margin:12px; }
+}
+
+/* V8 Mobile + Tablet responsive layer */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html, body, #root { width: 100%; min-height: 100%; }
+body { overflow-x: hidden; overscroll-behavior-y: none; }
+img, svg, canvas { max-width: 100%; }
+button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-action: manipulation; }
+.MuiButton-root, .MuiIconButton-root { min-height: 44px; }
+.MuiDialog-paper, .MuiModal-root .MuiPaper-root { max-width: calc(100vw - 24px); }
+.MuiDialogContent-root { -webkit-overflow-scrolling: touch; }
+.table-wrap, .student-table-wrap, .report-table-wrap, .school-exam-table-wrap,
+.lgs-table-wrap, .lgs-excel-table-wrap, .excel-preview-table-wrap { -webkit-overflow-scrolling: touch; }
+
+@media (max-width: 899px) {
+  .main, .main-home { margin-left: 0 !important; width: 100% !important; padding: 12px !important; }
+  .topbar { margin-left: 0 !important; width: 100% !important; }
+  .page-head { align-items: stretch; margin-bottom: 12px; }
+  .page-head > div, .page-head > .MuiStack-root { width: 100%; }
+  .page-head .MuiButton-root { flex: 1 1 auto; }
+  .glass { border-radius: 18px; }
+  .filter { padding: 12px; }
+  .home-topbar { border-radius: 18px; padding: 10px; flex-wrap: wrap; }
+  .home-search-area { width: 100%; justify-content: stretch !important; }
+  .home-search { width: 100% !important; min-width: 0 !important; }
+  .home-search-area .MuiButton-root { flex: 1; }
+  .home-content { padding: 12px; }
+  .dashboard-stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .dashboard-modules { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .report-card-grid { grid-template-columns: 1fr 1fr; }
+  .question-grid { grid-template-columns: repeat(5, 1fr); }
+  .student-portal-main { margin-left: 0 !important; }
+  .student-portal-content { padding: 14px !important; }
+  .student-welcome { padding: 20px; align-items: flex-start; }
+  .student-welcome-icon { font-size: 70px !important; }
+  .student-summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .student-large-grid, .student-info-grid, .student-chart-grid { grid-template-columns: 1fr; }
+  .student-action-card, .student-info-card, .student-chart-card, .student-ai-card, .student-table-card { padding: 16px; }
+  .lgs-live-list { min-width: 0 !important; }
+  .lgs-live-row { min-width: 0 !important; grid-template-columns: 1fr !important; gap: 10px !important; }
+  .lgs-live-row-actions { min-width: 0 !important; justify-content: stretch !important; flex-wrap: wrap; }
+  .lgs-live-row-actions .MuiButton-root { flex: 1 1 180px; min-width: 0 !important; }
+  .lgs-online-four-row-grid .student-online-question { min-width: 0 !important; }
+  .homework-status-buttons .MuiButton-root { min-width: 0; flex: 1; }
+}
+
+@media (max-width: 599px) {
+  body { font-size: 15px; }
+  .main, .main-home { padding: 8px !important; }
+  .MuiToolbar-root { min-height: 56px !important; padding-left: 8px !important; padding-right: 8px !important; }
+  .page-head h1, .page-head .MuiTypography-h4 { font-size: 1.7rem !important; }
+  .page-head h2, .page-head .MuiTypography-h5 { font-size: 1.4rem !important; }
+  .page-head .MuiStack-root { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px !important; }
+  .page-head .MuiStack-root .MuiButton-root:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .filter, .two, .grid { grid-template-columns: 1fr !important; }
+  .dashboard-stats, .dashboard-modules, .report-card-grid { grid-template-columns: 1fr !important; }
+  .dashboard-stat { padding: 14px; }
+  .dashboard-stat strong { font-size: 1.5rem; }
+  .module-card { min-height: 94px; }
+  .home-topbar { gap: 8px; }
+  .home-topbar > .MuiStack-root { width: 100%; }
+  .home-class-tabs { margin-left: -8px; margin-right: -8px; padding-left: 8px; padding-right: 8px; }
+  .home-content { padding: 8px; }
+  .student { align-items: flex-start; flex-wrap: wrap; }
+  .student-summary-grid, .student-summary-grid.two { grid-template-columns: 1fr !important; }
+  .student-summary-card { padding: 14px; }
+  .student-welcome { flex-direction: column; }
+  .student-welcome-icon { display: none !important; }
+  .student-page-title { align-items: flex-start; flex-direction: column; }
+  .student-page-title .MuiButton-root { width: 100%; }
+  .student-bars { gap: 8px; overflow-x: auto; justify-content: flex-start; }
+  .student-bar { min-width: 62px; }
+  .student-data-table { min-width: 680px; }
+  .question-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .report-toolbar .MuiFormControl-root, .report-toolbar .MuiButton-root { width: 100%; min-width: 0; }
+  .analysis-pair { grid-template-columns: 1fr; }
+  .plus-card-actions { grid-template-columns: 1fr !important; }
+  .school-exam-stats { grid-template-columns: 1fr !important; }
+  .MuiDialog-paper { width: calc(100vw - 12px) !important; max-height: calc(100dvh - 12px) !important; margin: 6px !important; border-radius: 16px !important; }
+  .MuiDialogTitle-root { padding: 14px 14px 8px !important; }
+  .MuiDialogContent-root { padding: 10px 14px !important; }
+  .MuiDialogActions-root { padding: 10px 14px calc(10px + env(safe-area-inset-bottom)) !important; flex-wrap: wrap; }
+  .MuiDialogActions-root .MuiButton-root { flex: 1 1 140px; }
+  .MuiSnackbar-root { left: 8px !important; right: 8px !important; bottom: calc(8px + env(safe-area-inset-bottom)) !important; }
+  .ai-fab { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); width: 50px; height: 50px; }
+}
+
+@media (max-width: 380px) {
+  .page-head .MuiStack-root { grid-template-columns: 1fr !important; }
+  .dashboard-stats { grid-template-columns: 1fr !important; }
+  .home-search-area .MuiButton-root { flex-basis: 100%; }
+  .question-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .MuiDialog-paper { max-height: calc(100dvh - 8px) !important; }
+  .student-welcome { padding: 14px; }
+  .home-topbar { min-height: 58px; }
+}
+
+@supports (padding: max(0px)) {
+  .main, .main-home, .student-portal-content {
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
