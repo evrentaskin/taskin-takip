@@ -773,7 +773,7 @@ export default function StudentsPage() {
       }
 
       purgeClassLocalData(selectedClass, studentIds)
-      window.dispatchEvent(new Event('taskin-exams-updated'))
+      window.dispatchEvent(new window.Event('taskin-exams-updated'))
       window.dispatchEvent(new Event('taskin-lgs-online-updated'))
       setStudents([])
       setCredentialsVersion(value => value + 1)

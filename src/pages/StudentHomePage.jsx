@@ -213,7 +213,7 @@ export default function StudentHomePage({ session, profile }) {
     setExams(next)
     try {
       localStorage.setItem(KEYS.exams, JSON.stringify(next))
-      window.dispatchEvent(new Event('taskin-exams-updated'))
+      window.dispatchEvent(new window.Event('taskin-exams-updated'))
       return true
     } catch (storageError) {
       console.error('Online deneme kaydı yerel depolamaya yazılamadı:', storageError)
