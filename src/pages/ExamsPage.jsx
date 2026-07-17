@@ -53,7 +53,7 @@ export default function ExamsPage() {
   useEffect(() => { loadClasses() }, [])
   useEffect(() => { if (selectedClass) loadStudents(selectedClass) }, [selectedClass])
   useEffect(() => {
-    if (examsCloudReady) window.dispatchEvent(new Event('taskin-exams-updated'))
+    if (examsCloudReady) window.dispatchEvent(new window.Event('taskin-exams-updated'))
   }, [exams, examsCloudReady])
 
   async function loadClasses() {
