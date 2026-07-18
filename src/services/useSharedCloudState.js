@@ -25,7 +25,12 @@ export function useSharedCloudState({ stateKey, localKey, fallback = [], readOnl
   useEffect(() => { valueRef.current = value }, [value])
 
   function setCloudValue(nextValue) {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
     skipNextSaveRef.current = true
+    valueRef.current = nextValue
     setValue(nextValue)
   }
 
