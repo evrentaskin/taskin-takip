@@ -10,6 +10,8 @@ import {
   Logout, Settings, TrendingDown, TrendingUp, OnlinePrediction, PlayArrow, Save
 } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
+import { readSharedState } from '../services/sharedState'
+import { saveMyLgsOnlineAttempt } from '../services/studentOnlineExam'
 
 const lessons = [
   { key:'turkish', name:'Türkçe', count:20 }, { key:'history', name:'İnkılap', count:10 },
@@ -51,13 +53,23 @@ export default function LgsStudentHomePage({ session, student, classInfo }) {
   const [onlineOpen,setOnlineOpen]=useState(false)
   const [activeOnline,setActiveOnline]=useState(null)
   const [onlineAnswers,setOnlineAnswers]=useState({})
+  const [onlineSaving,setOnlineSaving]=useState(false)
   const [onlineNow,setOnlineNow]=useState(new Date())
   const [bookletSelectOpen,setBookletSelectOpen]=useState(false)
   const [selectedBooklet,setSelectedBooklet]=useState('A')
 
   useEffect(()=>{ load() },[student.id])
   useEffect(()=>{
-    const refresh=()=>setOnlineExams(loadOnlineExams())
+    const refresh=async()=>{
+      try {
+        const result=await readSharedState('lgs-online-exams-v1',loadOnlineExams())
+        const next=result.payload||[]
+        setOnlineExams(next)
+        try{localStorage.setItem(ONLINE_STORAGE_KEY,JSON.stringify(next))}catch{}
+      } catch {
+        setOnlineExams(loadOnlineExams())
+      }
+    }
     const clockTick=window.setInterval(()=>setOnlineNow(new Date()),1000)
     const dataTick=window.setInterval(refresh,30000)
     window.addEventListener('storage',refresh)
@@ -154,17 +166,17 @@ export default function LgsStudentHomePage({ session, student, classInfo }) {
 
   function saveOnlineList(next){
     setOnlineExams(next)
-    try {
-      localStorage.setItem(ONLINE_STORAGE_KEY,JSON.stringify(next))
-      window.dispatchEvent(new Event('taskin-lgs-online-updated'))
-      return true
-    } catch (storageError) {
-      console.error('LGS online deneme kaydı yerel depolamaya yazılamadı:', storageError)
-      return false
-    }
+    try{localStorage.setItem(ONLINE_STORAGE_KEY,JSON.stringify(next))}catch{}
+    window.dispatchEvent(new Event('taskin-lgs-online-updated'))
   }
 
-  function beginOnlineExam(bookletGroup='A'){
+  async function persistLgsParticipant(examId, participant){
+    const payload=await saveMyLgsOnlineAttempt(examId,participant)
+    saveOnlineList(payload)
+    return payload
+  }
+
+  async function beginOnlineExam(bookletGroup='A'){
     if(!availableOnline)return
     const windowInfo=onlineWindow(availableOnline)
     if(onlineNow<windowInfo.start)return setError('Denemenin başlangıç saati henüz gelmedi.')
@@ -185,9 +197,17 @@ export default function LgsStudentHomePage({ session, student, classInfo }) {
     setError('')
     sessionStorage.setItem('taskin-active-lgs-online-exam-id', String(selectedExam.id))
     saveOnlineList(next)
+    try{
+      const payload=await persistLgsParticipant(selectedExam.id,participant)
+      const cloudExam=payload.find(e=>String(e.id)===String(selectedExam.id))
+      if(cloudExam)setActiveOnline(cloudExam)
+    }catch(saveError){
+      setError(`Deneme başlatılamadı: ${saveError.message||'Bulut kaydı başarısız.'}`)
+      setOnlineOpen(false);setActiveOnline(null)
+    }
   }
 
-  function chooseOnlineAnswer(key,value){
+  async function chooseOnlineAnswer(key,value){
     const answers={...onlineAnswers,[key]:value}
     setOnlineAnswers(answers)
     if(!activeOnline)return
@@ -197,9 +217,15 @@ export default function LgsStudentHomePage({ session, student, classInfo }) {
     const updated={...activeOnline,participants}
     setActiveOnline(updated)
     saveOnlineList(onlineExams.map(e=>e.id===updated.id?updated:e))
+    try{
+      const payload=await persistLgsParticipant(updated.id,participant)
+      const cloudExam=payload.find(e=>String(e.id)===String(updated.id))
+      if(cloudExam)setActiveOnline(cloudExam)
+      setError('')
+    }catch(saveError){setError(`Cevap buluta kaydedilemedi: ${saveError.message||'Bağlantıyı kontrol et.'}`)}
   }
 
-  function finishOnlineExam(autoFinish=false){
+  async function finishOnlineExam(autoFinish=false){
     if(!activeOnline)return
     if(!autoFinish&&!window.confirm('Cevaplarını kesin olarak kaydetmek istediğine emin misin? Kaydettikten sonra tekrar değiştiremezsin.'))return
     const existingParticipant=participantFor(activeOnline,student)||{}
@@ -232,8 +258,12 @@ export default function LgsStudentHomePage({ session, student, classInfo }) {
     const completed=participants.filter(p=>p.finishedAt||String(p.status||'').includes('Tamam')).sort((a,b)=>Number(b.score||0)-Number(a.score||0))
     const ranked=participants.map(p=>{const idx=completed.findIndex(x=>String(x.studentId)===String(p.studentId));return idx>=0?{...p,rank:idx+1}:p})
     const updated={...activeOnline,participants:ranked}
-    saveOnlineList(onlineExams.map(e=>e.id===updated.id?updated:e))
-    setOnlineOpen(false);setActiveOnline(null);setOnlineAnswers({});setMessage(autoFinish?'Süre doldu. Mevcut cevapların otomatik kaydedildi.':'Cevapların kaydedildi. Sonucun deneme süresi bittikten sonra LGS Denemelerim ekranında görünecek.')
+    setOnlineSaving(true);setError('')
+    try{
+      await persistLgsParticipant(updated.id,participant)
+      setOnlineOpen(false);setActiveOnline(null);setOnlineAnswers({});setMessage(autoFinish?'Süre doldu. Mevcut cevapların buluta kaydedildi.':'Cevapların buluta kaydedildi. Sonucun deneme süresi bittikten sonra LGS Denemelerim ekranında görünecek.')
+    }catch(saveError){setError(`Cevaplar kaydedilemedi: ${saveError.message||'İnternet bağlantısını kontrol edip tekrar dene.'}`)}
+    finally{setOnlineSaving(false)}
   }
 
   useEffect(()=>{
@@ -259,9 +289,9 @@ export default function LgsStudentHomePage({ session, student, classInfo }) {
       <Stack direction={{xs:'column',sm:'row'}} spacing={1} alignItems={{sm:'center'}}><Chip color="warning" label={`Kalan Süre: ${remainingText(onlineWindow(activeOnline).end, onlineNow)}`} /><Chip label={`İşaretlenen: ${Object.keys(onlineAnswers).length} / 90`} /><Chip color="primary" label={`${selectedBooklet} Grubu`} /></Stack>
     </Box>
     <Box className="online-exam-body">
-      {lessons.map(lesson=><Box className="lgs-online-lesson-section" key={lesson.key}><Typography variant="h6" fontWeight={950}>{lesson.name}</Typography><Box className="lgs-online-four-row-grid">{Array.from({length:lesson.count},(_,index)=>index+1).map(question=>{const key=`${lesson.key}-${question}`;return <Paper className="student-online-question" elevation={0} key={key}><b>{question}</b><Stack direction="row" spacing={.7}>{['A','B','C','D'].map(answer=><Button key={answer} size="small" variant={onlineAnswers[key]===answer?'contained':'outlined'} onClick={()=>chooseOnlineAnswer(key,answer)}>{answer}</Button>)}</Stack></Paper>})}</Box></Box>)}
+      {lessons.map(lesson=><Box className="lgs-online-lesson-section" key={lesson.key}><Typography variant="h6" fontWeight={950}>{lesson.name}</Typography><Box className="lgs-online-four-row-grid">{Array.from({length:lesson.count},(_,index)=>index+1).map(question=>{const key=`${lesson.key}-${question}`;return <Paper className="student-online-question" elevation={0} key={key}><b>{question}</b><Stack direction="row" spacing={.7}>{['A','B','C','D'].map(answer=><Button key={answer} size="small" variant={onlineAnswers[key]===answer?'contained':'outlined'} disabled={onlineSaving} onClick={()=>chooseOnlineAnswer(key,answer)}>{answer}</Button>)}</Stack></Paper>})}</Box></Box>)}
     </Box>
-    <Box className="online-exam-footer"><Typography color="text.secondary">İptal edip çıkarsan cevapların korunur ve süre içinde tekrar devam edebilirsin.</Typography><Stack direction={{xs:'column',sm:'row'}} spacing={1}><Button variant="outlined" startIcon={<Close/>} onClick={cancelOnlineExam}>İptal Et ve Çık</Button><Button variant="contained" color="success" size="large" startIcon={<CheckCircle/>} onClick={()=>finishOnlineExam(false)}>Cevapları Kaydet</Button></Stack></Box>
+    <Box className="online-exam-footer"><Typography color="text.secondary">İptal edip çıkarsan cevapların korunur ve süre içinde tekrar devam edebilirsin.</Typography><Stack direction={{xs:'column',sm:'row'}} spacing={1}><Button variant="outlined" startIcon={<Close/>} onClick={cancelOnlineExam}>İptal Et ve Çık</Button><Button variant="contained" color="success" size="large" startIcon={<CheckCircle/>} disabled={onlineSaving} onClick={()=>finishOnlineExam(false)}>Cevapları Kaydet</Button></Stack></Box>
   </Box>
   const menu=[['Ana Sayfa',Dashboard],['LGS Denemelerim',Assessment],['Çalışma Programım',CalendarMonth]]
   return <Box className="lgs-student-shell">

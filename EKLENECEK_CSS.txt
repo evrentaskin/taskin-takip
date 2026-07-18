@@ -1,0 +1,11 @@
+/* Avatar görselinin çerçevede küçük kalmasını önler. */
+.student-avatar img,
+.student-card-avatar img,
+.avatar-image,
+.MuiAvatar-root img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 38% !important;
+  transform: scale(1.08);
+}

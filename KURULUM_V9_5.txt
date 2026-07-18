@@ -1,0 +1,14 @@
+V9.5 ONLINE DENEME KALICI BULUT KAYDI
+
+1) Önce Supabase Dashboard > SQL Editor bölümünü açın.
+2) supabase/migrations/20260718_v9_5_student_online_attempt_rpc.sql dosyasının tamamını çalıştırın.
+3) ZIP içindeki src klasörünü projenin src klasörü üzerine kopyalayın.
+4) Proje klasöründe CMD açın:
+   npm run build
+   npm run dev
+
+ÖNEMLİ:
+- LGS online denemeleri için öğretmen hesabıyla LGS sayfasını bir kez açın. Mevcut yerel denemeler otomatik olarak lgs-online-exams-v1 bulut kaydına taşınır.
+- Öğrencide kayıt tamamlanmadan sınav ekranı kapanmaz.
+- Kayıt hatasında kırmızı hata mesajı görünür ve öğrenci tekrar Kaydet'e basabilir.
+- Öğretmen ekranının görünümü ve PDF düzeni değiştirilmemiştir.

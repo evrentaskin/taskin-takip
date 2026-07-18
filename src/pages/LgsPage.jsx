@@ -15,6 +15,7 @@ import {
 } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
 import { readSharedState, writeSharedState } from '../services/sharedState'
+import { useSharedCloudState } from '../services/useSharedCloudState'
 
 const safeText = value => value == null ? '' : String(value)
 const asNumber = value => {
@@ -211,9 +212,11 @@ export default function LgsPage() {
   const [liveOpen, setLiveOpen] = useState(false)
   const [liveExam, setLiveExam] = useState(null)
   const [liveTick, setLiveTick] = useState(Date.now())
-  const [onlineExams, setOnlineExams] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('lgsOnlineExams')) || initialOnlineExams }
-    catch { return initialOnlineExams }
+  const [onlineExams, setOnlineExams] = useSharedCloudState({
+    stateKey: 'lgs-online-exams-v1',
+    localKey: 'lgsOnlineExams',
+    fallback: initialOnlineExams,
+    onError: error => setError(error?.message || 'LGS online denemeleri buluta kaydedilemedi.')
   })
   const [targets, setTargets] = useState(() => {
     try { return JSON.parse(localStorage.getItem('lgsTargets')) || {} } catch { return {} }

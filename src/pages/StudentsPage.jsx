@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as XLSX from 'xlsx'
 import {
   Alert, Avatar, Box, Button, Checkbox, Chip, CircularProgress, Dialog, DialogActions,
-  DialogContent, DialogTitle, IconButton, LinearProgress, MenuItem, Paper,
+  DialogContent, DialogTitle, FormControlLabel, IconButton, LinearProgress, MenuItem, Paper,
   Snackbar, Stack, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, TextField, Typography
 } from '@mui/material'
@@ -11,6 +11,8 @@ import {
 } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
 import { isValidUsername, toAuthSafeUsername, USERNAME_HELP } from '../utils/username'
+import StudentProfileDialog from '../components/StudentProfileDialog'
+import { AVATARS, avatarSrc } from '../utils/avatars'
 
 const emptyStudent = {
   id: null,
@@ -20,7 +22,8 @@ const emptyStudent = {
   first_name: '',
   last_name: '',
   username: '',
-  password: ''
+  password: '',
+  avatar_id: 1
 }
 
 const CREDENTIALS_KEY = 'taskin-takip-student-credentials-v1'
@@ -67,6 +70,22 @@ const headerMap = {
   password: 'password'
 }
 
+const REPORT_FIELDS = [
+  ['number','Numara'],['mother','Anne adı'],['father','Baba adı'],['motherPhone','Anne telefonu'],['fatherPhone','Baba telefonu'],
+  ['motherAlive','Anne sağ'],['fatherAlive','Baba sağ'],['motherWorks','Anne çalışıyor'],['fatherWorks','Baba çalışıyor'],['livesWith','Kiminle yaşıyor'],
+  ['siblings','Kardeş sayısı'],['studyRoom','Çalışma odası var'],['internet','İnternet var'],['computer','Bilgisayar var'],['tablet','Tablet var'],
+  ['financial','Maddi durum'],['resourceSupport','Kaynak desteği gerekiyor'],['service','Servis kullanıyor'],['scholarship','Burslu'],
+  ['chronic','Kronik hastalık'],['allergy','Alerji'],['eye','Göz problemi'],['hearing','İşitme problemi'],['privateLesson','Özel ders'],
+  ['study','Etüt'],['ram','RAM'],['guidance','Rehberlik'],['teacherNotes','Öğretmen notları']
+]
+const REPORT_PROFILE_KEYS = {
+  mother:'default-0', father:'default-1', motherPhone:'default-2', fatherPhone:'default-3', motherAlive:'default-4', fatherAlive:'default-5',
+  motherWorks:'default-6', fatherWorks:'default-7', livesWith:'default-8', siblings:'default-9', studyRoom:'default-10', internet:'default-11',
+  computer:'default-12', tablet:'default-13', financial:'default-14', resourceSupport:'default-15', service:'default-16', scholarship:'default-17',
+  chronic:'default-18', allergy:'default-19', eye:'default-20', hearing:'default-21', privateLesson:'default-22', study:'default-23', ram:'default-24',
+  guidance:'default-25', teacherNotes:'default-26'
+}
+
 export default function StudentsPage() {
   const [classes, setClasses] = useState([])
   const [activeClasses, setActiveClasses] = useState([])
@@ -75,7 +94,6 @@ export default function StudentsPage() {
   const [search, setSearch] = useState('')
   const [form, setForm] = useState(emptyStudent)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [passwordDialog, setPasswordDialog] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [profileStudent, setProfileStudent] = useState(null)
   const [studentProfile, setStudentProfile] = useState({ gender:'', wears_glasses:false, height_group:'normal', talkative:false, hardworking:false, needs_support:false, front_row:false, notes:'', tags:[] })
@@ -99,6 +117,10 @@ export default function StudentsPage() {
   const [inactiveStudents, setInactiveStudents] = useState([])
   const [inactiveStudentsLoading, setInactiveStudentsLoading] = useState(false)
   const [inactiveStudentsOpen, setInactiveStudentsOpen] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportType, setReportType] = useState('pdf')
+  const [reportOrientation, setReportOrientation] = useState('portrait')
+  const [reportFields, setReportFields] = useState(REPORT_FIELDS.map(x => x[0]))
 
   const [importOpen, setImportOpen] = useState(false)
   const [importRows, setImportRows] = useState([])
@@ -291,7 +313,8 @@ export default function StudentsPage() {
       first_name: safeText(s.first_name),
       last_name: safeText(s.last_name),
       username: safeText(s.username),
-      password: ''
+      password: '',
+      avatar_id: Number(s.avatar_id || 1)
     })
     setDialogOpen(true)
   }
@@ -320,13 +343,9 @@ export default function StudentsPage() {
     setProfileTags(data || [])
   }
 
-  async function openProfile(student) {
+  function openProfile(student) {
     setProfileStudent(student)
     setProfileOpen(true)
-    setTagInput('')
-    const { data, error } = await supabase.from('student_profiles').select('*').eq('student_id', student.id).maybeSingle()
-    if (error) { setError(error.message); return }
-    setStudentProfile({ gender:'', wears_glasses:false, height_group:'normal', talkative:false, hardworking:false, needs_support:false, front_row:false, notes:'', tags:[], ...(data || {}) })
   }
 
   async function saveProfile() {
@@ -426,7 +445,8 @@ export default function StudentsPage() {
         student_number: Number(form.student_number),
         first_name: safeText(form.first_name).trim(),
         last_name: safeText(form.last_name).trim(),
-        username: toAuthSafeUsername(form.username)
+        username: toAuthSafeUsername(form.username),
+        avatar_id: Number(form.avatar_id || 1)
       }
 
       if (!form.id) {
@@ -956,6 +976,63 @@ export default function StudentsPage() {
     }
   }
 
+  function openReport(type) {
+    setReportType(type)
+    setReportOpen(true)
+  }
+
+  async function buildRecognitionRows() {
+    const ids = students.map(x => x.id)
+    const [{ data: profiles, error: profileError }, { data: customCards }] = await Promise.all([
+      supabase.from('student_profiles').select('student_id,recognition_data,notes').in('student_id', ids),
+      supabase.from('student_information_cards').select('id,label').eq('group_name','recognition').order('sort_order')
+    ])
+    if (profileError) throw profileError
+    const byStudent = new Map((profiles || []).map(x => [x.student_id, x]))
+    const selected = new Set(reportFields)
+    const rows = [...students].sort((a,b)=>Number(a.student_number)-Number(b.student_number)).map(student => {
+      const profile = byStudent.get(student.id) || { recognition_data:{} }
+      const values = profile.recognition_data || {}
+      const row = { 'Ad Soyad': `${student.first_name} ${student.last_name}` }
+      for (const [key,label] of REPORT_FIELDS) {
+        if (!selected.has(key)) continue
+        const raw = key === 'number' ? student.student_number : values[REPORT_PROFILE_KEYS[key]]
+        row[label] = typeof raw === 'boolean' ? (raw ? 'Evet' : 'Hayır') : (raw ?? '')
+      }
+      for (const card of customCards || []) {
+        const raw = values[card.id]
+        if (raw !== undefined && raw !== '') row[card.label] = typeof raw === 'boolean' ? (raw ? 'Evet' : 'Hayır') : raw
+      }
+      return row
+    })
+    return rows
+  }
+
+  async function createRecognitionReport() {
+    if (!reportFields.length) return setError('En az bir bilgi alanı seçmelisiniz.')
+    try {
+      const rows = await buildRecognitionRows()
+      if (reportType === 'excel') {
+        const worksheet = XLSX.utils.json_to_sheet(rows)
+        worksheet['!cols'] = Object.keys(rows[0] || {}).map(key => ({ wch: Math.max(14, Math.min(32, key.length + 5)) }))
+        const workbook = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Öğrenci Tanıma')
+        XLSX.writeFile(workbook, `${selectedClassName}_Ogrenci_Tanima.xlsx`)
+      } else {
+        const html2pdf = (await import('html2pdf.js')).default
+        const keys = Object.keys(rows[0] || {})
+        const width = reportOrientation === 'portrait' ? '190mm' : '277mm'
+        const container = document.createElement('div')
+        container.style.cssText = `width:${width};padding:7mm;background:white;color:#111;font-family:Arial,sans-serif;box-sizing:border-box;`
+        container.innerHTML = `<div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid #178b58;padding-bottom:7px;margin-bottom:8px"><img src="/taskin-takip-sistemi-logo.png" style="width:58px;height:58px;object-fit:contain"><div><div style="font-size:18px;font-weight:900">${selectedClassName} Öğrenci Tanıma Raporu</div><div style="font-size:10px;color:#555">Taşkın Takip • ${new Date().toLocaleDateString('tr-TR')}</div></div></div><table style="width:100%;border-collapse:collapse;font-size:${keys.length>14?'6.5px':'8px'}"><thead><tr>${keys.map(k=>`<th style="border:1px solid #777;padding:3px;background:#eaf4ef">${k}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${keys.map(k=>`<td style="border:1px solid #aaa;padding:3px">${String(r[k]??'')}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+        document.body.appendChild(container)
+        await html2pdf().set({ margin:0, filename:`${selectedClassName}_Ogrenci_Tanima.pdf`, image:{type:'jpeg',quality:.98}, html2canvas:{scale:1.7,useCORS:true}, jsPDF:{unit:'mm',format:'a4',orientation:reportOrientation}, pagebreak:{mode:['css','legacy']} }).from(container).save()
+        container.remove()
+      }
+      setReportOpen(false)
+    } catch (err) { setError(err?.message || 'Rapor oluşturulamadı.') }
+  }
+
   async function copyClassCredentials() {
     const text = students.map(student => {
       const password = credentialMap[String(student.username || '').toLowerCase()] || 'Şifre kayıtlı değil — yenileyin'
@@ -1049,10 +1126,10 @@ export default function StudentsPage() {
           {activeClasses.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
         </TextField>
         <TextField label="Öğrenci ara" value={search} onChange={e => setSearch(e.target.value)} />
-        <Button variant="outlined" startIcon={<PictureAsPdf />} onClick={downloadStudentListPdf} disabled={!students.length}>
-          PDF İndir
+        <Button variant="outlined" startIcon={<PictureAsPdf />} onClick={() => openReport('pdf')} disabled={!students.length}>
+          Tanıma Raporu
         </Button>
-        <Button variant="outlined" startIcon={<TableView />} onClick={downloadStudentListExcel} disabled={!students.length}>
+        <Button variant="outlined" startIcon={<TableView />} onClick={() => openReport('excel')} disabled={!students.length}>
           Excel İndir
         </Button>
         <Button color="error" variant="outlined" startIcon={<Delete />} onClick={() => { setClassDeleteText(''); setClassDeleteOpen(true) }} disabled={!selectedClass || !students.length}>
@@ -1069,19 +1146,17 @@ export default function StudentsPage() {
         <Box className="students-single-list">
           {filtered.map(s => (
             <Box className="glass student" key={s.id}>
-              <Avatar>{safeText(s.first_name)[0]}{safeText(s.last_name)[0]}</Avatar>
+              <Avatar src={avatarSrc(s)} alt={`${s.first_name} ${s.last_name}`} sx={{ width: 62, height: 62 }} />
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography noWrap fontWeight={900}>
-                  {s.student_number} — {s.first_name} {s.last_name}
+                <Typography noWrap fontWeight={950} sx={{ fontSize: '1.08rem' }}>
+                  {s.first_name} {s.last_name}
                 </Typography>
-                <Typography noWrap variant="body2" color="text.secondary">
-                  Kullanıcı adı: {s.username || 'yok'}
-                </Typography>
+                <Typography noWrap variant="body2">No: {s.student_number}</Typography>
+                <Typography noWrap variant="body2" color="text.secondary">{s.username || 'Kullanıcı adı yok'}</Typography>
               </Box>
               <Button size="small" variant="outlined" startIcon={<Person />} onClick={() => openProfile(s)}>Profili Aç</Button>
-              <IconButton onClick={() => openEdit(s)} aria-label="Düzenle"><Edit /></IconButton>
-              <IconButton onClick={() => { openEdit(s); setPasswordDialog(true) }} aria-label="Şifre değiştir"><Key /></IconButton>
-              <IconButton color="error" onClick={() => deleteStudent(s)} aria-label="Sil"><Delete /></IconButton>
+              <Button size="small" variant="outlined" startIcon={<Edit />} onClick={() => openEdit(s)}>Düzenle</Button>
+              <Button size="small" color="error" variant="outlined" startIcon={<Delete />} onClick={() => deleteStudent(s)}>Sil</Button>
             </Box>
           ))}
         </Box>
@@ -1181,7 +1256,7 @@ export default function StudentsPage() {
                     <TableCell>{student.first_name} {student.last_name}</TableCell>
                     <TableCell><b>{student.username || '-'}</b></TableCell>
                     <TableCell>{password ? (showPasswords ? password : '••••••••') : <Chip size="small" color="warning" label="Kayıtlı değil" />}</TableCell>
-                    <TableCell align="right"><Button size="small" startIcon={<Key />} onClick={() => { setCredentialsOpen(false); openEdit(student); setPasswordDialog(true) }}>Şifre Yenile</Button></TableCell>
+                    <TableCell align="right"><Button size="small" startIcon={<Key />} onClick={() => { setCredentialsOpen(false); openEdit(student) }}>Şifre Yenile</Button></TableCell>
                   </TableRow>
                 })}
               </TableBody>
@@ -1223,6 +1298,14 @@ export default function StudentsPage() {
               autoComplete="off"
               inputProps={{ autoComplete: 'new-username' }}
               onChange={e => setForm(f => ({ ...f, username: e.target.value.replace(/\s/g, '') }))} />
+            <Box>
+              <Typography fontWeight={900} sx={{ mb: 1 }}>Avatar</Typography>
+              <Box sx={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:1 }}>
+                {AVATARS.map(item => <IconButton key={item.id} onClick={() => setForm(f => ({...f, avatar_id:item.id}))} sx={{ border: form.avatar_id===item.id ? '3px solid #178b58' : '1px solid #d5dfdb', p:.35 }}>
+                  <Avatar src={item.src} sx={{width:48,height:48}} />
+                </IconButton>)}
+              </Box>
+            </Box>
             {!form.id && (
               <TextField label="İlk Şifre" type="password" value={form.password}
                 autoComplete="new-password"
@@ -1230,6 +1313,13 @@ export default function StudentsPage() {
                 helperText="En az 6 karakter"
                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
             )}
+            {form.id && <Paper variant="outlined" sx={{p:2,borderRadius:3}}>
+              <Typography fontWeight={950} sx={{mb:1}}>Şifre İşlemleri</Typography>
+              <Stack direction={{xs:'column',sm:'row'}} spacing={1}>
+                <TextField fullWidth label="Yeni Şifre" type="password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} helperText="En az 6 karakter" />
+                <Button variant="outlined" startIcon={<Key/>} onClick={changePassword} disabled={saving || newPassword.length<6}>Şifreyi Güncelle</Button>
+              </Stack>
+            </Paper>}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
@@ -1361,66 +1451,27 @@ export default function StudentsPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={profileOpen} onClose={() => setProfileOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle fontWeight={950}>Öğrenci Profili — {profileStudent?.first_name} {profileStudent?.last_name}</DialogTitle>
+      <Dialog open={reportOpen} onClose={() => setReportOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle fontWeight={950}>{reportType === 'pdf' ? 'Tanıma Raporu' : 'Excel İndir'}</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField select label="Cinsiyet" value={studentProfile.gender || ''} onChange={e => setStudentProfile(p => ({...p, gender:e.target.value}))}>
-              <MenuItem value="">Belirtilmedi</MenuItem><MenuItem value="female">Kız</MenuItem><MenuItem value="male">Erkek</MenuItem>
-            </TextField>
-            <Box>
-              <Typography fontWeight={900} sx={{ mb: .5 }}>Öğrenci Etiketleri</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.25 }}>
-                Burada oluşturduğun etiketler bütün öğrencilerin profilinde kutucuk olarak görünür. Bu öğrenciye uygun olanları işaretleyebilirsin.
-              </Typography>
-              <Stack direction={{ xs:'column', sm:'row' }} spacing={1} sx={{ mb: 1.5 }}>
-                <TextField fullWidth label="Yeni etiket adı" placeholder="Örn. Gözlüklü" value={tagInput} onChange={e=>setTagInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addTag()}}}/>
-                <Button variant="outlined" startIcon={<Add/>} onClick={addTag} disabled={tagSaving || !tagInput.trim()}>Etiket Ekle</Button>
-              </Stack>
-              <Box sx={{ display:'grid', gridTemplateColumns:{ xs:'1fr', sm:'1fr 1fr' }, gap:1 }}>
-                {profileTags.map(tag => {
-                  const selected = (studentProfile.tags || []).includes(tag.label)
-                  return <Paper key={tag.id} variant="outlined" sx={{ px:1, py:.5, display:'flex', alignItems:'center', minHeight:48, borderRadius:2 }}>
-                    <Checkbox checked={selected} onChange={() => toggleProfileTag(tag.label)} disabled={tagSaving}/>
-                    <Typography sx={{ flex:1, fontWeight:selected ? 800 : 500 }}>{tag.label}</Typography>
-                    <IconButton size="small" color="error" title="Etiketi bütün öğrencilerden sil" onClick={() => deleteProfileTag(tag)} disabled={tagSaving}>
-                      <Delete fontSize="small"/>
-                    </IconButton>
-                  </Paper>
-                })}
-              </Box>
-              {(studentProfile.tags || []).filter(label => !profileTags.some(tag => tag.label === label)).map(label =>
-                <Chip sx={{ mt:1, mr:1 }} key={label} label={label} color="primary" onDelete={() => toggleProfileTag(label)} />
-              )}
-              {!profileTags.length && !(studentProfile.tags || []).length && <Alert severity="info">Henüz etiket yok. Yukarıdan ilk etiketi ekleyebilirsin.</Alert>}
-            </Box>
-            <TextField multiline minRows={3} label="Öğretmen notu" value={studentProfile.notes || ''} onChange={e => setStudentProfile(p => ({...p,notes:e.target.value}))}/>
-          </Stack>
+          <Typography fontWeight={900} sx={{mb:1}}>Raporda bulunacak bilgiler</Typography>
+          <Box sx={{display:'grid',gridTemplateColumns:{xs:'1fr',sm:'1fr 1fr'},gap:.5}}>
+            {REPORT_FIELDS.map(([key,label]) => <FormControlLabel key={key} control={<Checkbox checked={reportFields.includes(key)} onChange={() => setReportFields(x => x.includes(key) ? x.filter(y=>y!==key) : [...x,key])}/>} label={label}/>) }
+          </Box>
+          {reportType === 'pdf' && <TextField select fullWidth sx={{mt:2}} label="Sayfa düzeni" value={reportOrientation} onChange={e=>setReportOrientation(e.target.value)}>
+            <MenuItem value="portrait">Dikey — tek sayfalık sıkı düzen</MenuItem><MenuItem value="landscape">Yatay — en fazla iki sayfalık geniş düzen</MenuItem>
+          </TextField>}
         </DialogContent>
-        <DialogActions><Button onClick={() => setProfileOpen(false)}>Vazgeç</Button><Button variant="contained" startIcon={<Save/>} onClick={saveProfile} disabled={saving}>Kaydet</Button></DialogActions>
+        <DialogActions><Button onClick={()=>setReportOpen(false)}>Vazgeç</Button><Button variant="contained" onClick={createRecognitionReport}>{reportType === 'pdf' ? 'PDF Oluştur' : 'Excel Oluştur'}</Button></DialogActions>
       </Dialog>
 
-      <Dialog open={passwordDialog} onClose={() => !saving && setPasswordDialog(false)} fullWidth maxWidth="xs">
-        <DialogTitle fontWeight={900}>Öğrenci Şifresini Değiştir</DialogTitle>
-        <DialogContent>
-          <TextField
-            sx={{ mt: 1 }}
-            fullWidth
-            label="Yeni Şifre"
-            type="password"
-            value={newPassword}
-            autoComplete="new-password"
-            onChange={e => setNewPassword(e.target.value)}
-            helperText="En az 6 karakter"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPasswordDialog(false)} disabled={saving}>İptal</Button>
-          <Button variant="contained" onClick={changePassword} disabled={saving || newPassword.length < 6}>
-            Değiştir
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <StudentProfileDialog
+        open={profileOpen}
+        student={profileStudent}
+        seatingCards={profileTags.map(tag => ({...tag, group_name:'seating'}))}
+        onClose={() => setProfileOpen(false)}
+        onSaved={() => setMessage('Öğrenci profili kaydedildi.')}
+      />
 
       <Snackbar open={Boolean(message)} autoHideDuration={3000} onClose={() => setMessage('')} message={message} />
     </Box>

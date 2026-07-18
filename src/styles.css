@@ -1865,3 +1865,82 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
     font-size: 18px !important;
   }
 }
+/* V9.2 öğrenci profili ve avatar yaması */
+.students-single-list .glass.student{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;align-items:center;gap:12px}
+.student-welcome-avatar{width:92px;height:92px;border-radius:50%;background:#fff;border:4px solid rgba(255,255,255,.65);box-shadow:0 10px 25px rgba(0,0,0,.16);object-fit:cover}
+@media(max-width:760px){.students-single-list .glass.student{grid-template-columns:auto minmax(0,1fr);}.students-single-list .glass.student>.MuiButton-root{grid-column:auto;min-width:0}.student-welcome{flex-wrap:wrap}.student-welcome-avatar{width:76px;height:76px}}
+
+
+/* V9.4: Öğrenci avatar marka halkası ve online deneme analizleri */
+.student-welcome-avatar,
+.lgs-welcome-avatar {
+  border: 1px solid #f28c28 !important;
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgba(242, 140, 40, .18);
+  object-fit: cover;
+}
+.lgs-welcome-avatar { width: 88px; height: 88px; flex: 0 0 auto; }
+.online-analysis-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+.online-analysis-summary > .MuiPaper-root { padding:14px; border:1px solid #d9e4ea; border-radius:14px; }
+.online-analysis-summary small { display:block; color:#60727d; margin-bottom:5px; }
+.online-analysis-summary b { font-size:24px; color:#173f55; }
+.online-analysis-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(175px,1fr)); gap:10px; }
+.online-analysis-question { padding:12px; border:2px solid transparent; border-radius:12px!important; }
+.online-analysis-question.correct { background:#ecfdf3; border-color:#22a35a; }
+.online-analysis-question.wrong { background:#fff1f2; border-color:#e5484d; }
+.online-analysis-question.blank { background:#fff9db; border-color:#e0a800; }
+@media (max-width:700px){.lgs-welcome-avatar{width:70px;height:70px}.online-analysis-grid{grid-template-columns:1fr 1fr}}
+
+
+/* V9.5.3 Öğrenci paneli Durum PDF beyaz sayfa düzeltmesi */
+.student-pdf-render-host{
+  position:fixed;
+  left:12px;
+  top:12px;
+  z-index:2147483000;
+  width:794px;
+  max-height:calc(100vh - 24px);
+  overflow:auto;
+  background:#fff;
+  pointer-events:none;
+}
+.student-report-pdf-clone{
+  position:relative!important;
+  left:auto!important;
+  top:auto!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  width:760px!important;
+  min-height:300px;
+  margin:0!important;
+  padding:30px!important;
+  background:#fff!important;
+  color:#111!important;
+  box-sizing:border-box!important;
+}
+.student-report-pdf-clone *{
+  -webkit-print-color-adjust:exact!important;
+  print-color-adjust:exact!important;
+}
+.student-pdf-preparing-overlay{
+  position:fixed;
+  inset:0;
+  z-index:2147483647;
+  display:grid;
+  place-items:center;
+  background:rgba(13,36,52,.58);
+  backdrop-filter:blur(3px);
+}
+.student-pdf-preparing-overlay>div{
+  min-width:260px;
+  padding:22px 26px;
+  border-radius:16px;
+  background:#fff;
+  color:#17324d;
+  text-align:center;
+  box-shadow:0 18px 55px rgba(0,0,0,.28);
+}
+.student-pdf-preparing-overlay b,
+.student-pdf-preparing-overlay span{display:block}
+.student-pdf-preparing-overlay span{margin-top:6px;color:#607584;font-size:13px}

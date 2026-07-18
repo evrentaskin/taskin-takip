@@ -12,7 +12,8 @@ import {
 } from '@mui/icons-material'
 import html2pdf from 'html2pdf.js'
 import { supabase } from '../services/supabase'
-import { readSharedState } from '../services/sharedState'
+import { avatarSrc } from '../utils/avatars'
+import { readSharedState, writeSharedState } from '../services/sharedState'
 import { ANNOUNCEMENTS_STORAGE_KEY, readAnnouncements } from './AnnouncementsPage'
 import LgsStudentHomePage from './LgsStudentHomePage'
 
@@ -70,6 +71,7 @@ export default function StudentHomePage({ session, profile }) {
   const [onlineOpen, setOnlineOpen] = useState(false)
   const [activeOnlineExam, setActiveOnlineExam] = useState(null)
   const [onlineAnswers, setOnlineAnswers] = useState({})
+  const [analysisExam, setAnalysisExam] = useState(null)
   const [exams, setExams] = useState(() => safeLoad(KEYS.exams))
   const [homeworks, setHomeworks] = useState(() => safeLoad(KEYS.homework))
   const pdfRef = useRef(null)
@@ -115,7 +117,7 @@ export default function StudentHomePage({ session, profile }) {
       setLoading(true)
       const { data, error: studentError } = await supabase
         .from('students')
-        .select('id,student_number,first_name,last_name,class_id,is_active')
+        .select('id,student_number,first_name,last_name,class_id,is_active,avatar_id')
         .eq('auth_user_id', session.user.id)
         .maybeSingle()
       if (studentError || !data) {
@@ -125,7 +127,7 @@ export default function StudentHomePage({ session, profile }) {
       setStudent(data)
       const [classResult, studentsResult] = await Promise.all([
         supabase.from('classes').select('id,name,is_lgs').eq('id', data.class_id).maybeSingle(),
-        supabase.from('students').select('id,student_number,first_name,last_name,class_id').eq('class_id', data.class_id).eq('is_active', true)
+        supabase.from('students').select('id,student_number,first_name,last_name,class_id,avatar_id').eq('class_id', data.class_id).eq('is_active', true)
       ])
       setClassInfo(classResult.data || null)
       setClassStudents(studentsResult.data || [data])
@@ -209,19 +211,28 @@ export default function StudentHomePage({ session, profile }) {
     setNewPassword(''); setConfirmPassword('')
   }
 
-  function persistExams(next) {
+  async function persistExams(next) {
     setExams(next)
     try {
       localStorage.setItem(KEYS.exams, JSON.stringify(next))
-      window.dispatchEvent(new window.Event('taskin-exams-updated'))
-      return true
     } catch (storageError) {
       console.error('Online deneme kaydı yerel depolamaya yazılamadı:', storageError)
+    }
+
+    try {
+      // Öğrencinin cevaplarını buluta yazmadan yenileme olayı göndermiyoruz.
+      // Aksi halde eski bulut verisi cevapları ve finishedAt bilgisini geri siliyordu.
+      await writeSharedState('exams-v1', next)
+      window.dispatchEvent(new window.Event('taskin-exams-updated'))
+      return true
+    } catch (cloudError) {
+      console.error('Online deneme kaydı buluta yazılamadı:', cloudError)
+      setError('Cevapların cihazda saklandı ancak buluta kaydedilemedi. İnternet bağlantını kontrol edip tekrar dene.')
       return false
     }
   }
 
-  function beginOnlineExam() {
+  async function beginOnlineExam() {
     if (!upcomingOnline || !student) return
     const start = new Date(upcomingOnline.startAt)
     const end = new Date(upcomingOnline.endAt)
@@ -238,7 +249,7 @@ export default function StudentHomePage({ session, profile }) {
     setOnlineOpen(true)
     setError('')
     sessionStorage.setItem('taskin-active-online-exam-id', String(selectedExam.id))
-    persistExams(next)
+    await persistExams(next)
   }
 
   function chooseOnlineAnswer(question, answer) {
@@ -252,7 +263,7 @@ export default function StudentHomePage({ session, profile }) {
     persistExams(exams.map(exam => exam.id === updated.id ? updated : exam))
   }
 
-  function finishOnlineExam(autoFinish = false) {
+  async function finishOnlineExam(autoFinish = false) {
     if (!activeOnlineExam || !student) return
     if (!autoFinish && !window.confirm('Cevaplarını kesin olarak kaydetmek istediğine emin misin? Kaydettikten sonra tekrar değiştiremezsin.')) return
     let correct = 0, wrong = 0
@@ -266,7 +277,9 @@ export default function StudentHomePage({ session, profile }) {
     const existing = activeOnlineExam.attempts?.[student.id] || {}
     const attempt = { ...existing, answers: onlineAnswers, correct, wrong, blank: 20 - correct - wrong, net, status: 'Kaydedildi', locked: true, finishedAt: new Date().toISOString() }
     const updated = { ...activeOnlineExam, attempts: { ...(activeOnlineExam.attempts || {}), [student.id]: attempt } }
-    persistExams(exams.map(exam => exam.id === updated.id ? updated : exam))
+    const saved = await persistExams(exams.map(exam => exam.id === updated.id ? updated : exam))
+    if (!saved) return
+    sessionStorage.removeItem('taskin-active-online-exam-id')
     setOnlineOpen(false)
     setActiveOnlineExam(null)
     window.alert(autoFinish ? 'Süre doldu. Mevcut cevapların otomatik kaydedildi.' : 'Cevapların kaydedildi. Sonuçların deneme süresi bittikten sonra Denemelerim ekranında görünecek.')
@@ -285,13 +298,66 @@ export default function StudentHomePage({ session, profile }) {
     setError('')
   }
 
-  function downloadPdf() {
-    if (!pdfRef.current) return
-    html2pdf().set({
-      margin: 8, filename: `${student.first_name}-${student.last_name}-ogrenci-durum-raporu.pdf`,
-      image: { type: 'jpeg', quality: .98 }, html2canvas: { scale: 2, useCORS: true },
-      pagebreak: { mode: ['css'], avoid: ['.student-report-card', 'tr'] }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    }).from(pdfRef.current).save()
+  async function downloadPdf() {
+    if (!pdfRef.current || !student) return
+
+    const overlay = document.createElement('div')
+    overlay.className = 'student-pdf-preparing-overlay'
+    overlay.innerHTML = '<div><b>PDF hazırlanıyor...</b><span>Lütfen bekleyin.</span></div>'
+
+    const renderHost = document.createElement('div')
+    renderHost.className = 'student-pdf-render-host'
+    const reportClone = pdfRef.current.cloneNode(true)
+    reportClone.removeAttribute('style')
+    reportClone.classList.add('student-report-pdf-clone')
+    renderHost.appendChild(reportClone)
+
+    document.body.appendChild(renderHost)
+    document.body.appendChild(overlay)
+
+    try {
+      if (document.fonts?.ready) await document.fonts.ready
+
+      const images = Array.from(reportClone.querySelectorAll('img'))
+      await Promise.all(images.map(img => new Promise(resolve => {
+        if (img.complete && img.naturalWidth > 0) return resolve()
+        const done = () => resolve()
+        img.addEventListener('load', done, { once: true })
+        img.addEventListener('error', done, { once: true })
+        setTimeout(done, 4000)
+      })))
+
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+
+      const rect = reportClone.getBoundingClientRect()
+      if (rect.width < 100 || rect.height < 100) {
+        throw new Error('Öğrenci durum raporu çizilemedi.')
+      }
+
+      await html2pdf().set({
+        margin: [8, 8, 8, 8],
+        filename: `${student.first_name}-${student.last_name}-ogrenci-durum-raporu.pdf`,
+        image: { type: 'jpeg', quality: .98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: '#ffffff',
+          logging: false,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 900
+        },
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['.student-report-card', 'tr'] },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
+      }).from(reportClone).save()
+    } catch (pdfError) {
+      console.error('Öğrenci durum PDF oluşturma hatası:', pdfError)
+      window.alert(`Durum PDF oluşturulamadı: ${pdfError?.message || 'Bilinmeyen hata'}`)
+    } finally {
+      renderHost.remove()
+      overlay.remove()
+    }
   }
 
   if (loading) return <Box className="loader"><CircularProgress /></Box>
@@ -336,6 +402,13 @@ export default function StudentHomePage({ session, profile }) {
     </Box>
 
 
+
+    <Dialog open={Boolean(analysisExam)} onClose={() => setAnalysisExam(null)} fullWidth maxWidth="md">
+      <DialogTitle fontWeight={950}>Online Fen Denemesi Analizi</DialogTitle>
+      <DialogContent>{analysisExam && <FenOnlineAnalysis exam={analysisExam} student={student} />}</DialogContent>
+      <DialogActions><Button onClick={() => setAnalysisExam(null)}>Kapat</Button></DialogActions>
+    </Dialog>
+
     <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)} fullWidth maxWidth="xs">
       <DialogTitle>Ayarlar</DialogTitle>
       <DialogContent>
@@ -363,7 +436,7 @@ export default function StudentHomePage({ session, profile }) {
 
   function StudentDashboard() {
     return <Stack spacing={2.5}>
-      <Paper className="student-welcome" elevation={0}><Box><Typography variant="h3" fontWeight={950}>Hoş geldin, {student.first_name} {student.last_name}</Typography><Typography variant="h6">{classInfo?.name || 'Sınıf'} • No: {student.student_number}</Typography><Typography className="student-motivation">“{motivational[new Date().getDate() % motivational.length]}”</Typography></Box><EmojiEvents className="student-welcome-icon" /></Paper>
+      <Paper className="student-welcome" elevation={0}><img className="student-welcome-avatar" src={avatarSrc(student)} alt="Öğrenci avatarı"/><Box><Typography variant="h3" fontWeight={950}>Hoş geldin, {student.first_name} {student.last_name}</Typography><Typography variant="h6">{classInfo?.name || 'Sınıf'} • No: {student.student_number}</Typography><Typography className="student-motivation">“{motivational[new Date().getDate() % motivational.length]}”</Typography></Box><EmojiEvents className="student-welcome-icon" /></Paper>
       <Box className="student-summary-grid">
         <SummaryCard icon={<Star />} label="Toplam Artım" value={studentPlus.reduce((s, r) => s + Number(r.amount || 1), 0)} tone="gold" />
         <SummaryCard icon={<TrendingUp />} label="Son Deneme Netim" value={latestExam ? `${latestNet.toFixed(2)} net` : '—'} tone="blue" />
@@ -384,7 +457,7 @@ export default function StudentHomePage({ session, profile }) {
 
   function StudentExams() {
     const chronological = [...studentExams].sort((a, b) => new Date(examDate(a)) - new Date(examDate(b)))
-    return <Stack spacing={2}><PageTitle icon={<Quiz />} title="Denemelerim" subtitle="Fen, genel ve online deneme sonuçların" action={<Button variant="contained" startIcon={<Download />} onClick={downloadPdf}>Durum PDF</Button>}/><Paper className="student-table-card" elevation={0}><div className="student-table-wrap"><table className="student-data-table"><thead><tr><th>Tarih</th><th>Tür</th><th>Deneme</th><th>Doğru</th><th>Yanlış</th><th>Net</th><th>Sınıf Sırası</th></tr></thead><tbody>{studentExams.map(exam => { const result = examResult(exam, student.id) || {}; const rows = examParticipants(exam).sort((a,b)=>b.net-a.net); const rankIndex = rows.findIndex(r=>r.id===student.id); const rank = rankIndex >= 0 ? rankIndex + 1 : 0; return <tr key={exam.id}><td>{fmtDate(examDate(exam))}</td><td><Chip size="small" label={examType(exam)} /></td><td>{exam.name}</td><td>{result.correct ?? '—'}</td><td>{result.wrong ?? '—'}</td><td><b>{(exam.kind === 'online' ? threeWrongNet(result.correct, result.wrong) : Number(result.net || 0)).toFixed(2)}</b></td><td>{rank || '—'} / {rows.length}</td></tr>})}</tbody></table></div>{!studentExams.length && <Empty text="Henüz deneme sonucun yok."/>}</Paper><Box className="student-chart-grid"><Paper className="student-chart-card" elevation={0}><Typography variant="h6" fontWeight={950}>Net Gelişimim</Typography><LineChart exams={chronological}/></Paper><Paper className="student-chart-card" elevation={0}><Typography variant="h6" fontWeight={950}>Son Deneme Karşılaştırması</Typography><ComparisonChart exam={latestExam}/></Paper></Box><StudentReport /></Stack>
+    return <Stack spacing={2}><PageTitle icon={<Quiz />} title="Denemelerim" subtitle="Fen, genel ve online deneme sonuçların" action={<Button variant="contained" startIcon={<Download />} onClick={downloadPdf}>Durum PDF</Button>}/><Paper className="student-table-card" elevation={0}><div className="student-table-wrap"><table className="student-data-table"><thead><tr><th>Tarih</th><th>Tür</th><th>Deneme</th><th>Doğru</th><th>Yanlış</th><th>Net</th><th>Sınıf Sırası</th><th>Analiz</th></tr></thead><tbody>{studentExams.map(exam => { const result = examResult(exam, student.id) || {}; const rows = examParticipants(exam).sort((a,b)=>b.net-a.net); const rankIndex = rows.findIndex(r=>r.id===student.id); const rank = rankIndex >= 0 ? rankIndex + 1 : 0; return <tr key={exam.id}><td>{fmtDate(examDate(exam))}</td><td><Chip size="small" label={examType(exam)} /></td><td>{exam.name}</td><td>{result.correct ?? '—'}</td><td>{result.wrong ?? '—'}</td><td><b>{(exam.kind === 'online' ? threeWrongNet(result.correct, result.wrong) : Number(result.net || 0)).toFixed(2)}</b></td><td>{rank || '—'} / {rows.length}</td><td>{exam.kind === 'online' && new Date(exam.endAt) <= now ? <Button size="small" variant="outlined" startIcon={<BarChart/>} onClick={() => setAnalysisExam(exam)}>Analizi Gör</Button> : '—'}</td></tr>})}</tbody></table></div>{!studentExams.length && <Empty text="Henüz deneme sonucun yok."/>}</Paper><Box className="student-chart-grid"><Paper className="student-chart-card" elevation={0}><Typography variant="h6" fontWeight={950}>Net Gelişimim</Typography><LineChart exams={chronological}/></Paper><Paper className="student-chart-card" elevation={0}><Typography variant="h6" fontWeight={950}>Son Deneme Karşılaştırması</Typography><ComparisonChart exam={latestExam}/></Paper></Box><StudentReport /></Stack>
   }
 
   function StudentHomeworks() {
@@ -429,6 +502,27 @@ export default function StudentHomePage({ session, profile }) {
   function StudentReport() {
     return <Box className="student-report-print" ref={pdfRef}><Box className="student-report-letter"><img src="/taskin-takip-sistemi-logo.png"/><Box><h1>ÖĞRENCİ DURUM RAPORU</h1><p>{student.first_name} {student.last_name} • {classInfo?.name} • No: {student.student_number}</p></Box></Box><Box className="student-report-grid"><ReportCard title="Aylık Durum" lines={[`Puan: ${ownPoints}`, `Sıra: ${ownRank || '—'}`, `Birinci ile fark: ${scoreLeader ? Math.max(0, scoreLeader.points-ownPoints) : '—'}`]}/><ReportCard title="Genel Özet" lines={[`Toplam artı: ${studentPlus.length}`, `Son deneme: ${latestExam ? `${latestNet.toFixed(2)} net` : '—'}`, `Ödev sayısı: ${studentHomeworks.length}`]}/></Box><h2>Deneme Sonuçları</h2><table><thead><tr><th>Tarih</th><th>Tür</th><th>Deneme</th><th>Net</th></tr></thead><tbody>{studentExams.map(e=><tr key={e.id}><td>{fmtDate(examDate(e))}</td><td>{examType(e)}</td><td>{e.name}</td><td>{(e.kind === 'online' ? threeWrongNet(examResult(e,student.id)?.correct, examResult(e,student.id)?.wrong) : Number(examResult(e,student.id)?.net||0)).toFixed(2)}</td></tr>)}</tbody></table><h2>Ödev Durumu</h2><table><thead><tr><th>Ödev</th><th>Son Tarih</th><th>Durum</th></tr></thead><tbody>{studentHomeworks.map(h=><tr key={h.id}><td>{h.title}</td><td>{fmtDate(h.dueDate)}</td><td>{statusLabel(h.statuses?.[student.id])}</td></tr>)}</tbody></table></Box>
   }
+}
+
+
+function FenOnlineAnalysis({ exam, student }) {
+  const attempt = exam.attempts?.[student.id] || {}
+  const completed = Object.values(exam.attempts || {}).filter(x => x?.finishedAt)
+  const nets = completed.map(x => threeWrongNet(x.correct, x.wrong)).filter(Number.isFinite)
+  const average = nets.length ? nets.reduce((a,b)=>a+b,0) / nets.length : 0
+  const highest = nets.length ? Math.max(...nets) : 0
+  const questionRows = Array.from({ length:20 }, (_,i) => i + 1).map(question => {
+    const own = attempt.answers?.[question] || ''
+    const correct = exam.answers?.[question] || ''
+    const answered = completed.filter(x => x?.answers?.[question])
+    const success = completed.length ? Math.round(completed.filter(x => x?.answers?.[question] === correct).length / completed.length * 100) : 0
+    return { question, own, correct, success, status: !own ? 'blank' : own === correct ? 'correct' : 'wrong' }
+  })
+  return <Stack spacing={2} sx={{pt:1}}>
+    <Box className="online-analysis-summary"><Paper><small>Netin</small><b>{threeWrongNet(attempt.correct,attempt.wrong).toFixed(2)}</b></Paper><Paper><small>Sınıf Ortalaması</small><b>{average.toFixed(2)}</b></Paper><Paper><small>En Yüksek Net</small><b>{highest.toFixed(2)}</b></Paper></Box>
+    <Alert severity="info">Yeşil doğru, kırmızı yanlış, sarı boş cevabı gösterir. Başarı oranı, denemeyi tamamlayan öğrenciler üzerinden hesaplanır.</Alert>
+    <Box className="online-analysis-grid">{questionRows.map(row => <Paper key={row.question} className={`online-analysis-question ${row.status}`} elevation={0}><Typography fontWeight={950}>Soru {row.question}</Typography><Typography>Senin cevabın: <b>{row.own || 'Boş'}</b></Typography><Typography>Doğru cevap: <b>{row.correct || '—'}</b></Typography><Typography variant="body2">Sınıf doğru yapma oranı: <b>%{row.success}</b></Typography></Paper>)}</Box>
+  </Stack>
 }
 
 function collectClassStudentIds(student, homeworks, exams, plusRecords, visibleStudents = []) {

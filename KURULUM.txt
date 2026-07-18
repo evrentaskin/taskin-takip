@@ -1,13 +1,18 @@
-Taşkın Takip V9.3 Mobil Düzeltmeler
+V9.5.3 - ÖĞRENCİ PANELİ DURUM PDF BEYAZ SAYFA DÜZELTMESİ
 
-1) Bu klasördeki src klasörünü çalışan DENEME projenizin ana klasörüne kopyalayın.
-2) Dosya değiştirme sorusuna "Değiştir" deyin.
-3) Proje klasöründe: npm run dev
-4) Kontrol edin:
-   - Sınav Notları: öğrenci adı yatay kaydırmada sabit
-   - Telefon geri: önce Ana Sayfa, sonra çıkış
-   - Oturma Planı: Raporlar'dan sonra
-   - Giriş: Beni hatırla
-   - Deneme butonları: telefonda yan yana
+DÜZELTİLEN BÖLÜM:
+- Yalnızca 5, 6, 7 ve 8. sınıf öğrenci panelindeki Denemelerim > Durum PDF.
+- Öğretmen paneli ve öğretmen PDF'leri değiştirilmemiştir.
 
-Bu güncelleme için Supabase SQL çalıştırmanız gerekmez.
+KAYNAK KODLA KURULUM:
+1. ZIP içindeki src klasörünü çalışan projenin üzerine kopyalayın.
+2. Dosyaları değiştirmeyi onaylayın.
+3. Projenin ana klasöründe CMD açın.
+4. npm run build
+5. Test için npm run dev
+
+HAZIR DIST İLE KURULUM:
+- Mevcut dist klasörünü ZIP içindeki dist klasörüyle değiştirin.
+- CMD çalıştırmanız gerekmez.
+
+SQL ve npm install gerekmez.
