@@ -20,8 +20,14 @@ export function useSharedCloudState({ stateKey, localKey, fallback = [], readOnl
   const [cloudReady, setCloudReady] = useState(false)
   const valueRef = useRef(value)
   const saveTimerRef = useRef(null)
+  const skipNextSaveRef = useRef(false)
 
   useEffect(() => { valueRef.current = value }, [value])
+
+  function setCloudValue(nextValue) {
+    skipNextSaveRef.current = true
+    setValue(nextValue)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -61,6 +67,10 @@ export function useSharedCloudState({ stateKey, localKey, fallback = [], readOnl
       try { localStorage.setItem(localKey, JSON.stringify(value)) } catch {}
     }
     if (readOnly) return
+    if (skipNextSaveRef.current) {
+      skipNextSaveRef.current = false
+      return
+    }
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(async () => {
@@ -76,5 +86,5 @@ export function useSharedCloudState({ stateKey, localKey, fallback = [], readOnl
     }
   }, [value, cloudReady, stateKey, localKey, readOnly, onError])
 
-  return [value, setValue, cloudReady]
+  return [value, setValue, cloudReady, setCloudValue]
 }

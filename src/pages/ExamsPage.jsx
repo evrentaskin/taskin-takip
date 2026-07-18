@@ -27,7 +27,7 @@ export default function ExamsPage() {
   const [classes, setClasses] = useState([])
   const [students, setStudents] = useState([])
   const [selectedClass, setSelectedClass] = useState('')
-  const [exams, setExams, examsCloudReady] = useSharedCloudState({
+  const [exams, setExams, examsCloudReady, setExamsFromCloud] = useSharedCloudState({
     stateKey: 'exams-v1', localKey: STORAGE_KEY, fallback: loadStored(),
     onError: err => setError(`Denemeler buluta kaydedilemedi: ${err?.message || err}`)
   })
@@ -212,10 +212,21 @@ export default function ExamsPage() {
   }
 
   function openLive(exam) { setActiveExam(exam); setLiveOpen(true) }
-  function resetAttempt(studentId) {
-    setExams(list => list.map(e => e.id === activeExam.id ? { ...e, attempts: { ...(e.attempts || {}), [studentId]: null } } : e))
-    setActiveExam(e => ({ ...e, attempts: { ...(e.attempts || {}), [studentId]: null } }))
-    setMessage('Öğrencinin sonucu iptal edildi; tekrar çözebilir.')
+  async function resetAttempt(studentId) {
+    try {
+      const { data, error: resetError } = await supabase.rpc('reset_science_online_attempt', {
+        p_exam_id: String(activeExam.id),
+        p_student_id: String(studentId)
+      })
+      if (resetError) throw resetError
+      const updatedExam = data
+      const next = exams.map(e => String(e.id) === String(activeExam.id) ? updatedExam : e)
+      setExamsFromCloud(next)
+      setActiveExam(updatedExam)
+      setMessage('Öğrencinin sonucu iptal edildi; tekrar çözebilir.')
+    } catch (resetError) {
+      setError(`Sonuç iptal edilemedi: ${resetError?.message || resetError}`)
+    }
   }
   function togglePassive(exam) {
     setExams(list => list.map(e => e.id === exam.id ? { ...e, isPassive: !e.isPassive } : e))
