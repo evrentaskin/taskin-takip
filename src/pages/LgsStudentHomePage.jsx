@@ -171,9 +171,11 @@ export default function LgsStudentHomePage({ session, student, classInfo }) {
   }
 
   async function persistLgsParticipant(examId, participant){
-    const payload=await saveMyLgsOnlineAttempt(examId,participant)
-    saveOnlineList(payload)
-    return payload
+    const result=await saveMyLgsOnlineAttempt(examId,participant)
+    const updatedExam=Array.isArray(result)?result.find(e=>String(e.id)===String(examId)):result
+    const next=Array.isArray(result)?result:onlineExams.map(e=>String(e.id)===String(examId)?(updatedExam||e):e)
+    saveOnlineList(next)
+    return next
   }
 
   async function beginOnlineExam(bookletGroup='A'){

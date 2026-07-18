@@ -220,9 +220,15 @@ export default function StudentHomePage({ session, profile }) {
   }
 
   async function persistScienceAttempt(examId, attempt) {
-    const payload = await saveMyScienceOnlineAttempt(examId, attempt)
-    persistExams(payload)
-    return payload
+    const result = await saveMyScienceOnlineAttempt(examId, attempt)
+    const updatedExam = Array.isArray(result)
+      ? result.find(exam => String(exam.id) === String(examId))
+      : result
+    const next = Array.isArray(result)
+      ? result
+      : exams.map(exam => String(exam.id) === String(examId) ? (updatedExam || exam) : exam)
+    persistExams(next)
+    return next
   }
 
   async function beginOnlineExam() {
