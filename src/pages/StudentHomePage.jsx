@@ -13,7 +13,8 @@ import {
 import html2pdf from 'html2pdf.js'
 import { supabase } from '../services/supabase'
 import { avatarSrc } from '../utils/avatars'
-import { readSharedState, writeSharedState } from '../services/sharedState'
+import { readSharedState } from '../services/sharedState'
+import { saveMyScienceOnlineAttempt } from '../services/studentOnlineExam'
 import { ANNOUNCEMENTS_STORAGE_KEY, readAnnouncements } from './AnnouncementsPage'
 import LgsStudentHomePage from './LgsStudentHomePage'
 
@@ -72,6 +73,7 @@ export default function StudentHomePage({ session, profile }) {
   const [activeOnlineExam, setActiveOnlineExam] = useState(null)
   const [onlineAnswers, setOnlineAnswers] = useState({})
   const [analysisExam, setAnalysisExam] = useState(null)
+  const [onlineSaving, setOnlineSaving] = useState(false)
   const [exams, setExams] = useState(() => safeLoad(KEYS.exams))
   const [homeworks, setHomeworks] = useState(() => safeLoad(KEYS.homework))
   const pdfRef = useRef(null)
@@ -211,25 +213,16 @@ export default function StudentHomePage({ session, profile }) {
     setNewPassword(''); setConfirmPassword('')
   }
 
-  async function persistExams(next) {
+  function persistExams(next) {
     setExams(next)
-    try {
-      localStorage.setItem(KEYS.exams, JSON.stringify(next))
-    } catch (storageError) {
-      console.error('Online deneme kaydı yerel depolamaya yazılamadı:', storageError)
-    }
+    try { localStorage.setItem(KEYS.exams, JSON.stringify(next)) } catch {}
+    window.dispatchEvent(new window.Event('taskin-exams-updated'))
+  }
 
-    try {
-      // Öğrencinin cevaplarını buluta yazmadan yenileme olayı göndermiyoruz.
-      // Aksi halde eski bulut verisi cevapları ve finishedAt bilgisini geri siliyordu.
-      await writeSharedState('exams-v1', next)
-      window.dispatchEvent(new window.Event('taskin-exams-updated'))
-      return true
-    } catch (cloudError) {
-      console.error('Online deneme kaydı buluta yazılamadı:', cloudError)
-      setError('Cevapların cihazda saklandı ancak buluta kaydedilemedi. İnternet bağlantını kontrol edip tekrar dene.')
-      return false
-    }
+  async function persistScienceAttempt(examId, attempt) {
+    const payload = await saveMyScienceOnlineAttempt(examId, attempt)
+    persistExams(payload)
+    return payload
   }
 
   async function beginOnlineExam() {
@@ -243,16 +236,23 @@ export default function StudentHomePage({ session, profile }) {
     const attempt = { ...existing, startedAt: existing.startedAt || new Date().toISOString(), finishedAt: null, status: 'Sınavda', answers: existing.answers || {} }
     const next = exams.map(exam => exam.id === upcomingOnline.id ? { ...exam, attempts: { ...(exam.attempts || {}), [student.id]: attempt } } : exam)
     const selectedExam = next.find(exam => exam.id === upcomingOnline.id) || { ...upcomingOnline, attempts: { ...(upcomingOnline.attempts || {}), [student.id]: attempt } }
-    // Önce cevap ekranını aç. Depolama hatası ekranın açılmasını engellemesin.
     setActiveOnlineExam(selectedExam)
     setOnlineAnswers(attempt.answers || {})
     setOnlineOpen(true)
     setError('')
     sessionStorage.setItem('taskin-active-online-exam-id', String(selectedExam.id))
-    await persistExams(next)
+    try {
+      const payload = await persistScienceAttempt(selectedExam.id, attempt)
+      const cloudExam = payload.find(exam => String(exam.id) === String(selectedExam.id))
+      if (cloudExam) setActiveOnlineExam(cloudExam)
+    } catch (saveError) {
+      setError(`Deneme başlatılamadı: ${saveError.message || 'Bulut kaydı başarısız.'}`)
+      setOnlineOpen(false)
+      setActiveOnlineExam(null)
+    }
   }
 
-  function chooseOnlineAnswer(question, answer) {
+  async function chooseOnlineAnswer(question, answer) {
     const answers = { ...onlineAnswers, [question]: answer }
     setOnlineAnswers(answers)
     if (!activeOnlineExam || !student) return
@@ -260,11 +260,18 @@ export default function StudentHomePage({ session, profile }) {
     const attempt = { ...existing, startedAt: existing.startedAt || new Date().toISOString(), finishedAt: null, status: 'Sınavda', answers }
     const updated = { ...activeOnlineExam, attempts: { ...(activeOnlineExam.attempts || {}), [student.id]: attempt } }
     setActiveOnlineExam(updated)
-    persistExams(exams.map(exam => exam.id === updated.id ? updated : exam))
+    try {
+      const payload = await persistScienceAttempt(updated.id, attempt)
+      const cloudExam = payload.find(exam => String(exam.id) === String(updated.id))
+      if (cloudExam) setActiveOnlineExam(cloudExam)
+      setError('')
+    } catch (saveError) {
+      setError(`Cevap buluta kaydedilemedi: ${saveError.message || 'Bağlantıyı kontrol et.'}`)
+    }
   }
 
   async function finishOnlineExam(autoFinish = false) {
-    if (!activeOnlineExam || !student) return
+    if (!activeOnlineExam || !student || onlineSaving) return
     if (!autoFinish && !window.confirm('Cevaplarını kesin olarak kaydetmek istediğine emin misin? Kaydettikten sonra tekrar değiştiremezsin.')) return
     let correct = 0, wrong = 0
     for (let q = 1; q <= 20; q += 1) {
@@ -276,13 +283,20 @@ export default function StudentHomePage({ session, profile }) {
     const net = threeWrongNet(correct, wrong)
     const existing = activeOnlineExam.attempts?.[student.id] || {}
     const attempt = { ...existing, answers: onlineAnswers, correct, wrong, blank: 20 - correct - wrong, net, status: 'Kaydedildi', locked: true, finishedAt: new Date().toISOString() }
-    const updated = { ...activeOnlineExam, attempts: { ...(activeOnlineExam.attempts || {}), [student.id]: attempt } }
-    const saved = await persistExams(exams.map(exam => exam.id === updated.id ? updated : exam))
-    if (!saved) return
-    sessionStorage.removeItem('taskin-active-online-exam-id')
-    setOnlineOpen(false)
-    setActiveOnlineExam(null)
-    window.alert(autoFinish ? 'Süre doldu. Mevcut cevapların otomatik kaydedildi.' : 'Cevapların kaydedildi. Sonuçların deneme süresi bittikten sonra Denemelerim ekranında görünecek.')
+    setOnlineSaving(true)
+    setError('')
+    try {
+      await persistScienceAttempt(activeOnlineExam.id, attempt)
+      sessionStorage.removeItem('taskin-active-online-exam-id')
+      setOnlineOpen(false)
+      setActiveOnlineExam(null)
+      setOnlineAnswers({})
+      window.alert(autoFinish ? 'Süre doldu. Mevcut cevapların buluta kaydedildi.' : 'Cevapların buluta kaydedildi. Sonuçların deneme süresi bittikten sonra Denemelerim ekranında görünecek.')
+    } catch (saveError) {
+      setError(`Cevaplar kaydedilemedi: ${saveError.message || 'İnternet bağlantısını kontrol edip tekrar dene.'}`)
+    } finally {
+      setOnlineSaving(false)
+    }
   }
 
   useEffect(() => {
@@ -371,10 +385,10 @@ export default function StudentHomePage({ session, profile }) {
     </Box>
     <Box className="online-exam-body">
       <Box className="student-online-two-columns">
-        {[Array.from({length:10},(_,i)=>i+1), Array.from({length:10},(_,i)=>i+11)].map((questions,column)=><Box className="student-online-column" key={column}>{questions.map(question => <Paper className="student-online-question" elevation={0} key={question}><b>{question}</b><Stack direction="row" spacing={.7}>{['A','B','C','D'].map(answer=><Button key={answer} size="small" variant={onlineAnswers[question]===answer?'contained':'outlined'} onClick={()=>chooseOnlineAnswer(question,answer)}>{answer}</Button>)}</Stack></Paper>)}</Box>)}
+        {[Array.from({length:10},(_,i)=>i+1), Array.from({length:10},(_,i)=>i+11)].map((questions,column)=><Box className="student-online-column" key={column}>{questions.map(question => <Paper className="student-online-question" elevation={0} key={question}><b>{question}</b><Stack direction="row" spacing={.7}>{['A','B','C','D'].map(answer=><Button key={answer} size="small" variant={onlineAnswers[question]===answer?'contained':'outlined'} disabled={onlineSaving} onClick={()=>chooseOnlineAnswer(question,answer)}>{answer}</Button>)}</Stack></Paper>)}</Box>)}
       </Box>
     </Box>
-    <Box className="online-exam-footer"><Typography color="text.secondary">İptal edip çıkarsan cevapların korunur ve süre içinde tekrar devam edebilirsin.</Typography><Stack direction={{xs:'column',sm:'row'}} spacing={1}><Button variant="outlined" startIcon={<Close/>} onClick={cancelOnlineExam}>İptal Et ve Çık</Button><Button variant="contained" color="success" size="large" startIcon={<CheckCircle/>} onClick={()=>finishOnlineExam(false)}>Cevapları Kaydet</Button></Stack></Box>
+    <Box className="online-exam-footer"><Typography color="text.secondary">İptal edip çıkarsan cevapların korunur ve süre içinde tekrar devam edebilirsin.</Typography><Stack direction={{xs:'column',sm:'row'}} spacing={1}><Button variant="outlined" startIcon={<Close/>} disabled={onlineSaving} onClick={cancelOnlineExam}>İptal Et ve Çık</Button><Button variant="contained" color="success" size="large" startIcon={<CheckCircle/>} disabled={onlineSaving} onClick={()=>finishOnlineExam(false)}>Cevapları Kaydet</Button></Stack></Box>
   </Box>
 
   return <Box className="student-portal">

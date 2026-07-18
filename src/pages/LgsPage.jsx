@@ -15,7 +15,6 @@ import {
 } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
 import { readSharedState, writeSharedState } from '../services/sharedState'
-import { useSharedCloudState } from '../services/useSharedCloudState'
 
 const safeText = value => value == null ? '' : String(value)
 const asNumber = value => {
@@ -212,12 +211,11 @@ export default function LgsPage() {
   const [liveOpen, setLiveOpen] = useState(false)
   const [liveExam, setLiveExam] = useState(null)
   const [liveTick, setLiveTick] = useState(Date.now())
-  const [onlineExams, setOnlineExams] = useSharedCloudState({
-    stateKey: 'lgs-online-exams-v1',
-    localKey: 'lgsOnlineExams',
-    fallback: initialOnlineExams,
-    onError: error => setError(error?.message || 'LGS online denemeleri buluta kaydedilemedi.')
+  const [onlineExams, setOnlineExams] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('lgsOnlineExams')) || initialOnlineExams }
+    catch { return initialOnlineExams }
   })
+  const [onlineCloudReady, setOnlineCloudReady] = useState(false)
   const [targets, setTargets] = useState(() => {
     try { return JSON.parse(localStorage.getItem('lgsTargets')) || {} } catch { return {} }
   })
@@ -233,6 +231,30 @@ export default function LgsPage() {
 
   useEffect(() => { loadDashboard() }, [])
   useEffect(() => {
+    if (!onlineCloudReady) return undefined
+    const timer = window.setTimeout(async () => {
+      try {
+        await writeSharedState('lgs-online-exams-v1', onlineExams)
+        localStorage.setItem('lgsOnlineExams', JSON.stringify(onlineExams))
+        window.dispatchEvent(new Event('taskin-lgs-online-updated'))
+      } catch (saveError) {
+        console.error('LGS online denemeleri buluta kaydedilemedi:', saveError)
+      }
+    }, 350)
+    return () => window.clearTimeout(timer)
+  }, [onlineExams, onlineCloudReady])
+  useEffect(() => {
+    if (!onlineCloudReady) return undefined
+    const refresh = async () => {
+      try {
+        const state = await readSharedState('lgs-online-exams-v1', onlineExams)
+        if (Array.isArray(state.payload)) setOnlineExams(state.payload)
+      } catch {}
+    }
+    const timer = window.setInterval(refresh, 10000)
+    return () => window.clearInterval(timer)
+  }, [onlineCloudReady])
+  useEffect(() => {
     if (!liveOpen) return undefined
     const timer = window.setInterval(() => setLiveTick(Date.now()), 1000)
     return () => window.clearInterval(timer)
@@ -246,6 +268,17 @@ export default function LgsPage() {
     setError('')
     try {
       const globalSettings = await readSharedState('lgs-global-settings-v1', { lgsDate: '2027-06-06' })
+      const localOnline = (() => { try { return JSON.parse(localStorage.getItem('lgsOnlineExams')) || initialOnlineExams } catch { return initialOnlineExams } })()
+      const onlineState = await readSharedState('lgs-online-exams-v1', localOnline)
+      if (onlineState.updatedAt) {
+        const cloudOnline = Array.isArray(onlineState.payload) ? onlineState.payload : []
+        setOnlineExams(cloudOnline)
+        try { localStorage.setItem('lgsOnlineExams', JSON.stringify(cloudOnline)) } catch {}
+      } else {
+        setOnlineExams(localOnline)
+        await writeSharedState('lgs-online-exams-v1', localOnline)
+      }
+      setOnlineCloudReady(true)
       if (globalSettings?.payload?.lgsDate) {
         setLgsDate(globalSettings.payload.lgsDate)
         try { localStorage.setItem('lgsDate', globalSettings.payload.lgsDate) } catch {}
