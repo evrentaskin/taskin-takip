@@ -262,8 +262,7 @@ export default function StudentHomePage({ session, profile }) {
     setError('')
     sessionStorage.setItem('taskin-active-online-exam-id', String(selectedExam.id))
     try {
-      const payload = await persistScienceAttempt(selectedExam.id, attempt)
-      const cloudExam = payload.find(exam => String(exam.id) === String(selectedExam.id))
+      const { updatedExam: cloudExam } = await persistScienceAttempt(selectedExam.id, attempt)
       if (cloudExam) setActiveOnlineExam(cloudExam)
     } catch (saveError) {
       setError(`Deneme başlatılamadı: ${saveError.message || 'Bulut kaydı başarısız.'}`)
