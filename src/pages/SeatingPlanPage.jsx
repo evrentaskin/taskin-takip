@@ -8,6 +8,7 @@ const rulesDefault = { glassesFront:true, shortFront:true, tallBack:true, separa
 const deskId = (c,r) => `${c}-${r}`
 const seatId = (c,r,side) => `${c}-${r}-${side}`
 const normalize = value => String(value || '').trim().toLocaleLowerCase('tr-TR')
+const EMPTY_SEAT = '__TASKIN_EMPTY_SEAT__'
 
 function migrateLegacySeats(seats = {}) {
   const migrated = {}
@@ -22,7 +23,10 @@ function migrateLegacySeats(seats = {}) {
 export default function SeatingPlanPage(){
   const [classes,setClasses]=useState([]), [classId,setClassId]=useState(''), [students,setStudents]=useState([]), [profiles,setProfiles]=useState({})
   const [plan,setPlan]=useState(defaults), [rules,setRules]=useState(rulesDefault), [loading,setLoading]=useState(true), [message,setMessage]=useState('')
+  const [selectedStudentId,setSelectedStudentId]=useState('')
+  const [touchTargetSeat,setTouchTargetSeat]=useState('')
   const printRef=useRef(null)
+  const touchDrag=useRef(null)
   useEffect(()=>{loadClasses()},[])
   useEffect(()=>{if(classId) loadClass()},[classId])
 
@@ -50,29 +54,66 @@ export default function SeatingPlanPage(){
   }
 
   const studentById=useMemo(()=>Object.fromEntries(students.map(s=>[s.id,s])),[students])
-  const placed=new Set(Object.values(plan.seats||{}).filter(Boolean))
+  const placed=new Set(Object.values(plan.seats||{}).filter(value=>value && value!==EMPTY_SEAT))
   const unplaced=students.filter(s=>!placed.has(s.id))
   const className=classes.find(x=>x.id===classId)?.name||''
 
   function setSeat(id,studentId){setPlan(p=>({...p,seats:{...p.seats,[id]:studentId||null}}))}
-  function dropStudent(e,id){
-    e.preventDefault(); const sid=e.dataTransfer.getData('studentId'); if(!sid)return
+  function moveStudent(studentId,targetSeatId,sourceSeatId=''){
+    if(!studentId||!targetSeatId)return
     setPlan(p=>{
       const seats={...p.seats}
-      Object.keys(seats).forEach(k=>{if(seats[k]===sid)seats[k]=null})
-      // Dolu koltuğa bırakılırsa iki öğrenci yer değiştirir.
-      const previousTarget=seats[id]
-      const sourceId=e.dataTransfer.getData('sourceSeatId')
-      seats[id]=sid
-      if(previousTarget && sourceId) seats[sourceId]=previousTarget
+      const previousTarget=seats[targetSeatId]
+      Object.keys(seats).forEach(k=>{if(seats[k]===studentId)seats[k]=null})
+      seats[targetSeatId]=studentId
+      if(previousTarget && previousTarget!==EMPTY_SEAT && sourceSeatId && sourceSeatId!==targetSeatId) seats[sourceSeatId]=previousTarget
       return {...p,seats}
     })
+    setSelectedStudentId('')
+  }
+  function dropStudent(e,id){
+    e.preventDefault(); const sid=e.dataTransfer.getData('studentId'); if(!sid)return
+    moveStudent(sid,id,e.dataTransfer.getData('sourceSeatId'))
   }
   function beginDrag(e,studentId,sourceSeatId=''){
     e.dataTransfer.setData('studentId',studentId)
     e.dataTransfer.setData('sourceSeatId',sourceSeatId)
     e.dataTransfer.effectAllowed='move'
   }
+  function beginTouch(e,studentId,sourceSeatId=''){
+    const touch=e.touches?.[0]
+    if(!touch)return
+    touchDrag.current={studentId,sourceSeatId}
+    setSelectedStudentId(studentId)
+    setTouchTargetSeat('')
+  }
+  function moveTouch(e){
+    if(!touchDrag.current)return
+    const touch=e.touches?.[0]
+    if(!touch)return
+    e.preventDefault()
+    const target=document.elementFromPoint(touch.clientX,touch.clientY)?.closest?.('[data-seat-id]')
+    setTouchTargetSeat(target?.dataset?.seatId||'')
+  }
+  function endTouch(e){
+    const drag=touchDrag.current
+    if(!drag)return
+    const touch=e.changedTouches?.[0]
+    const target=touch ? document.elementFromPoint(touch.clientX,touch.clientY)?.closest?.('[data-seat-id]') : null
+    const targetId=target?.dataset?.seatId||touchTargetSeat
+    if(targetId) moveStudent(drag.studentId,targetId,drag.sourceSeatId)
+    touchDrag.current=null
+    setTouchTargetSeat('')
+  }
+  function chooseSeat(id){
+    if(selectedStudentId) moveStudent(selectedStudentId,id,'')
+  }
+  function reserveEmpty(id){
+    const current=plan.seats[id]
+    if(current && current!==EMPTY_SEAT) setSelectedStudentId(current)
+    setSeat(id,EMPTY_SEAT)
+  }
+
   function addColumn(){setPlan(p=>({...p,columns:[...p.columns,5]}))}
   function removeColumn(i){
     setPlan(p=>{
@@ -122,7 +163,7 @@ export default function SeatingPlanPage(){
   function smartDistribute(){
     const locked=new Set(plan.locked_students||[]), seats={...plan.seats}
     const fixed=new Set(Object.entries(seats).filter(([,sid])=>locked.has(sid)).map(([,sid])=>sid))
-    Object.keys(seats).forEach(k=>{if(!fixed.has(seats[k]))seats[k]=null})
+    Object.keys(seats).forEach(k=>{if(seats[k]!==EMPTY_SEAT && !fixed.has(seats[k]))seats[k]=null})
     let pool=students.filter(s=>!fixed.has(s.id))
     const positions=[]
     plan.columns.forEach((count,c)=>Array.from({length:count}).forEach((_,r)=>{
@@ -157,13 +198,20 @@ export default function SeatingPlanPage(){
   }
 
   function Seat({id}){
-    const sid=plan.seats[id], st=studentById[sid], locked=(plan.locked_students||[]).includes(sid)
-    return <div className={`desk-seat ${st?'occupied':''}`} onDragOver={e=>e.preventDefault()} onDrop={e=>dropStudent(e,id)}>
+    const sid=plan.seats[id], reserved=sid===EMPTY_SEAT, st=studentById[sid], locked=(plan.locked_students||[]).includes(sid)
+    return <div data-seat-id={id} className={`desk-seat ${st?'occupied':''} ${reserved?'reserved-empty':''} ${touchTargetSeat===id?'touch-drop-target':''}`} onClick={()=>chooseSeat(id)} onDragOver={e=>e.preventDefault()} onDrop={e=>dropStudent(e,id)}>
       {st?<>
-        <div className="seat-student" draggable onDragStart={e=>beginDrag(e,st.id,id)}>{st.first_name} {st.last_name}<small>{st.student_number}</small></div>
-        <button className="seat-lock" title={locked?'Sabitlemeyi kaldır':'Öğrenciyi sabitle'} onClick={()=>toggleLock(sid)}>{locked?<Lock/>:<LockOpen/>}</button>
-        <button className="seat-remove" title="Koltuktan kaldır" onClick={()=>setSeat(id,null)}>×</button>
-      </>:<span>Boş</span>}
+        <div className={`seat-student ${selectedStudentId===st.id?'selected':''}`} draggable onClick={e=>{e.stopPropagation();setSelectedStudentId(st.id)}} onDragStart={e=>beginDrag(e,st.id,id)} onTouchStart={e=>beginTouch(e,st.id,id)} onTouchMove={moveTouch} onTouchEnd={endTouch}>{st.first_name} {st.last_name}<small>{st.student_number}</small></div>
+        <button className="seat-lock" title={locked?'Sabitlemeyi kaldır':'Öğrenciyi sabitle'} onClick={e=>{e.stopPropagation();toggleLock(sid)}}>{locked?<Lock/>:<LockOpen/>}</button>
+        <button className="seat-remove" title="Koltuktan kaldır" onClick={e=>{e.stopPropagation();setSeat(id,null)}}>×</button>
+        <button className="seat-empty" title="Bu koltuğu boş bırak" onClick={e=>{e.stopPropagation();reserveEmpty(id)}}>Boş bırak</button>
+      </>:reserved?<>
+        <span className="reserved-label">Boş bırakıldı</span>
+        <button className="seat-enable" onClick={e=>{e.stopPropagation();setSeat(id,null)}}>Kullan</button>
+      </>:<>
+        <span>{selectedStudentId?'Buraya yerleştir':'Boş'}</span>
+        <button className="seat-empty empty-seat-action" onClick={e=>{e.stopPropagation();reserveEmpty(id)}}>Boş bırak</button>
+      </>}
     </div>
   }
 
@@ -173,7 +221,7 @@ export default function SeatingPlanPage(){
     {message&&<Alert sx={{mb:2}} onClose={()=>setMessage('')}>{message}</Alert>}
     <Paper className="seating-toolbar" variant="outlined"><TextField select label="Sınıf" value={classId} onChange={e=>setClassId(e.target.value)}>{classes.map(c=><MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}</TextField><TextField label="Okul adı" value={plan.school_name} onChange={e=>setPlan(p=>({...p,school_name:e.target.value}))}/><TextField label="Eğitim yılı" value={plan.school_year} onChange={e=>setPlan(p=>({...p,school_year:e.target.value}))}/><TextField select label="Sayfa" value={plan.orientation} onChange={e=>setPlan(p=>({...p,orientation:e.target.value}))}><MenuItem value="landscape">Yatay</MenuItem><MenuItem value="portrait">Dikey</MenuItem></TextField></Paper>
     <Paper className="seating-rules" variant="outlined"><Typography fontWeight={900}>Akıllı dağıtım kuralları</Typography><Stack direction="row" flexWrap="wrap">{[['glassesFront','Gözlüklüler önde'],['shortFront','Kısa boylular önde'],['tallBack','Uzun boylular arkada'],['separateTalkative','Çok konuşanları ayır'],['mixedGender','Kız-erkek yan yana'],['pairSupport','Çalışkan-destek eşleştir']].map(([k,l])=><FormControlLabel key={k} control={<Checkbox checked={rules[k]} onChange={e=>setRules(r=>({...r,[k]:e.target.checked}))}/>} label={l}/>)}</Stack><Button variant="contained" color="secondary" startIcon={<AutoAwesome/>} onClick={smartDistribute}>Akıllı Dağıt</Button></Paper>
-    <Box className="seating-workspace"><Paper className="student-pool" variant="outlined"><Typography fontWeight={900}>Yerleştirilmemiş Öğrenciler ({unplaced.length})</Typography>{unplaced.map(s=><Chip draggable onDragStart={e=>beginDrag(e,s.id)} key={s.id} label={`${s.student_number} ${s.first_name} ${s.last_name}`} />)}</Paper>
+    <Box className="seating-workspace"><Paper className="student-pool" variant="outlined"><Typography fontWeight={900}>Yerleştirilmemiş Öğrenciler ({unplaced.length})</Typography><Typography variant="caption" color="text.secondary">Telefonda öğrenciyi sürükleyin veya öğrenciye dokunup koltuğu seçin.</Typography>{unplaced.map(s=><Chip className={selectedStudentId===s.id?'selected-student-chip':''} draggable onClick={()=>setSelectedStudentId(s.id)} onDragStart={e=>beginDrag(e,s.id)} onTouchStart={e=>beginTouch(e,s.id)} onTouchMove={moveTouch} onTouchEnd={endTouch} key={s.id} label={`${s.student_number} ${s.first_name} ${s.last_name}`} />)}</Paper>
       <Paper ref={printRef} className={`seating-print ${plan.orientation}`} variant="outlined"><div className="print-title"><b>{plan.school_name||'OKUL ADI'}</b><span>{className} SINIFI OTURMA PLANI</span><small>{plan.school_year} • {new Date().toLocaleDateString('tr-TR')}</small></div><div className="board">AKILLI TAHTA</div><div className="teacher-desk">ÖĞRETMEN MASASI</div><div className="seat-columns">{plan.columns.map((count,c)=><div className="seat-column" key={c}><div className="column-tools"><TextField size="small" type="number" label="Sıra" value={count} onChange={e=>rows(c,e.target.value)}/><Button size="small" color="error" onClick={()=>removeColumn(c)}><Delete/></Button></div>{Array.from({length:count}).map((_,r)=><div className="double-desk" key={deskId(c,r)}><Seat id={seatId(c,r,0)}/><Seat id={seatId(c,r,1)}/></div>)}</div>)}<Button className="add-column" startIcon={<Add/>} onClick={addColumn}>Sütun Ekle</Button></div></Paper></Box>
   </Box>
 }
