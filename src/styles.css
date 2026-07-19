@@ -1956,18 +1956,46 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
   transform: translateZ(0);
 }
 
-/* V9.5.9 Mobil oturma planı ve bağımsız boş koltuk */
-.desk-seat{padding-bottom:24px}
-.seat-empty,.seat-enable{position:absolute!important;left:50%!important;right:auto!important;bottom:2px!important;top:auto!important;transform:translateX(-50%);font-size:10px;white-space:nowrap;color:#607d8b}
-.seat-empty:hover,.seat-enable:hover{color:#263238}
-.empty-seat-action{opacity:.72}
-.reserved-empty{background:repeating-linear-gradient(135deg,#f5f7f8,#f5f7f8 8px,#e8edef 8px,#e8edef 16px)!important}
-.reserved-label{color:#607d8b!important;font-weight:800!important;font-size:12px}
-.touch-drop-target{box-shadow:inset 0 0 0 4px #1976d2!important;background:#e3f2fd!important}
-.seat-student.selected,.selected-student-chip{outline:3px solid #1976d2!important;outline-offset:2px}
-@media(max-width:899px){
-  .student-pool .MuiChip-root,.seat-student{touch-action:none;-webkit-user-select:none;user-select:none}
-  .desk-seat{min-height:88px;padding-bottom:28px}
-  .seat-empty,.seat-enable{font-size:9px}
+.yearly-plan-toolbar,
+.yearly-plan-card {
+  padding: 20px;
 }
-@media print{.seat-empty,.seat-enable{display:none!important}.reserved-empty{background:#fff!important}.reserved-label{color:transparent!important}}
+
+.yearly-plan-card {
+  max-width: 820px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.yearly-plan-outcome {
+  padding: 18px;
+  border: 1px solid rgba(100, 116, 139, 0.18);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.yearly-plan-upload-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.yearly-plan-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid rgba(100, 116, 139, 0.16);
+  border-radius: 16px;
+}
+
+@media (max-width: 599px) {
+  .yearly-plan-toolbar,
+  .yearly-plan-card {
+    padding: 14px;
+  }
+
+  .yearly-plan-upload-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -3,9 +3,11 @@ import {
   Alert, Box, Button, Checkbox, CircularProgress, Dialog, DialogActions,
   DialogContent, DialogTitle, FormControlLabel, Stack, TextField, Typography
 } from '@mui/material'
-import { CalendarMonth, LockReset, Person, Save, School } from '@mui/icons-material'
+import { CalendarMonth, DeleteOutline, Download, LockReset, Person, Save, School, UploadFile } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
 import { isValidUsername, toAuthSafeUsername, USERNAME_HELP } from '../utils/username'
+import { useSharedCloudState } from '../services/useSharedCloudState'
+import { parseYearlyPlanWorkbook, YEARLY_PLAN_GRADES, YEARLY_PLAN_LOCAL_KEY, YEARLY_PLAN_STATE_KEY } from '../utils/yearlyPlan'
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState({ full_name: '', username: '' })
@@ -22,6 +24,13 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [yearlyPlans, setYearlyPlans, plansReady] = useSharedCloudState({
+    stateKey: YEARLY_PLAN_STATE_KEY,
+    localKey: YEARLY_PLAN_LOCAL_KEY,
+    fallback: {},
+    onError: err => setError(err?.message || 'Yıllık planlar yüklenemedi.')
+  })
+  const [planBusyGrade, setPlanBusyGrade] = useState('')
 
   useEffect(() => { loadSettings() }, [])
 
@@ -221,6 +230,33 @@ export default function SettingsPage() {
     }
   }
 
+
+  async function uploadYearlyPlan(grade, file) {
+    if (!file) return
+    setError('')
+    setMessage('')
+    setPlanBusyGrade(grade)
+    try {
+      const entries = await parseYearlyPlanWorkbook(file, grade)
+      setYearlyPlans(current => ({ ...(current || {}), [grade]: entries }))
+      setMessage(`${grade}. sınıf yıllık planı yüklendi. ${entries.length} kazanım satırı kaydedildi.`)
+    } catch (err) {
+      setError(err?.message || 'Excel dosyası okunamadı.')
+    } finally {
+      setPlanBusyGrade('')
+    }
+  }
+
+  function deleteYearlyPlan(grade) {
+    if (!window.confirm(`${grade}. sınıf yıllık planını silmek istediğine emin misin?`)) return
+    setYearlyPlans(current => {
+      const next = { ...(current || {}) }
+      delete next[grade]
+      return next
+    })
+    setMessage(`${grade}. sınıf yıllık planı silindi.`)
+  }
+
   async function changePassword() {
     if (newPassword.length < 6) return setError('Şifre en az 6 karakter olmalı.')
     if (newPassword !== newPasswordAgain) return setError('Şifreler aynı değil.')
@@ -352,6 +388,72 @@ export default function SettingsPage() {
             Yeni Dönemi Başlat
           </Button>
         </Stack>
+      </Box>
+
+
+      <Box className="glass settings-card settings-term-card">
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+          <CalendarMonth color="primary" />
+          <Typography variant="h6" fontWeight={900}>Yıllık Plan Yönetimi</Typography>
+        </Stack>
+        <Typography color="text.secondary" sx={{ mb: 2 }}>
+          Yalnızca dersine girdiğin sınıfların Fen Bilimleri yıllık planlarını yükle. Aynı sınıfa yeni Excel yüklediğinde eski plan güncellenir.
+        </Typography>
+
+        <Button
+          component="a"
+          href="/fen-yillik-plan-sablonu.xlsx"
+          download="Fen_Yillik_Plan_Sablonu.xlsx"
+          variant="outlined"
+          startIcon={<Download />}
+          sx={{ mb: 2 }}
+        >
+          Excel Şablonunu İndir
+        </Button>
+
+        <Box className="yearly-plan-upload-grid">
+          {YEARLY_PLAN_GRADES.map(grade => {
+            const count = Array.isArray(yearlyPlans?.[grade]) ? yearlyPlans[grade].length : 0
+            return (
+              <Box key={grade} className="yearly-plan-upload-row">
+                <Box sx={{ minWidth: 100 }}>
+                  <Typography fontWeight={900}>{grade}. Sınıf</Typography>
+                  <Typography variant="caption" color={count ? 'success.main' : 'text.secondary'}>
+                    {count ? `${count} kazanım yüklü` : 'Plan yüklenmemiş'}
+                  </Typography>
+                </Box>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ flex: 1, justifyContent: 'flex-end' }}>
+                  <Button
+                    component="label"
+                    variant={count ? 'outlined' : 'contained'}
+                    startIcon={planBusyGrade === grade ? <CircularProgress size={16} /> : <UploadFile />}
+                    disabled={!plansReady || Boolean(planBusyGrade)}
+                  >
+                    {count ? 'Excel’i Güncelle' : 'Excel Yükle'}
+                    <input
+                      hidden
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={event => {
+                        const file = event.target.files?.[0]
+                        event.target.value = ''
+                        uploadYearlyPlan(grade, file)
+                      }}
+                    />
+                  </Button>
+                  {count > 0 && (
+                    <Button color="error" variant="text" startIcon={<DeleteOutline />} onClick={() => deleteYearlyPlan(grade)}>
+                      Sil
+                    </Button>
+                  )}
+                </Stack>
+              </Box>
+            )
+          })}
+        </Box>
+        <Alert severity="info" sx={{ mt: 2 }}>
+          Excel sütunları: <b>Hafta Başlangıç</b>, <b>Hafta Bitiş</b>, <b>Ünite</b> ve <b>Kazanım</b>. Aynı haftada birden fazla kazanım varsa ayrı satırlara yazabilirsin.
+        </Alert>
       </Box>
 
 
