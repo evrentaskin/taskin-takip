@@ -1999,3 +1999,52 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
     flex-direction: column;
   }
 }
+
+/* V9.6.4 Final - ortak, sıkı online cevap ekranı */
+.compact-online-answer-grid .student-online-question{
+  display:grid!important;
+  grid-template-columns:36px max-content!important;
+  justify-content:start!important;
+  align-items:center!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:48px!important;
+  gap:8px!important;
+  padding:7px 9px!important;
+}
+.compact-online-answer-grid .student-online-question>b{
+  width:32px!important;
+  height:32px!important;
+  font-size:15px!important;
+}
+.compact-online-answer-grid .student-online-question .MuiStack-root{
+  justify-content:flex-start!important;
+  flex-wrap:nowrap!important;
+  gap:6px!important;
+}
+.compact-online-answer-grid .student-online-question .MuiButton-root{
+  min-width:34px!important;
+  width:34px!important;
+  height:32px!important;
+  padding:0!important;
+  border-radius:9px!important;
+}
+.student-online-two-columns.compact-online-answer-grid{
+  gap:12px!important;
+}
+.student-online-two-columns.compact-online-answer-grid .student-online-column{
+  gap:7px!important;
+}
+.lgs-online-four-row-grid.compact-online-answer-grid{
+  grid-template-rows:repeat(4,minmax(48px,auto))!important;
+  grid-auto-columns:minmax(225px,1fr)!important;
+  gap:7px!important;
+}
+@media(max-width:800px){
+  .compact-online-answer-grid .student-online-question{
+    grid-template-columns:34px max-content!important;
+  }
+  .compact-online-answer-grid .student-online-question .MuiButton-root{
+    min-width:32px!important;width:32px!important;height:31px!important;
+  }
+}

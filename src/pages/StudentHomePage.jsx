@@ -272,7 +272,10 @@ export default function StudentHomePage({ session, profile }) {
   }
 
   async function chooseOnlineAnswer(question, answer) {
-    const answers = { ...onlineAnswers, [question]: answer }
+    const nextAnswer = onlineAnswers[question] === answer ? null : answer
+    const answers = { ...onlineAnswers }
+    if (nextAnswer) answers[question] = nextAnswer
+    else delete answers[question]
     setOnlineAnswers(answers)
     if (!activeOnlineExam || !student) return
     const existing = activeOnlineExam.attempts?.[student.id] || {}
@@ -402,7 +405,7 @@ export default function StudentHomePage({ session, profile }) {
       <Stack direction={{xs:'column',sm:'row'}} spacing={1} alignItems={{sm:'center'}}>{activeOnlineExam.attachment && <><Button variant="outlined" startIcon={<NoteAlt/>} onClick={()=>accessOnlineExamFile(activeOnlineExam,false)}>Denemeyi Aç</Button><Button variant="outlined" startIcon={<Download/>} onClick={()=>accessOnlineExamFile(activeOnlineExam,true)}>İndir</Button></>}<Chip color="warning" icon={<Schedule/>} label={`Kalan Süre: ${remainingText(activeOnlineExam.endAt, now)}`} /><Chip label={`İşaretlenen: ${Object.keys(onlineAnswers).length} / 20`} /></Stack>
     </Box>
     <Box className="online-exam-body">
-      <Box className="student-online-two-columns">
+      <Box className="student-online-two-columns compact-online-answer-grid">
         {[Array.from({length:10},(_,i)=>i+1), Array.from({length:10},(_,i)=>i+11)].map((questions,column)=><Box className="student-online-column" key={column}>{questions.map(question => <Paper className="student-online-question" elevation={0} key={question}><b>{question}</b><Stack direction="row" spacing={.7}>{['A','B','C','D'].map(answer=><Button key={answer} size="small" variant={onlineAnswers[question]===answer?'contained':'outlined'} disabled={onlineSaving} onClick={()=>chooseOnlineAnswer(question,answer)}>{answer}</Button>)}</Stack></Paper>)}</Box>)}
       </Box>
     </Box>

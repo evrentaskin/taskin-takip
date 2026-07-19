@@ -223,7 +223,9 @@ export default function LgsStudentHomePage({ session, student, classInfo }) {
   }
 
   async function chooseOnlineAnswer(key,value){
-    const answers={...onlineAnswers,[key]:value}
+    const answers={...onlineAnswers}
+    if(onlineAnswers[key]===value) delete answers[key]
+    else answers[key]=value
     setOnlineAnswers(answers)
     if(!activeOnline)return
     const existing=participantFor(activeOnline,student)||{}
@@ -304,7 +306,7 @@ export default function LgsStudentHomePage({ session, student, classInfo }) {
       <Stack direction={{xs:'column',sm:'row'}} spacing={1} alignItems={{sm:'center'}}>{activeOnline.attachment&&<><Button variant="outlined" startIcon={<Download/>} onClick={()=>accessLgsOnlineFile(activeOnline,false)}>Denemeyi Aç</Button><Button variant="outlined" startIcon={<Download/>} onClick={()=>accessLgsOnlineFile(activeOnline,true)}>İndir</Button></>}<Chip color="warning" label={`Kalan Süre: ${remainingText(onlineWindow(activeOnline).end, onlineNow)}`} /><Chip label={`İşaretlenen: ${Object.keys(onlineAnswers).length} / 90`} /><Chip color="primary" label={`${selectedBooklet} Grubu`} /></Stack>
     </Box>
     <Box className="online-exam-body">
-      {lessons.map(lesson=><Box className="lgs-online-lesson-section" key={lesson.key}><Typography variant="h6" fontWeight={950}>{lesson.name}</Typography><Box className="lgs-online-four-row-grid">{Array.from({length:lesson.count},(_,index)=>index+1).map(question=>{const key=`${lesson.key}-${question}`;return <Paper className="student-online-question" elevation={0} key={key}><b>{question}</b><Stack direction="row" spacing={.7}>{['A','B','C','D'].map(answer=><Button key={answer} size="small" variant={onlineAnswers[key]===answer?'contained':'outlined'} disabled={onlineSaving} onClick={()=>chooseOnlineAnswer(key,answer)}>{answer}</Button>)}</Stack></Paper>})}</Box></Box>)}
+      {lessons.map(lesson=><Box className="lgs-online-lesson-section" key={lesson.key}><Typography variant="h6" fontWeight={950}>{lesson.name}</Typography><Box className="lgs-online-four-row-grid compact-online-answer-grid">{Array.from({length:lesson.count},(_,index)=>index+1).map(question=>{const key=`${lesson.key}-${question}`;return <Paper className="student-online-question" elevation={0} key={key}><b>{question}</b><Stack direction="row" spacing={.7}>{['A','B','C','D'].map(answer=><Button key={answer} size="small" variant={onlineAnswers[key]===answer?'contained':'outlined'} disabled={onlineSaving} onClick={()=>chooseOnlineAnswer(key,answer)}>{answer}</Button>)}</Stack></Paper>})}</Box></Box>)}
     </Box>
     <Box className="online-exam-footer"><Typography color="text.secondary">İptal edip çıkarsan cevapların korunur ve süre içinde tekrar devam edebilirsin.</Typography><Stack direction={{xs:'column',sm:'row'}} spacing={1}><Button variant="outlined" startIcon={<Close/>} onClick={cancelOnlineExam}>İptal Et ve Çık</Button><Button variant="contained" color="success" size="large" startIcon={<CheckCircle/>} disabled={onlineSaving} onClick={()=>finishOnlineExam(false)}>Cevapları Kaydet</Button></Stack></Box>
   </Box>
