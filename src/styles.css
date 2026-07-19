@@ -1944,3 +1944,14 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
 .student-pdf-preparing-overlay b,
 .student-pdf-preparing-overlay span{display:block}
 .student-pdf-preparing-overlay span{margin-top:6px;color:#607584;font-size:13px}
+
+/* V9.5.8 Mobil öğrenci Denemelerim yatay kaydırma sabitlemesi */
+.student-exams-table-wrap {
+  overscroll-behavior-x: contain;
+  scroll-behavior: auto;
+  touch-action: pan-x pan-y;
+  scrollbar-gutter: stable;
+}
+.student-exams-table-wrap .student-data-table {
+  transform: translateZ(0);
+}

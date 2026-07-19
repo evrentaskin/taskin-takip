@@ -77,6 +77,7 @@ export default function StudentHomePage({ session, profile }) {
   const [exams, setExams] = useState(() => safeLoad(KEYS.exams))
   const [homeworks, setHomeworks] = useState(() => safeLoad(KEYS.homework))
   const pdfRef = useRef(null)
+  const examsTableScrollLeftRef = useRef(0)
 
   const plusRecords = safeLoad(KEYS.plus)
   const grades = safeLoad(KEYS.grades, {})
@@ -220,15 +221,9 @@ export default function StudentHomePage({ session, profile }) {
   }
 
   async function persistScienceAttempt(examId, attempt) {
-    const result = await saveMyScienceOnlineAttempt(examId, attempt)
-    const updatedExam = Array.isArray(result)
-      ? result.find(exam => String(exam.id) === String(examId))
-      : result
-    const next = Array.isArray(result)
-      ? result
-      : exams.map(exam => String(exam.id) === String(examId) ? (updatedExam || exam) : exam)
-    persistExams(next)
-    return next
+    const payload = await saveMyScienceOnlineAttempt(examId, attempt)
+    persistExams(payload)
+    return payload
   }
 
   async function beginOnlineExam() {
@@ -477,7 +472,18 @@ export default function StudentHomePage({ session, profile }) {
 
   function StudentExams() {
     const chronological = [...studentExams].sort((a, b) => new Date(examDate(a)) - new Date(examDate(b)))
-    return <Stack spacing={2}><PageTitle icon={<Quiz />} title="Denemelerim" subtitle="Fen, genel ve online deneme sonuçların" action={<Button variant="contained" startIcon={<Download />} onClick={downloadPdf}>Durum PDF</Button>}/><Paper className="student-table-card" elevation={0}><div className="student-table-wrap"><table className="student-data-table"><thead><tr><th>Tarih</th><th>Tür</th><th>Deneme</th><th>Doğru</th><th>Yanlış</th><th>Net</th><th>Sınıf Sırası</th><th>Analiz</th></tr></thead><tbody>{studentExams.map(exam => { const result = examResult(exam, student.id) || {}; const rows = examParticipants(exam).sort((a,b)=>b.net-a.net); const rankIndex = rows.findIndex(r=>r.id===student.id); const rank = rankIndex >= 0 ? rankIndex + 1 : 0; return <tr key={exam.id}><td>{fmtDate(examDate(exam))}</td><td><Chip size="small" label={examType(exam)} /></td><td>{exam.name}</td><td>{result.correct ?? '—'}</td><td>{result.wrong ?? '—'}</td><td><b>{(exam.kind === 'online' ? threeWrongNet(result.correct, result.wrong) : Number(result.net || 0)).toFixed(2)}</b></td><td>{rank || '—'} / {rows.length}</td><td>{exam.kind === 'online' && new Date(exam.endAt) <= now ? <Button size="small" variant="outlined" startIcon={<BarChart/>} onClick={() => setAnalysisExam(exam)}>Analizi Gör</Button> : '—'}</td></tr>})}</tbody></table></div>{!studentExams.length && <Empty text="Henüz deneme sonucun yok."/>}</Paper><Box className="student-chart-grid"><Paper className="student-chart-card" elevation={0}><Typography variant="h6" fontWeight={950}>Net Gelişimim</Typography><LineChart exams={chronological}/></Paper><Paper className="student-chart-card" elevation={0}><Typography variant="h6" fontWeight={950}>Son Deneme Karşılaştırması</Typography><ComparisonChart exam={latestExam}/></Paper></Box><StudentReport /></Stack>
+    return <Stack spacing={2}><PageTitle icon={<Quiz />} title="Denemelerim" subtitle="Fen, genel ve online deneme sonuçların" action={<Button variant="contained" startIcon={<Download />} onClick={downloadPdf}>Durum PDF</Button>}/><Paper className="student-table-card" elevation={0}><div
+  className="student-table-wrap student-exams-table-wrap"
+  ref={node => {
+    if (!node) return
+    requestAnimationFrame(() => {
+      if (Math.abs(node.scrollLeft - examsTableScrollLeftRef.current) > 1) {
+        node.scrollLeft = examsTableScrollLeftRef.current
+      }
+    })
+  }}
+  onScroll={event => { examsTableScrollLeftRef.current = event.currentTarget.scrollLeft }}
+><table className="student-data-table"><thead><tr><th>Tarih</th><th>Tür</th><th>Deneme</th><th>Doğru</th><th>Yanlış</th><th>Net</th><th>Sınıf Sırası</th><th>Analiz</th></tr></thead><tbody>{studentExams.map(exam => { const result = examResult(exam, student.id) || {}; const rows = examParticipants(exam).sort((a,b)=>b.net-a.net); const rankIndex = rows.findIndex(r=>r.id===student.id); const rank = rankIndex >= 0 ? rankIndex + 1 : 0; return <tr key={exam.id}><td>{fmtDate(examDate(exam))}</td><td><Chip size="small" label={examType(exam)} /></td><td>{exam.name}</td><td>{result.correct ?? '—'}</td><td>{result.wrong ?? '—'}</td><td><b>{(exam.kind === 'online' ? threeWrongNet(result.correct, result.wrong) : Number(result.net || 0)).toFixed(2)}</b></td><td>{rank || '—'} / {rows.length}</td><td>{exam.kind === 'online' && new Date(exam.endAt) <= now ? <Button size="small" variant="outlined" startIcon={<BarChart/>} onClick={() => setAnalysisExam(exam)}>Analizi Gör</Button> : '—'}</td></tr>})}</tbody></table></div>{!studentExams.length && <Empty text="Henüz deneme sonucun yok."/>}</Paper><Box className="student-chart-grid"><Paper className="student-chart-card" elevation={0}><Typography variant="h6" fontWeight={950}>Net Gelişimim</Typography><LineChart exams={chronological}/></Paper><Paper className="student-chart-card" elevation={0}><Typography variant="h6" fontWeight={950}>Son Deneme Karşılaştırması</Typography><ComparisonChart exam={latestExam}/></Paper></Box><StudentReport /></Stack>
   }
 
   function StudentHomeworks() {
