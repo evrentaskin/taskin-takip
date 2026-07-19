@@ -1,24 +1,22 @@
-TAŞKIN TAKİP V9.6.1 — ONLINE DENEME DOSYA EKİ
+V9.6.2 ONLINE DENEME BEYAZ EKRAN DÜZELTMESİ
 
-1) ZIP içindeki src klasörünü projenin üzerine kopyalayın.
-2) Supabase > SQL Editor bölümünde şu dosyayı çalıştırın:
-   supabase/migrations/20260719_online_exam_files.sql
-3) Terminalde:
-   npm install
-   npm run build
-   git add .
-   git commit -m "Online deneme PDF ve resim eki"
-   git push
+Sorun:
+Supabase save_my_science_online_attempt RPC fonksiyonu güncellenen tek denemeyi nesne olarak döndürürken öğrenci paneli bunu tüm deneme listesi sanıp state'e yazıyordu. Ardından exams.filter çalışınca "filter is not a function" hatası oluşuyor ve ekran beyaza dönüyordu.
 
-ÖZELLİKLER
-- Fen ve LGS online denemelerine PDF/JPG/PNG/WEBP eklenebilir.
-- En fazla dosya boyutu 20 MB'dir.
-- Öğrenci dosyayı yalnızca denemenin başlangıç-bitiş süresi içinde açabilir/indirebilir.
-- Öğrenci cevabı kesin kaydedince dosya erişimi kapanır.
-- Süre bitince dosya düğmeleri görünmez; yalnızca sonuç ve analiz kalır.
-- Öğretmen tekrar çözdürürse erişim sınav süresi hâlâ devam ediyorsa yeniden açılır.
-- Bağlantılar 2 dakikalık imzalı URL olarak oluşturulur.
+Düzeltme:
+- RPC'nin tek deneme nesnesi dönüşü mevcut deneme listesine güvenli biçimde birleştirildi.
+- Eski RPC sürümlerinin dizi döndürmesi de desteklenmeye devam ediyor.
+- localStorage veya buluttan hatalı tip gelirse öğrenci ekranının çökmesini önleyen dizi kontrolleri eklendi.
+- Deneme başlatma ve cevap kaydetme sonrası aktif sınav güvenli biçimde güncelleniyor.
 
-BUILD KONTROLÜ
-- npm run build başarıyla tamamlandı.
-- Vite yalnızca mevcut büyük bundle uyarısını verdi; derleme hatası yoktur.
+Kurulum:
+1. ZIP içindeki src klasörünü proje klasörünün üzerine kopyalayın.
+2. npm run build
+3. git add .
+4. git commit -m "Online deneme beyaz ekran duzeltmesi"
+5. git push
+
+SQL GEREKMEZ.
+
+Kontrol:
+Üretim derlemesi başarıyla tamamlandı.

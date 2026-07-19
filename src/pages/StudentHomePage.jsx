@@ -27,6 +27,7 @@ const KEYS = {
   comments: 'taskin-akademi-v64-comments'
 }
 const safeLoad = (key, fallback = []) => { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)) } catch { return fallback } }
+const asArray = value => Array.isArray(value) ? value : []
 const fmtDate = value => value ? new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(value)) : '—'
 const fmtDateTime = value => value ? new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value)) : '—'
 const examDate = exam => exam.date || exam.startAt || exam.createdAt || ''
@@ -75,8 +76,8 @@ export default function StudentHomePage({ session, profile }) {
   const [onlineAnswers, setOnlineAnswers] = useState({})
   const [analysisExam, setAnalysisExam] = useState(null)
   const [onlineSaving, setOnlineSaving] = useState(false)
-  const [exams, setExams] = useState(() => safeLoad(KEYS.exams))
-  const [homeworks, setHomeworks] = useState(() => safeLoad(KEYS.homework))
+  const [exams, setExams] = useState(() => asArray(safeLoad(KEYS.exams)))
+  const [homeworks, setHomeworks] = useState(() => asArray(safeLoad(KEYS.homework)))
   const pdfRef = useRef(null)
   const examsTableScrollLeftRef = useRef(0)
 
@@ -91,11 +92,11 @@ export default function StudentHomePage({ session, profile }) {
           readSharedState('exams-v1', safeLoad(KEYS.exams)),
           readSharedState('homeworks-v1', safeLoad(KEYS.homework))
         ])
-        setExams(examState.payload || [])
-        setHomeworks(homeworkState.payload || [])
+        setExams(asArray(examState.payload))
+        setHomeworks(asArray(homeworkState.payload))
       } catch {
-        setExams(safeLoad(KEYS.exams))
-        setHomeworks(safeLoad(KEYS.homework))
+        setExams(asArray(safeLoad(KEYS.exams)))
+        setHomeworks(asArray(safeLoad(KEYS.homework)))
       }
     }
     const clockTimer = setInterval(() => setNow(new Date()), 1000)
@@ -222,9 +223,15 @@ export default function StudentHomePage({ session, profile }) {
   }
 
   async function persistScienceAttempt(examId, attempt) {
-    const payload = await saveMyScienceOnlineAttempt(examId, attempt)
-    persistExams(payload)
-    return payload
+    const result = await saveMyScienceOnlineAttempt(examId, attempt)
+    const updatedExam = Array.isArray(result)
+      ? result.find(exam => String(exam.id) === String(examId))
+      : result
+    const next = Array.isArray(result)
+      ? result
+      : asArray(exams).map(exam => String(exam.id) === String(examId) ? (updatedExam || exam) : exam)
+    persistExams(next)
+    return { exams: next, updatedExam }
   }
 
   async function accessOnlineExamFile(exam, download = false) {
@@ -274,8 +281,7 @@ export default function StudentHomePage({ session, profile }) {
     const updated = { ...activeOnlineExam, attempts: { ...(activeOnlineExam.attempts || {}), [student.id]: attempt } }
     setActiveOnlineExam(updated)
     try {
-      const payload = await persistScienceAttempt(updated.id, attempt)
-      const cloudExam = payload.find(exam => String(exam.id) === String(updated.id))
+      const { updatedExam: cloudExam } = await persistScienceAttempt(updated.id, attempt)
       if (cloudExam) setActiveOnlineExam(cloudExam)
       setError('')
     } catch (saveError) {
