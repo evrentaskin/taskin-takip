@@ -12,6 +12,7 @@ import {
 import { supabase } from '../services/supabase'
 import { readSharedState } from '../services/sharedState'
 import { saveMyLgsOnlineAttempt } from '../services/studentOnlineExam'
+import { openOnlineExamFile } from '../services/onlineExamFiles'
 
 const lessons = [
   { key:'turkish', name:'Türkçe', count:20 }, { key:'history', name:'İnkılap', count:10 },
@@ -178,6 +179,18 @@ export default function LgsStudentHomePage({ session, student, classInfo }) {
     return next
   }
 
+  async function accessLgsOnlineFile(exam, download = false) {
+    if (!exam?.attachment) return
+    const participant = participantFor(exam, student)
+    const windowInfo = onlineWindow(exam)
+    const current = new Date()
+    if (current < windowInfo.start || current > windowInfo.end || participant?.finishedAt) {
+      return window.alert('Deneme dosyasına yalnızca sınav süresi içinde erişebilirsin.')
+    }
+    try { await openOnlineExamFile(exam.attachment, { download }) }
+    catch (err) { setError(`Deneme dosyası açılamadı: ${err?.message || err}`) }
+  }
+
   async function beginOnlineExam(bookletGroup='A'){
     if(!availableOnline)return
     const windowInfo=onlineWindow(availableOnline)
@@ -288,7 +301,7 @@ export default function LgsStudentHomePage({ session, student, classInfo }) {
   if(onlineOpen && activeOnline)return <Box className="online-exam-screen lgs-online-exam-screen">
     <Box className="online-exam-header">
       <Box><Typography variant="h5" fontWeight={950}>{activeOnline.name || 'LGS Online Deneme'}</Typography><Typography variant="body2">90 soru • Cevapların otomatik kaydedilir.</Typography></Box>
-      <Stack direction={{xs:'column',sm:'row'}} spacing={1} alignItems={{sm:'center'}}><Chip color="warning" label={`Kalan Süre: ${remainingText(onlineWindow(activeOnline).end, onlineNow)}`} /><Chip label={`İşaretlenen: ${Object.keys(onlineAnswers).length} / 90`} /><Chip color="primary" label={`${selectedBooklet} Grubu`} /></Stack>
+      <Stack direction={{xs:'column',sm:'row'}} spacing={1} alignItems={{sm:'center'}}>{activeOnline.attachment&&<><Button variant="outlined" startIcon={<Download/>} onClick={()=>accessLgsOnlineFile(activeOnline,false)}>Denemeyi Aç</Button><Button variant="outlined" startIcon={<Download/>} onClick={()=>accessLgsOnlineFile(activeOnline,true)}>İndir</Button></>}<Chip color="warning" label={`Kalan Süre: ${remainingText(onlineWindow(activeOnline).end, onlineNow)}`} /><Chip label={`İşaretlenen: ${Object.keys(onlineAnswers).length} / 90`} /><Chip color="primary" label={`${selectedBooklet} Grubu`} /></Stack>
     </Box>
     <Box className="online-exam-body">
       {lessons.map(lesson=><Box className="lgs-online-lesson-section" key={lesson.key}><Typography variant="h6" fontWeight={950}>{lesson.name}</Typography><Box className="lgs-online-four-row-grid">{Array.from({length:lesson.count},(_,index)=>index+1).map(question=>{const key=`${lesson.key}-${question}`;return <Paper className="student-online-question" elevation={0} key={key}><b>{question}</b><Stack direction="row" spacing={.7}>{['A','B','C','D'].map(answer=><Button key={answer} size="small" variant={onlineAnswers[key]===answer?'contained':'outlined'} disabled={onlineSaving} onClick={()=>chooseOnlineAnswer(key,answer)}>{answer}</Button>)}</Stack></Paper>})}</Box></Box>)}
@@ -311,7 +324,7 @@ export default function LgsStudentHomePage({ session, student, classInfo }) {
         <Paper className="lgs-online-student-card" elevation={0}>
           <Box className="lgs-online-student-icon"><OnlinePrediction/></Box>
           <Box className="lgs-online-student-info"><Typography variant="overline">LGS Online Deneme</Typography><Typography variant="h5" fontWeight={950}>{availableOnline?.name||'Planlanmış aktif deneme yok'}</Typography>{availableOnline&&<Typography color="text.secondary">{fmtDate(availableOnline.date)} • {availableOnline.start}–{availableOnline.end}</Typography>}</Box>
-          <Box className="lgs-online-student-status">{availableOnline?availableParticipant?.finishedAt?<><Chip color="info" label="Cevapların kaydedildi"/><Typography variant="body2" color="text.secondary">Sonucun süre bittikten sonra LGS Denemelerim ekranında açılacak.</Typography></>:<><Chip color={onlineCanStart?'success':'info'} label={availableParticipant?.startedAt?'Devam ediyor':onlineCanStart?'Başlayabilirsin':`Başlamasına ${onlineCountdown}`}/><Button variant="contained" startIcon={<PlayArrow/>} disabled={!onlineCanStart} onClick={()=>availableParticipant?.startedAt?beginOnlineExam(availableParticipant.bookletGroup||'A'):setBookletSelectOpen(true)}>{availableParticipant?.startedAt?'Devam Et':'Denemeye Başla'}</Button></>:<Typography color="text.secondary">Yeni deneme planlandığında burada görünecek.</Typography>}</Box>
+          <Box className="lgs-online-student-status">{availableOnline?availableParticipant?.finishedAt?<><Chip color="info" label="Cevapların kaydedildi"/><Typography variant="body2" color="text.secondary">Sonucun süre bittikten sonra LGS Denemelerim ekranında açılacak.</Typography></>:<><Chip color={onlineCanStart?'success':'info'} label={availableParticipant?.startedAt?'Devam ediyor':onlineCanStart?'Başlayabilirsin':`Başlamasına ${onlineCountdown}`}/><Stack direction={{xs:'column',sm:'row'}} spacing={1}><Button variant="contained" startIcon={<PlayArrow/>} disabled={!onlineCanStart} onClick={()=>availableParticipant?.startedAt?beginOnlineExam(availableParticipant.bookletGroup||'A'):setBookletSelectOpen(true)}>{availableParticipant?.startedAt?'Devam Et':'Denemeye Başla'}</Button>{availableOnline.attachment&&onlineCanStart&&<Button variant="outlined" startIcon={<Download/>} onClick={()=>accessLgsOnlineFile(availableOnline,true)}>Denemeyi İndir</Button>}</Stack></>:<Typography color="text.secondary">Yeni deneme planlandığında burada görünecek.</Typography>}</Box>
         </Paper>
         <Box className="lgs-dashboard-grid"><Paper className="lgs-panel" elevation={0}><Typography variant="h5" fontWeight={950}>Puan Gelişimim</Typography><ScoreChart rows={rows}/></Paper><Paper className="lgs-panel" elevation={0}><Typography variant="h5" fontWeight={950}>Son Deneme Karşılaştırması</Typography><ComparisonBars latest={latest} stats={latest?statsByExam.get(latest.exam_id):null}/></Paper></Box>
         <Paper className="lgs-ai-panel" elevation={0}><Stack direction="row" spacing={1} alignItems="center"><AutoAwesome color="primary"/><Typography variant="h5" fontWeight={950}>Yapay Zekâ Destekli Deneme Analizi</Typography></Stack><Typography>{analysis}</Typography><Typography variant="caption">Bu analiz her yeni deneme sonucu eklendiğinde otomatik olarak yenilenir.</Typography></Paper>

@@ -6,12 +6,13 @@ import {
   Typography
 } from '@mui/material'
 import {
-  AddCircle, Assessment, CheckCircle, Close, Delete, Edit, Event,
+  AddCircle, Assessment, AttachFile, CheckCircle, Close, Delete, Edit, Event,
   Groups, MonitorHeart, OnlinePrediction, QueryStats, Refresh,
-  Save, Science, TrackChanges
+  Save, Science, TrackChanges, UploadFile
 } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
 import { useSharedCloudState } from '../services/useSharedCloudState'
+import { ONLINE_EXAM_ACCEPT, removeOnlineExamFile, uploadOnlineExamFile, validateOnlineExamFile } from '../services/onlineExamFiles'
 
 const STORAGE_KEY = 'taskin-akademi-v64-exams'
 const ANSWERS = ['A', 'B', 'C', 'D']
@@ -45,7 +46,9 @@ export default function ExamsPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [form, setForm] = useState({ name: '', date: todayIso(), type: 'fen' })
-  const [onlineForm, setOnlineForm] = useState({ name: '', startAt: '', endAt: '', answers: {} })
+  const [onlineForm, setOnlineForm] = useState({ name: '', startAt: '', endAt: '', answers: {}, attachment: null })
+  const [onlineFile, setOnlineFile] = useState(null)
+  const [onlineUploading, setOnlineUploading] = useState(false)
   const [targetValues, setTargetValues] = useState({})
   const [resultValues, setResultValues] = useState({})
   const resultRefs = useRef([])
@@ -132,35 +135,52 @@ export default function ExamsPage() {
   function openOnline(exam = null) {
     setEditing(exam)
     setOnlineForm(exam ? {
-      name: exam.name, startAt: exam.startAt, endAt: exam.endAt, answers: exam.answers || {}
-    } : { name: '', startAt: '', endAt: '', answers: {} })
+      name: exam.name, startAt: exam.startAt, endAt: exam.endAt, answers: exam.answers || {}, attachment: exam.attachment || null
+    } : { name: '', startAt: '', endAt: '', answers: {}, attachment: null })
+    setOnlineFile(null)
     setOnlineOpen(true)
   }
 
-  function saveOnline() {
+  async function saveOnline() {
     if (!onlineForm.name.trim()) return setError('Online deneme adı zorunludur.')
     if (!onlineForm.startAt || !onlineForm.endAt) return setError('Başlangıç ve bitiş tarihi-saatleri zorunludur.')
     if (new Date(onlineForm.endAt) <= new Date(onlineForm.startAt)) return setError('Bitiş zamanı başlangıçtan sonra olmalıdır.')
     const missing = Array.from({ length: 20 }, (_, i) => i + 1).filter(q => !onlineForm.answers[q])
     if (missing.length) return setError(`Cevap anahtarı eksik: ${missing.join(', ')}. sorular`)
-    if (editing) {
-      setExams(list => list.map(e => e.id === editing.id ? { ...e, ...onlineForm, name: onlineForm.name.trim() } : e))
-      setMessage('Online deneme güncellendi.')
-    } else {
-      setExams(list => [{
-        id: crypto.randomUUID(), kind: 'online', classId: selectedClass,
-        className: classInfo?.name || '', name: onlineForm.name.trim(),
-        startAt: onlineForm.startAt, endAt: onlineForm.endAt,
-        answers: onlineForm.answers, attempts: {}, isPassive: false,
-        createdAt: new Date().toISOString()
-      }, ...list])
-      setMessage('Online deneme oluşturuldu.')
-    }
-    setOnlineOpen(false)
+    const fileError = validateOnlineExamFile(onlineFile)
+    if (fileError) return setError(fileError)
+    setOnlineUploading(true)
+    try {
+      const examId = editing?.id || crypto.randomUUID()
+      let attachment = onlineForm.attachment || null
+      if (onlineFile) {
+        const previous = attachment
+        attachment = await uploadOnlineExamFile(onlineFile, 'fen', examId)
+        if (previous?.path) await removeOnlineExamFile(previous).catch(() => {})
+      }
+      if (editing) {
+        setExams(list => list.map(e => e.id === editing.id ? { ...e, ...onlineForm, attachment, name: onlineForm.name.trim() } : e))
+        setMessage('Online deneme güncellendi.')
+      } else {
+        setExams(list => [{
+          id: examId, kind: 'online', classId: selectedClass,
+          className: classInfo?.name || '', name: onlineForm.name.trim(),
+          startAt: onlineForm.startAt, endAt: onlineForm.endAt,
+          answers: onlineForm.answers, attachment, attempts: {}, isPassive: false,
+          createdAt: new Date().toISOString()
+        }, ...list])
+        setMessage('Online deneme oluşturuldu.')
+      }
+      setOnlineOpen(false)
+      setOnlineFile(null)
+    } catch (err) {
+      setError(`Deneme dosyası yüklenemedi: ${err?.message || err}`)
+    } finally { setOnlineUploading(false) }
   }
 
-  function deleteExam(exam) {
+  async function deleteExam(exam) {
     if (!window.confirm(`“${exam.name}” denemesi silinsin mi?`)) return
+    if (exam.attachment?.path) await removeOnlineExamFile(exam.attachment).catch(() => {})
     setExams(list => list.filter(e => e.id !== exam.id))
     setMessage('Deneme silindi.')
   }
@@ -297,6 +317,7 @@ export default function ExamsPage() {
 
     <Dialog open={onlineOpen} onClose={() => setOnlineOpen(false)} fullWidth maxWidth="md"><DialogTitle>{editing ? 'Online Denemeyi Düzenle' : 'Online Deneme Oluştur'}<IconButton className="dialog-close" onClick={() => setOnlineOpen(false)}><Close/></IconButton></DialogTitle><DialogContent dividers><Stack spacing={2} sx={{pt:1}}>
       <TextField label="Deneme adı" value={onlineForm.name} onChange={e => setOnlineForm({...onlineForm,name:e.target.value})}/><Box className="online-time-grid"><TextField type="datetime-local" label="Başlangıç" value={onlineForm.startAt} onChange={e => setOnlineForm({...onlineForm,startAt:e.target.value})} InputLabelProps={{shrink:true}}/><TextField type="datetime-local" label="Bitiş" value={onlineForm.endAt} onChange={e => setOnlineForm({...onlineForm,endAt:e.target.value})} InputLabelProps={{shrink:true}}/></Box>
+      <Paper variant="outlined" sx={{p:2,borderRadius:3}}><Stack spacing={1}><Typography fontWeight={900}><AttachFile sx={{verticalAlign:'middle',mr:1}}/>Deneme Dosyası (isteğe bağlı)</Typography><Typography variant="body2" color="text.secondary">PDF, JPG, PNG veya WEBP • En fazla 20 MB. Öğrenci yalnızca sınav sürerken açabilir ve indirebilir.</Typography><Button component="label" variant="outlined" startIcon={<UploadFile/>} disabled={onlineUploading}>{onlineFile ? onlineFile.name : onlineForm.attachment?.name || 'Dosya Seç'}<input hidden type="file" accept={ONLINE_EXAM_ACCEPT} onChange={e=>setOnlineFile(e.target.files?.[0]||null)}/></Button>{onlineForm.attachment && !onlineFile && <Button color="error" size="small" onClick={()=>setOnlineForm({...onlineForm,attachment:null})}>Yüklü Dosyayı Kaldır</Button>}</Stack></Paper>
       <Typography variant="h6" fontWeight={950}>20 Soruluk Cevap Anahtarı</Typography><Box className="answer-key-grid">{[1,11].map(start => <Box key={start} className="answer-key-column">{Array.from({length:10},(_,i)=>start+i).map(q => <Box className="answer-key-row" key={q}><b>{q}</b>{ANSWERS.map(a => <Button key={a} size="small" variant={onlineForm.answers[q]===a?'contained':'outlined'} onClick={() => setOnlineForm({...onlineForm,answers:{...onlineForm.answers,[q]:a}})}>{a}</Button>)}</Box>)}</Box>)}</Box>
     </Stack></DialogContent><DialogActions><Button onClick={() => setOnlineOpen(false)}>İptal</Button><Button variant="contained" startIcon={<Save/>} onClick={saveOnline}>Kaydet</Button></DialogActions></Dialog>
 

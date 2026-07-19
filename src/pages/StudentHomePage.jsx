@@ -15,6 +15,7 @@ import { supabase } from '../services/supabase'
 import { avatarSrc } from '../utils/avatars'
 import { readSharedState } from '../services/sharedState'
 import { saveMyScienceOnlineAttempt } from '../services/studentOnlineExam'
+import { openOnlineExamFile } from '../services/onlineExamFiles'
 import { ANNOUNCEMENTS_STORAGE_KEY, readAnnouncements } from './AnnouncementsPage'
 import LgsStudentHomePage from './LgsStudentHomePage'
 
@@ -226,6 +227,17 @@ export default function StudentHomePage({ session, profile }) {
     return payload
   }
 
+  async function accessOnlineExamFile(exam, download = false) {
+    if (!exam?.attachment || !student) return
+    const attempt = exam.attempts?.[student.id]
+    const current = new Date()
+    if (current < new Date(exam.startAt) || current > new Date(exam.endAt) || attempt?.finishedAt || attempt?.locked) {
+      return window.alert('Deneme dosyasına yalnızca sınav süresi içinde erişebilirsin.')
+    }
+    try { await openOnlineExamFile(exam.attachment, { download }) }
+    catch (err) { setError(`Deneme dosyası açılamadı: ${err?.message || err}`) }
+  }
+
   async function beginOnlineExam() {
     if (!upcomingOnline || !student) return
     const start = new Date(upcomingOnline.startAt)
@@ -382,7 +394,7 @@ export default function StudentHomePage({ session, profile }) {
   if (onlineOpen && activeOnlineExam) return <Box className="online-exam-screen">
     <Box className="online-exam-header">
       <Box><Typography variant="h5" fontWeight={950}>{activeOnlineExam.name || 'Online Deneme'}</Typography><Typography variant="body2">Cevapların her işaretlemede otomatik kaydedilir.</Typography></Box>
-      <Stack direction={{xs:'column',sm:'row'}} spacing={1} alignItems={{sm:'center'}}><Chip color="warning" icon={<Schedule/>} label={`Kalan Süre: ${remainingText(activeOnlineExam.endAt, now)}`} /><Chip label={`İşaretlenen: ${Object.keys(onlineAnswers).length} / 20`} /></Stack>
+      <Stack direction={{xs:'column',sm:'row'}} spacing={1} alignItems={{sm:'center'}}>{activeOnlineExam.attachment && <><Button variant="outlined" startIcon={<NoteAlt/>} onClick={()=>accessOnlineExamFile(activeOnlineExam,false)}>Denemeyi Aç</Button><Button variant="outlined" startIcon={<Download/>} onClick={()=>accessOnlineExamFile(activeOnlineExam,true)}>İndir</Button></>}<Chip color="warning" icon={<Schedule/>} label={`Kalan Süre: ${remainingText(activeOnlineExam.endAt, now)}`} /><Chip label={`İşaretlenen: ${Object.keys(onlineAnswers).length} / 20`} /></Stack>
     </Box>
     <Box className="online-exam-body">
       <Box className="student-online-two-columns">
@@ -460,7 +472,7 @@ export default function StudentHomePage({ session, profile }) {
       </Box>
       <Box className="student-large-grid">
         <Paper className="student-action-card" elevation={0}><Box className="student-card-title"><Assignment/><Typography variant="h5" fontWeight={950}>Yaklaşan Ödev</Typography></Box>{upcomingHomework ? <><Typography variant="h6" fontWeight={900}>{upcomingHomework.title}</Typography><Typography color="text.secondary">Son tarih: {fmtDate(upcomingHomework.dueDate)}</Typography><Chip sx={{ mt: 2 }} color="warning" label={`${Math.max(0, Math.ceil((new Date(`${upcomingHomework.dueDate}T23:59:59`) - now) / 86400000))} gün kaldı`} /></> : <Typography color="text.secondary">Yaklaşan ödev bulunmuyor.</Typography>}<Button onClick={() => setPage('Ödevlerim')}>Tüm Ödevlerim</Button></Paper>
-        <Paper className="student-action-card online" elevation={0}><Box className="student-card-title"><OnlinePrediction/><Typography variant="h5" fontWeight={950}>Online Deneme</Typography></Box>{upcomingOnline ? <><Typography variant="h6" fontWeight={900}>{upcomingOnline.name}</Typography><Typography color="text.secondary">Başlangıç: {fmtDateTime(upcomingOnline.startAt)}</Typography><Typography className="student-countdown">{countdown(upcomingOnline.startAt)}</Typography>{upcomingOnline.attempts?.[student.id]?.finishedAt ? <><Chip color="info" label="Cevapların kaydedildi"/><Typography variant="body2" color="text.secondary">Sonucun süre bittikten sonra Denemelerim ekranında açılacak.</Typography></> : <Button variant="contained" startIcon={<PlayArrow/>} disabled={new Date(upcomingOnline.startAt) > now || new Date(upcomingOnline.endAt) < now} onClick={beginOnlineExam}>{upcomingOnline.attempts?.[student.id]?.startedAt ? 'Devam Et' : 'Denemeye Başla'}</Button>}</> : <Typography color="text.secondary">Planlanmış online deneme bulunmuyor.</Typography>}</Paper>
+        <Paper className="student-action-card online" elevation={0}><Box className="student-card-title"><OnlinePrediction/><Typography variant="h5" fontWeight={950}>Online Deneme</Typography></Box>{upcomingOnline ? <><Typography variant="h6" fontWeight={900}>{upcomingOnline.name}</Typography><Typography color="text.secondary">Başlangıç: {fmtDateTime(upcomingOnline.startAt)}</Typography><Typography className="student-countdown">{countdown(upcomingOnline.startAt)}</Typography>{upcomingOnline.attempts?.[student.id]?.finishedAt ? <><Chip color="info" label="Cevapların kaydedildi"/><Typography variant="body2" color="text.secondary">Sonucun süre bittikten sonra Denemelerim ekranında açılacak.</Typography></> : <Stack direction={{xs:'column',sm:'row'}} spacing={1}><Button variant="contained" startIcon={<PlayArrow/>} disabled={new Date(upcomingOnline.startAt) > now || new Date(upcomingOnline.endAt) < now} onClick={beginOnlineExam}>{upcomingOnline.attempts?.[student.id]?.startedAt ? 'Devam Et' : 'Denemeye Başla'}</Button>{upcomingOnline.attachment && new Date(upcomingOnline.startAt) <= now && new Date(upcomingOnline.endAt) >= now && !upcomingOnline.attempts?.[student.id]?.finishedAt && <Button variant="outlined" startIcon={<Download/>} onClick={()=>accessOnlineExamFile(upcomingOnline,true)}>Denemeyi İndir</Button>}</Stack>}</> : <Typography color="text.secondary">Planlanmış online deneme bulunmuyor.</Typography>}</Paper>
       </Box>
       <Box className="student-info-grid">
         <Paper className="student-info-card" elevation={0}><Box className="student-card-title"><Campaign/><Typography variant="h5" fontWeight={950}>Duyurular</Typography></Box>{visibleAnnouncements.slice(0, 3).map(a => <Box className="student-mini-row" key={a.id}><Announcement/><Box><Typography fontWeight={900}>{a.title}</Typography><Typography variant="body2" color="text.secondary">{a.body}</Typography></Box></Box>)}{!visibleAnnouncements.length && <Typography color="text.secondary">Yeni duyuru yok.</Typography>}</Paper>

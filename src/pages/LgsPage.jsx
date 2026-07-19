@@ -15,6 +15,7 @@ import {
 } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
 import { readSharedState, writeSharedState } from '../services/sharedState'
+import { ONLINE_EXAM_ACCEPT, removeOnlineExamFile, uploadOnlineExamFile, validateOnlineExamFile } from '../services/onlineExamFiles'
 
 const safeText = value => value == null ? '' : String(value)
 const asNumber = value => {
@@ -202,7 +203,9 @@ export default function LgsPage() {
   const [studentNumberSearch, setStudentNumberSearch] = useState('')
   const [studentSearchError, setStudentSearchError] = useState('')
   const [lgsDate, setLgsDate] = useState(localStorage.getItem('lgsDate') || '2027-06-06')
-  const [onlineForm, setOnlineForm] = useState({ name:'', date:'', start:'', end:'' })
+  const [onlineForm, setOnlineForm] = useState({ name:'', date:'', start:'', end:'', attachment:null })
+  const [onlineFile, setOnlineFile] = useState(null)
+  const [onlineUploading, setOnlineUploading] = useState(false)
   const [answerKey, setAnswerKey] = useState({})
   const [bookletMap, setBookletMap] = useState({})
   const [onlineValidationErrors, setOnlineValidationErrors] = useState([])
@@ -463,12 +466,12 @@ export default function LgsPage() {
   }
 
   function openOnlineCreate() {
-    setOnlineForm({ name:'', date:new Date().toISOString().slice(0,10), start:'10:00', end:'12:35' })
+    setOnlineForm({ name:'', date:new Date().toISOString().slice(0,10), start:'10:00', end:'12:35', attachment:null }); setOnlineFile(null)
     setAnswerKey({}); setBookletMap({}); setOnlineValidationErrors([]); setEditingOnlineId(null); setOnlineOpen(true)
   }
 
   function editOnlineExam(exam) {
-    setOnlineForm({ name:exam.name, date:exam.date, start:exam.start, end:exam.end })
+    setOnlineForm({ name:exam.name, date:exam.date, start:exam.start, end:exam.end, attachment:exam.attachment||null }); setOnlineFile(null)
     setAnswerKey(exam.answerKey || {}); setBookletMap(exam.bookletMap || {})
     setOnlineValidationErrors([]); setEditingOnlineId(exam.id); setOnlineOpen(true)
   }
@@ -500,15 +503,28 @@ export default function LgsPage() {
     setTimeout(()=>document.querySelector(`[data-field="${key}"] input, [data-field="${key}"] button`)?.focus(), 300)
   }
 
-  function saveOnlineExam() {
+  async function saveOnlineExam() {
     const errors = validateOnlineExam()
     setOnlineValidationErrors(errors)
     if (errors.length) { setError(`Online deneme kaydedilemedi: ${errors.length} alan düzeltilmelidir.`); focusOnlineError(errors[0].key); return }
-    const old = onlineExams.find(item => item.id === editingOnlineId)
-    const item = { id:editingOnlineId || Date.now(), ...onlineForm, answerKey, bookletMap, participants:old?.participants || [] }
-    const next = editingOnlineId ? onlineExams.map(x=>x.id===editingOnlineId?item:x) : [item, ...onlineExams]
-    setOnlineExams(next); localStorage.setItem('lgsOnlineExams', JSON.stringify(next)); window.dispatchEvent(new Event('taskin-lgs-online-updated'))
-    setMessage(editingOnlineId ? 'Online deneme güncellendi.' : 'Online deneme kaydedildi.'); setOnlineOpen(false)
+    const fileError = validateOnlineExamFile(onlineFile)
+    if (fileError) return setError(fileError)
+    setOnlineUploading(true)
+    try {
+      const old = onlineExams.find(item => item.id === editingOnlineId)
+      const examId = editingOnlineId || Date.now()
+      let attachment = onlineForm.attachment || old?.attachment || null
+      if (onlineFile) {
+        const previous = attachment
+        attachment = await uploadOnlineExamFile(onlineFile, 'lgs', examId)
+        if (previous?.path) await removeOnlineExamFile(previous).catch(()=>{})
+      }
+      const item = { id:examId, ...onlineForm, attachment, answerKey, bookletMap, participants:old?.participants || [] }
+      const next = editingOnlineId ? onlineExams.map(x=>x.id===editingOnlineId?item:x) : [item, ...onlineExams]
+      setOnlineExams(next); localStorage.setItem('lgsOnlineExams', JSON.stringify(next)); window.dispatchEvent(new Event('taskin-lgs-online-updated'))
+      setMessage(editingOnlineId ? 'Online deneme güncellendi.' : 'Online deneme kaydedildi.'); setOnlineOpen(false); setOnlineFile(null)
+    } catch (err) { setError(`Deneme dosyası yüklenemedi: ${err?.message || err}`) }
+    finally { setOnlineUploading(false) }
   }
 
   function openLiveTracking(exam) {
@@ -1000,10 +1016,10 @@ export default function LgsPage() {
       <DialogContent>
         {onlineValidationErrors.length>0&&<Alert severity="error" icon={<ErrorOutline/>} sx={{my:1}}><b>Deneme kaydedilemedi. Aşağıdaki alanları düzeltin:</b><ul className="online-error-list">{onlineValidationErrors.slice(0,20).map((err,i)=><li key={`${err.key}-${i}`}><button onClick={()=>focusOnlineError(err.key)}>{err.message}</button></li>)}</ul>{onlineValidationErrors.length>20&&<small>+ {onlineValidationErrors.length-20} hata daha</small>}</Alert>}
         <Box className="two" sx={{ mt:1 }}><TextField data-field="name" error={onlineValidationErrors.some(e=>e.key==='name')} label="Deneme adı" value={onlineForm.name} onChange={e=>setOnlineForm({...onlineForm,name:e.target.value})}/><TextField data-field="date" error={onlineValidationErrors.some(e=>e.key==='date')} type="date" label="Tarih" InputLabelProps={{ shrink:true }} value={onlineForm.date} onChange={e=>setOnlineForm({...onlineForm,date:e.target.value})}/><TextField data-field="start" error={onlineValidationErrors.some(e=>e.key==='start')} type="time" label="Giriş saati" InputLabelProps={{ shrink:true }} value={onlineForm.start} onChange={e=>setOnlineForm({...onlineForm,start:e.target.value})}/><TextField data-field="end" error={onlineValidationErrors.some(e=>e.key==='end')} type="time" label="Bitiş saati" InputLabelProps={{ shrink:true }} value={onlineForm.end} onChange={e=>setOnlineForm({...onlineForm,end:e.target.value})}/></Box>
-        <Alert severity="info" sx={{ my:2 }}>A kitapçığı cevabını seçin. B sırası alanlarında Enter'a bastığınızda bir sonraki kutuya geçilir. Aynı B soru numarası iki kez kullanılamaz.</Alert>
+        <Paper variant="outlined" sx={{p:2,my:2,borderRadius:3}}><Stack spacing={1}><Typography fontWeight={900}>Deneme Dosyası (isteğe bağlı)</Typography><Typography variant="body2" color="text.secondary">PDF, JPG, PNG veya WEBP • En fazla 20 MB. Öğrenci yalnızca sınav süresi içinde erişebilir.</Typography><Button component="label" variant="outlined" startIcon={<UploadFile/>} disabled={onlineUploading}>{onlineFile?onlineFile.name:onlineForm.attachment?.name||'Dosya Seç'}<input hidden type="file" accept={ONLINE_EXAM_ACCEPT} onChange={e=>setOnlineFile(e.target.files?.[0]||null)}/></Button>{onlineForm.attachment&&!onlineFile&&<Button color="error" size="small" onClick={()=>setOnlineForm({...onlineForm,attachment:null})}>Yüklü Dosyayı Kaldır</Button>}</Stack></Paper><Alert severity="info" sx={{ my:2 }}>A kitapçığı cevabını seçin. B sırası alanlarında Enter'a bastığınızda bir sonraki kutuya geçilir. Aynı B soru numarası iki kez kullanılamaz.</Alert>
         <Box className="online-answer-sections">{lessonDefs.map(lesson => {const half=Math.ceil(lesson.count/2);const columns=[Array.from({length:half},(_,i)=>i+1),Array.from({length:lesson.count-half},(_,i)=>i+half+1)];return <Box className="online-answer-lesson" key={lesson.key}><Stack direction="row" justifyContent="space-between"><Typography variant="h6" fontWeight={900}>{lesson.name}</Typography><Chip size="small" label={`${Array.from({length:lesson.count},(_,i)=>answerKey[`${lesson.key}-${i+1}`]&&bookletMap[`${lesson.key}-${i+1}`]).filter(Boolean).length}/${lesson.count} tamamlandı`}/></Stack><Box className="online-answer-columns">{columns.map((questions,ci)=><Box className="online-answer-column" key={ci}>{questions.map(question => { const key=`${lesson.key}-${question}`;const hasError=onlineValidationErrors.some(e=>e.key===`answer-${key}`||e.key===`map-${key}`);return <Box data-field={`map-${key}`} className={`online-answer-row ${hasError?'field-error':''}`} key={key}><b>{question}</b>{['A','B','C','D'].map(option => <Button data-field={`answer-${key}`} key={option} size="small" variant={answerKey[key]===option?'contained':'outlined'} onClick={()=>setAnswerKey({...answerKey,[key]:option})}>{option}</Button>)}<TextField id={`map-${key}`} size="small" type="number" label="B sırası" value={bookletMap[key]||''} onChange={e=>setBookletMap({...bookletMap,[key]:e.target.value})} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();const q=question<lesson.count?question+1:null;if(q)document.getElementById(`map-${lesson.key}-${q}`)?.focus();else document.getElementById('save-online-exam')?.focus()}}} inputProps={{ min:1,max:lesson.count }}/></Box> })}</Box>)}</Box></Box>})}</Box>
       </DialogContent>
-      <DialogActions><Button onClick={()=>setOnlineOpen(false)}>İptal</Button><Button id="save-online-exam" variant="contained" onClick={saveOnlineExam}>{editingOnlineId?'Değişiklikleri Kaydet':'Cevap Anahtarıyla Kaydet'}</Button></DialogActions>
+      <DialogActions><Button onClick={()=>setOnlineOpen(false)}>İptal</Button><Button id="save-online-exam" variant="contained" onClick={saveOnlineExam} disabled={onlineUploading}>{editingOnlineId?'Değişiklikleri Kaydet':'Cevap Anahtarıyla Kaydet'}</Button></DialogActions>
     </Dialog>
 
     <Dialog open={liveOpen} onClose={()=>setLiveOpen(false)} fullWidth maxWidth="xl" PaperProps={{ className:'lgs-live-dialog' }}>

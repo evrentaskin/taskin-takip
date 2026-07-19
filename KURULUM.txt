@@ -1,24 +1,24 @@
-V9.6.0 FEN YILLIK PLAN YAMASI
+TAŞKIN TAKİP V9.6.1 — ONLINE DENEME DOSYA EKİ
 
-1) ZIP içindeki src ve public klasörlerini mevcut projenin üzerine kopyalayın.
-2) Terminalde çalıştırın:
+1) ZIP içindeki src klasörünü projenin üzerine kopyalayın.
+2) Supabase > SQL Editor bölümünde şu dosyayı çalıştırın:
+   supabase/migrations/20260719_online_exam_files.sql
+3) Terminalde:
    npm install
    npm run build
-3) Build başarılı olunca:
    git add .
-   git commit -m "Fen yıllık plan özelliği"
+   git commit -m "Online deneme PDF ve resim eki"
    git push
 
-Vercel GitHub'a bağlıysa push işleminden sonra otomatik yayınlar.
-SQL çalıştırılması gerekmez.
-
 ÖZELLİKLER
-- Sol menüde Yıllık Plan, Oturma Planı'nın hemen üstünde.
-- Ayarlar içinde 5, 6, 7 ve 8. sınıf için ayrı Excel yükleme/güncelleme/silme.
-- Kullanılmayan sınıfın planını yüklemek zorunlu değildir.
-- Excel şablonu uygulamadaki Ayarlar ekranından indirilebilir.
-- Ekran her açıldığında bugünün tarihine ait haftayı gösterir.
-- Oklarla Excel'deki tüm önceki ve sonraki haftalarda sınırsız gezinilir.
-- Bugünkü Haftaya Dön düğmesi bulunur.
-- Aynı haftaya birden fazla kazanım satırı eklenebilir.
-- Veriler mevcut shared_app_state altyapısında bulutta saklanır.
+- Fen ve LGS online denemelerine PDF/JPG/PNG/WEBP eklenebilir.
+- En fazla dosya boyutu 20 MB'dir.
+- Öğrenci dosyayı yalnızca denemenin başlangıç-bitiş süresi içinde açabilir/indirebilir.
+- Öğrenci cevabı kesin kaydedince dosya erişimi kapanır.
+- Süre bitince dosya düğmeleri görünmez; yalnızca sonuç ve analiz kalır.
+- Öğretmen tekrar çözdürürse erişim sınav süresi hâlâ devam ediyorsa yeniden açılır.
+- Bağlantılar 2 dakikalık imzalı URL olarak oluşturulur.
+
+BUILD KONTROLÜ
+- npm run build başarıyla tamamlandı.
+- Vite yalnızca mevcut büyük bundle uyarısını verdi; derleme hatası yoktur.
