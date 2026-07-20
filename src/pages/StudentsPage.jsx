@@ -121,7 +121,6 @@ export default function StudentsPage() {
   const [inactiveStudentsOpen, setInactiveStudentsOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [reportType, setReportType] = useState('pdf')
-  const [reportOrientation, setReportOrientation] = useState('portrait')
   const [reportFields, setReportFields] = useState(REPORT_FIELDS.map(x => x[0]))
   const [customReportFields, setCustomReportFields] = useState([])
 
@@ -988,7 +987,7 @@ export default function StudentsPage() {
     const legacy = (data || []).map(field => ({ ...field, id:String(field.id), legacy_card_id:field.id }))
     const fields = mergeProfileFields(schemaResult?.payload || DEFAULT_STUDENT_PROFILE_FIELDS, legacy)
     setCustomReportFields(fields)
-    setReportFields(current => [...new Set([...current, ...fields.map(x => `custom:${x.id}`)])])
+    setReportFields(['number', ...fields.map(x => `custom:${x.id}`)])
     setReportOpen(true)
   }
 
@@ -1010,11 +1009,7 @@ export default function StudentsPage() {
       const profile = byStudent.get(student.id) || { recognition_data:{} }
       const values = profile.recognition_data || {}
       const row = { 'Ad Soyad': `${student.first_name} ${student.last_name}` }
-      for (const [key,label] of REPORT_FIELDS) {
-        if (!selected.has(key)) continue
-        const raw = key === 'number' ? student.student_number : values[REPORT_PROFILE_KEYS[key]]
-        row[label] = typeof raw === 'boolean' ? (raw ? 'Evet' : 'Hayır') : (raw ?? '')
-      }
+      if (selected.has('number')) row.Numara = student.student_number
       for (const card of customCards || []) {
         if (!selected.has(`custom:${card.id}`)) continue
         let raw = values[card.id]
@@ -1040,13 +1035,37 @@ export default function StudentsPage() {
       } else {
         const html2pdf = (await import('html2pdf.js')).default
         const keys = Object.keys(rows[0] || {})
-        const width = reportOrientation === 'portrait' ? '190mm' : '277mm'
+        const rowCount = Math.max(1, rows.length)
+        const columnCount = Math.max(1, keys.length)
+        const density = Math.max(rowCount / 28, columnCount / 18)
+        const fontSize = Math.max(4.2, Math.min(7.5, 7.5 / Math.max(1, density)))
+        const cellPadding = density > 1.55 ? 1 : density > 1.15 ? 1.5 : 2
+        const logoSize = rowCount > 34 ? 34 : 42
         const container = document.createElement('div')
-        container.style.cssText = `width:${width};padding:7mm;background:white;color:#111;font-family:Arial,sans-serif;box-sizing:border-box;`
-        container.innerHTML = `<div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid #178b58;padding-bottom:7px;margin-bottom:8px"><img src="/taskin-takip-sistemi-logo.png" style="width:58px;height:58px;object-fit:contain"><div><div style="font-size:18px;font-weight:900">${selectedClassName} Öğrenci Tanıma Raporu</div><div style="font-size:10px;color:#555">Taşkın Takip • ${new Date().toLocaleDateString('tr-TR')}</div></div></div><table style="width:100%;border-collapse:collapse;font-size:${keys.length>14?'6.5px':'8px'}"><thead><tr>${keys.map(k=>`<th style="border:1px solid #777;padding:3px;background:#eaf4ef">${k}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${keys.map(k=>`<td style="border:1px solid #aaa;padding:3px">${String(r[k]??'')}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+        container.style.cssText = 'width:287mm;max-height:200mm;padding:4mm;background:#fff;color:#111;font-family:Arial,sans-serif;box-sizing:border-box;overflow:hidden;'
+        const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]))
+        container.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid #178b58;padding-bottom:4px;margin-bottom:5px">
+            <img src="/taskin-takip-sistemi-logo.png" style="width:${logoSize}px;height:${logoSize}px;object-fit:contain">
+            <div style="flex:1"><div style="font-size:14px;font-weight:900">${escapeHtml(selectedClassName)} Öğrenci Tanıma Raporu</div><div style="font-size:7px;color:#555">Taşkın Takip • ${new Date().toLocaleDateString('tr-TR')} • ${rowCount} öğrenci</div></div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:${fontSize}px;line-height:1.02">
+            <thead><tr>${keys.map(k=>`<th style="border:1px solid #777;padding:${cellPadding}px;background:#eaf4ef;overflow-wrap:anywhere">${escapeHtml(k)}</th>`).join('')}</tr></thead>
+            <tbody>${rows.map(r=>`<tr>${keys.map(k=>`<td style="border:1px solid #aaa;padding:${cellPadding}px;overflow-wrap:anywhere;text-align:${typeof r[k]==='number'?'center':'left'}">${escapeHtml(r[k])}</td>`).join('')}</tr>`).join('')}</tbody>
+          </table>`
         document.body.appendChild(container)
-        await html2pdf().set({ margin:0, filename:`${selectedClassName}_Ogrenci_Tanima.pdf`, image:{type:'jpeg',quality:.98}, html2canvas:{scale:1.7,useCORS:true}, jsPDF:{unit:'mm',format:'a4',orientation:reportOrientation}, pagebreak:{mode:['css','legacy']} }).from(container).save()
-        container.remove()
+        try {
+          await html2pdf().set({
+            margin:0,
+            filename:`${selectedClassName}_Ogrenci_Tanima.pdf`,
+            image:{type:'jpeg',quality:.98},
+            html2canvas:{scale:2,useCORS:true,scrollX:0,scrollY:0},
+            jsPDF:{unit:'mm',format:'a4',orientation:'landscape'},
+            pagebreak:{mode:['avoid-all','css','legacy']}
+          }).from(container).save()
+        } finally {
+          container.remove()
+        }
       }
       setReportOpen(false)
     } catch (err) { setError(err?.message || 'Rapor oluşturulamadı.') }
@@ -1475,12 +1494,10 @@ export default function StudentsPage() {
         <DialogContent>
           <Typography fontWeight={900} sx={{mb:1}}>Raporda bulunacak bilgiler</Typography>
           <Box sx={{display:'grid',gridTemplateColumns:{xs:'1fr',sm:'1fr 1fr'},gap:.5}}>
-            {REPORT_FIELDS.map(([key,label]) => <FormControlLabel key={key} control={<Checkbox checked={reportFields.includes(key)} onChange={() => setReportFields(x => x.includes(key) ? x.filter(y=>y!==key) : [...x,key])}/>} label={label}/>) }
+            <FormControlLabel control={<Checkbox checked={reportFields.includes('number')} onChange={() => setReportFields(x => x.includes('number') ? x.filter(y=>y!=='number') : [...x,'number'])}/>} label="Numara" />
             {customReportFields.map(field => { const key=`custom:${field.id}`; return <FormControlLabel key={key} control={<Checkbox checked={reportFields.includes(key)} onChange={() => setReportFields(x => x.includes(key) ? x.filter(y=>y!==key) : [...x,key])}/>} label={`${field.label} • ${field.field_type==='number'?'Sayı':field.field_type==='date'?'Tarih':field.field_type==='phone'?'Telefon':field.field_type==='checkbox'?'Evet/Hayır':field.field_type==='select'?'Seçim':'Yazı'}`}/> })}
           </Box>
-          {reportType === 'pdf' && <TextField select fullWidth sx={{mt:2}} label="Sayfa düzeni" value={reportOrientation} onChange={e=>setReportOrientation(e.target.value)}>
-            <MenuItem value="portrait">Dikey — tek sayfalık sıkı düzen</MenuItem><MenuItem value="landscape">Yatay — en fazla iki sayfalık geniş düzen</MenuItem>
-          </TextField>}
+          {reportType === 'pdf' && <Alert severity="info" sx={{mt:2}}>PDF yatay A4 olarak hazırlanır ve sınıfın tamamı tek sayfaya sığdırılır.</Alert>}
         </DialogContent>
         <DialogActions><Button onClick={()=>setReportOpen(false)}>Vazgeç</Button><Button variant="contained" onClick={createRecognitionReport}>{reportType === 'pdf' ? 'PDF Oluştur' : 'Excel Oluştur'}</Button></DialogActions>
       </Dialog>

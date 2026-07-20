@@ -3,9 +3,9 @@ import {
   Alert, Avatar, Box, Button, Checkbox, Dialog, DialogActions, DialogContent,
   DialogTitle, FormControlLabel, IconButton, MenuItem, Paper, Stack, TextField, Typography
 } from '@mui/material'
-import { Autorenew, Close, Save } from '@mui/icons-material'
+import { Close, Save } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
-import { AVATARS, automaticAvatarId, avatarMatches, nextAvatarId } from '../utils/avatars'
+import { AVATARS, avatarMatches, leastUsedAvatarId, pairedAvatarId } from '../utils/avatars'
 import { useSharedCloudState } from '../services/useSharedCloudState'
 import {
   DEFAULT_STUDENT_PROFILE_FIELDS,
@@ -25,6 +25,7 @@ export default function StudentProfileDialog({ open, student, seatingCards = [],
     onError: error => setError(error?.message || 'Profil etiketleri yüklenemedi.')
   })
   const [avatarId, setAvatarId] = useState(1)
+  const [avatarUsage, setAvatarUsage] = useState({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -32,9 +33,10 @@ export default function StudentProfileDialog({ open, student, seatingCards = [],
 
   async function load() {
     setError('')
-    const [{ data:p, error:e }, { data:c }] = await Promise.all([
+    const [{ data:p, error:e }, { data:c }, { data:studentRows }] = await Promise.all([
       supabase.from('student_profiles').select('*').eq('student_id', student.id).maybeSingle(),
-      supabase.from('student_information_cards').select('*').order('sort_order')
+      supabase.from('student_information_cards').select('*').order('sort_order'),
+      supabase.from('students').select('id,avatar_id').eq('is_active', true)
     ])
     if (e) { setError(e.message); return }
     const loaded = { tags:[], recognition_data:{}, notes:'', gender:'', wears_glasses:false, ...(p || {}) }
@@ -42,10 +44,17 @@ export default function StudentProfileDialog({ open, student, seatingCards = [],
     loaded.wears_glasses = Boolean(loaded.wears_glasses || (loaded.tags || []).includes('Gözlüklü'))
     setProfile(loaded)
     setLegacyCards((c || []).map(card => ({ ...card, id:String(card.id), legacy_card_id:card.id })))
+    const usage = (studentRows || []).reduce((acc, row) => {
+      const id = Number(row.avatar_id)
+      if (id && row.id !== student.id) acc[id] = (acc[id] || 0) + 1
+      return acc
+    }, {})
+    setAvatarUsage(usage)
+    const gender = loaded.gender === 'female' ? 'girl' : 'boy'
     setAvatarId(
-      avatarMatches(student.avatar_id, loaded.gender === 'female' ? 'girl' : 'boy', loaded.wears_glasses)
+      avatarMatches(student.avatar_id, gender, loaded.wears_glasses)
         ? Number(student.avatar_id)
-        : automaticAvatarId(student, loaded.gender === 'female' ? 'girl' : 'boy', loaded.wears_glasses)
+        : leastUsedAvatarId(usage, gender, loaded.wears_glasses, null, student)
     )
   }
 
@@ -81,13 +90,13 @@ export default function StudentProfileDialog({ open, student, seatingCards = [],
       return next
     })
     if (field.label === 'Gözlüklü') {
-      setAvatarId(automaticAvatarId(student, profile.gender === 'female' ? 'girl' : 'boy', Boolean(value)))
+      setAvatarId(current => pairedAvatarId(current, profile.gender === 'female' ? 'girl' : 'boy', Boolean(value), avatarUsage, student))
     }
   }
 
   function changeGender(gender) {
     setProfile(p => ({ ...p, gender }))
-    setAvatarId(automaticAvatarId(student, gender === 'female' ? 'girl' : 'boy', profile.wears_glasses))
+    setAvatarId(current => leastUsedAvatarId(avatarUsage, gender === 'female' ? 'girl' : 'boy', profile.wears_glasses, current, student))
   }
 
   function changeGlasses(checked) {
@@ -99,12 +108,9 @@ export default function StudentProfileDialog({ open, student, seatingCards = [],
         tags:checked ? [...new Set([...tags, 'Gözlüklü'])] : tags.filter(x => x !== 'Gözlüklü')
       }
     })
-    setAvatarId(automaticAvatarId(student, profile.gender === 'female' ? 'girl' : 'boy', checked))
+    setAvatarId(current => pairedAvatarId(current, profile.gender === 'female' ? 'girl' : 'boy', checked, avatarUsage, student))
   }
 
-  function refreshAvatar() {
-    setAvatarId(current => nextAvatarId(current, profile.gender === 'female' ? 'girl' : 'boy', profile.wears_glasses))
-  }
 
   async function save() {
     setSaving(true)
@@ -146,16 +152,15 @@ export default function StudentProfileDialog({ open, student, seatingCards = [],
       {error && <Alert severity="error" sx={{ mb:2 }}>{error}</Alert>}
       <Stack spacing={2}>
         <Paper variant="outlined" sx={{ p:2, borderRadius:3 }}>
-          <Typography fontWeight={900} sx={{ mb:1.5 }}>Temel Bilgiler ve Otomatik Avatar</Typography>
+          <Typography fontWeight={900} sx={{ mb:1.5 }}>Temel Bilgiler</Typography>
           <Stack direction={{ xs:'column', sm:'row' }} spacing={2} alignItems={{ sm:'center' }}>
-            <Avatar src={avatar.src} sx={{ width:82, height:82 }} />
+            <Box className="student-profile-avatar-frame"><Avatar src={avatar.src} imgProps={{ style:{ objectFit:'cover', objectPosition:'center' } }} sx={{ width:'100%', height:'100%' }} /></Box>
             <Box sx={{ flex:1, display:'grid', gridTemplateColumns:{ xs:'1fr', sm:'1fr 1fr' }, gap:1.5 }}>
               <TextField select label="Cinsiyet" value={profile.gender || ''} onChange={e => changeGender(e.target.value)}>
                 <MenuItem value="female">Kız</MenuItem><MenuItem value="male">Erkek</MenuItem>
               </TextField>
               <FormControlLabel control={<Checkbox checked={Boolean(profile.wears_glasses)} onChange={e => changeGlasses(e.target.checked)} />} label="Gözlük kullanıyor" />
             </Box>
-            <Button variant="outlined" startIcon={<Autorenew />} onClick={refreshAvatar} disabled={!profile.gender}>Avatarı Yenile</Button>
           </Stack>
         </Paper>
 

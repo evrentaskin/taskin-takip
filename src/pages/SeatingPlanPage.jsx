@@ -2,11 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Box, Button, Checkbox, Chip, CircularProgress, FormControlLabel, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material'
 import { Add, AutoAwesome, Block, Delete, Lock, LockOpen, Print, Save } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
-import { readSharedState } from '../services/sharedState'
-import { DEFAULT_STUDENT_PROFILE_FIELDS, STUDENT_PROFILE_SCHEMA_STATE_KEY, mergeProfileFields } from '../utils/studentProfileSchema'
 
 const defaults = { orientation: 'landscape', columns: [5,5,5,5], seats: {}, locked_students: [], school_name: '', school_year: '' }
-const rulesDefault = { glassesFront:true, shortFront:true, tallBack:true, separateTalkative:true, pairSupport:true, genderMode:'alternate', selectedFields:[] }
+const rulesDefault = { glassesFront:true, shortFront:true, tallBack:true, separateTalkative:true, pairSupport:true, genderMode:'alternate' }
 const deskId = (c,r) => `${c}-${r}`
 const seatId = (c,r,side) => `${c}-${r}-${side}`
 const normalize = value => String(value || '').trim().toLocaleLowerCase('tr-TR')
@@ -23,7 +21,7 @@ function migrateLegacySeats(seats = {}) {
 }
 
 export default function SeatingPlanPage(){
-  const [classes,setClasses]=useState([]), [classId,setClassId]=useState(''), [students,setStudents]=useState([]), [profiles,setProfiles]=useState({}), [profileFields,setProfileFields]=useState([])
+  const [classes,setClasses]=useState([]), [classId,setClassId]=useState(''), [students,setStudents]=useState([]), [profiles,setProfiles]=useState({})
   const [plan,setPlan]=useState(defaults), [rules,setRules]=useState(rulesDefault), [loading,setLoading]=useState(true), [message,setMessage]=useState('')
   const [selectedStudentId,setSelectedStudentId]=useState('')
   const [touchTargetSeat,setTouchTargetSeat]=useState('')
@@ -44,17 +42,13 @@ export default function SeatingPlanPage(){
 
   async function loadClass(){
     setLoading(true); const {data:u}=await supabase.auth.getUser()
-    const [{data:ss},{data:pp},{data:sp},{data:fields},schemaResult] = await Promise.all([
+    const [{data:ss},{data:pp},{data:sp}] = await Promise.all([
       supabase.from('students').select('id,student_number,first_name,last_name').eq('class_id',classId).eq('is_active',true).order('student_number'),
       supabase.from('student_profiles').select('*'),
-      supabase.from('seating_plans').select('*').eq('teacher_id',u.user.id).eq('class_id',classId).eq('name','Normal Düzen').maybeSingle(),
-      supabase.from('student_information_cards').select('id,label,field_type,options').order('sort_order'),
-      readSharedState(STUDENT_PROFILE_SCHEMA_STATE_KEY, DEFAULT_STUDENT_PROFILE_FIELDS).catch(()=>({payload:DEFAULT_STUDENT_PROFILE_FIELDS}))
+      supabase.from('seating_plans').select('*').eq('teacher_id',u.user.id).eq('class_id',classId).eq('name','Normal Düzen').maybeSingle()
     ])
     setStudents(ss||[])
     setProfiles(Object.fromEntries((pp||[]).map(x=>[x.student_id,x])))
-    const legacyFields=(fields||[]).map(field=>({...field,id:String(field.id),legacy_card_id:field.id}))
-    setProfileFields(mergeProfileFields(schemaResult?.payload||DEFAULT_STUDENT_PROFILE_FIELDS,legacyFields))
     setPlan(sp ? {...defaults,...sp,seats:migrateLegacySeats(sp.seats)} : {...defaults,seats:{}})
     setLoading(false)
   }
@@ -151,35 +145,11 @@ export default function SeatingPlanPage(){
     if(key==='front') return !!pr.front_row || profileHas(studentId,'Ön sırada oturmalı')
     return false
   }
-  function fieldValue(studentId, fieldId){
-    const field=profileFields.find(item=>String(item.id)===String(fieldId))
-    const profile=profiles[studentId]||{}
-    const data=profile.recognition_data||{}
-    if(Object.prototype.hasOwnProperty.call(data,fieldId)) return data[fieldId]
-    if(field?.legacy_card_id && Object.prototype.hasOwnProperty.call(data,field.legacy_card_id)) return data[field.legacy_card_id]
-    if(field?.field_type==='checkbox') return (profile.tags||[]).some(tag=>normalize(tag)===normalize(field.label))
-    return undefined
-  }
-  function selectedFieldScore(studentId, position){
-    let total=0
-    const front=position.row/(position.max-1||1)
-    for(const fieldId of (rules.selectedFields||[])){
-      const field=profileFields.find(x=>String(x.id)===String(fieldId))
-      const raw=fieldValue(studentId,fieldId)
-      if(!field || raw===undefined || raw===null || raw==='') continue
-      if(field.field_type==='checkbox' && Boolean(raw)) total+=(1-front)*5
-      else if(field.field_type==='number'){
-        const n=Number(raw)
-        if(Number.isFinite(n)) total+= n>=170 ? (position.col===0||position.col===plan.columns.length-1 ? 6 : -2) : (1-front)*Math.max(0,170-n)/12
-      }
-      else if(typeof raw==='string' && normalize(raw).includes('yüksek')) total+=front*3
-    }
-    return total
-  }
+
 
   function score(student,position,pairMate){
     const pr=profiles[student.id]||{}
-    let value=Math.random()*3 + selectedFieldScore(student.id,position)
+    let value=Math.random()*3
     const front=position.row/(position.max-1||1)
     if(rules.glassesFront&&property(student.id,'glasses'))value+=(1-front)*10
     if(rules.shortFront&&property(student.id,'short'))value+=(1-front)*9
@@ -256,7 +226,7 @@ export default function SeatingPlanPage(){
     <Box className="page-head"><Box><Typography variant="h4" fontWeight={950}>Oturma Planı</Typography><Typography color="text.secondary">Her sırada iki öğrenci, akıllı dağıtım ve tek sayfa çıktı.</Typography></Box><Stack direction="row" spacing={1}><Button startIcon={<Save/>} variant="contained" onClick={save}>Kaydet</Button><Button startIcon={<Print/>} variant="outlined" onClick={print}>Yazdır / PDF</Button></Stack></Box>
     {message&&<Alert sx={{mb:2}} onClose={()=>setMessage('')}>{message}</Alert>}
     <Paper className="seating-toolbar" variant="outlined"><TextField select label="Sınıf" value={classId} onChange={e=>setClassId(e.target.value)}>{classes.map(c=><MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}</TextField><TextField label="Okul adı" value={plan.school_name} onChange={e=>setPlan(p=>({...p,school_name:e.target.value}))}/><TextField label="Eğitim yılı" value={plan.school_year} onChange={e=>setPlan(p=>({...p,school_year:e.target.value}))}/><TextField select label="Sayfa" value={plan.orientation} onChange={e=>setPlan(p=>({...p,orientation:e.target.value}))}><MenuItem value="landscape">Yatay</MenuItem><MenuItem value="portrait">Dikey</MenuItem></TextField></Paper>
-    <Paper className="seating-rules" variant="outlined"><Typography fontWeight={900}>Akıllı dağıtım kuralları</Typography><div className="seating-rule-groups"><div className="seating-rule-group"><div className="seating-rule-group-title">Yan yana oturma düzeni</div><TextField select size="small" fullWidth value={rules.genderMode||'free'} onChange={e=>setRules(r=>({...r,genderMode:e.target.value}))}><MenuItem value="free">Serbest</MenuItem><MenuItem value="alternate">Bir kız – bir erkek</MenuItem><MenuItem value="girls">Kızlar yan yana</MenuItem><MenuItem value="boys">Erkekler yan yana</MenuItem></TextField></div><div className="seating-rule-group"><div className="seating-rule-group-title">Hazır kurallar</div><Stack direction="row" flexWrap="wrap">{[['glassesFront','Gözlüklüler önde'],['shortFront','Kısa boylular önde'],['tallBack','Uzun boylular arkada'],['separateTalkative','Çok konuşanları ayır'],['pairSupport','Çalışkan ile desteğe ihtiyacı olanı eşleştir']].map(([k,l])=><FormControlLabel key={k} control={<Checkbox checked={Boolean(rules[k])} onChange={e=>setRules(r=>({...r,[k]:e.target.checked}))}/>} label={l}/>)}</Stack></div><div className="seating-rule-group"><div className="seating-rule-group-title">Öğrenci profili verileri</div><Typography variant="caption" color="text.secondary">Dağıtımda kullanılacak etiketleri açılır listeden işaretle.</Typography><TextField select size="small" fullWidth value={rules.selectedFields||[]} SelectProps={{multiple:true,renderValue:selected=>selected.length?`${selected.length} etiket seçildi`:'Etiket seç',MenuProps:{PaperProps:{sx:{maxHeight:360}}}}} onChange={e=>setRules(r=>({...r,selectedFields:typeof e.target.value==='string'?e.target.value.split(','):e.target.value}))}>{profileFields.map(field=><MenuItem key={field.id} value={field.id}><Checkbox size="small" checked={(rules.selectedFields||[]).includes(field.id)}/><Typography variant="body2">{field.label}</Typography></MenuItem>)}</TextField></div></div><Button variant="contained" color="secondary" startIcon={<AutoAwesome/>} onClick={smartDistribute}>Akıllı Dağıt</Button></Paper>
+    <Paper className="seating-rules" variant="outlined"><Typography fontWeight={900}>Akıllı dağıtım kuralları</Typography><div className="seating-rule-groups"><div className="seating-rule-group"><div className="seating-rule-group-title">Yan yana oturma düzeni</div><TextField select size="small" fullWidth value={rules.genderMode||'free'} onChange={e=>setRules(r=>({...r,genderMode:e.target.value}))}><MenuItem value="free">Serbest</MenuItem><MenuItem value="alternate">Bir kız – bir erkek</MenuItem><MenuItem value="girls">Kızlar yan yana</MenuItem><MenuItem value="boys">Erkekler yan yana</MenuItem></TextField></div><div className="seating-rule-group"><div className="seating-rule-group-title">Hazır kurallar</div><Stack direction="row" flexWrap="wrap">{[['glassesFront','Gözlüklüler önde'],['shortFront','Kısa boylular önde'],['tallBack','Uzun boylular arkada'],['separateTalkative','Çok konuşanları ayır'],['pairSupport','Çalışkan ile desteğe ihtiyacı olanı eşleştir']].map(([k,l])=><FormControlLabel key={k} control={<Checkbox checked={Boolean(rules[k])} onChange={e=>setRules(r=>({...r,[k]:e.target.checked}))}/>} label={l}/>)}</Stack></div></div><Button variant="contained" color="secondary" startIcon={<AutoAwesome/>} onClick={smartDistribute}>Akıllı Dağıt</Button></Paper>
     <Box className="seating-workspace"><Paper className="student-pool" variant="outlined"><Typography fontWeight={900}>Yerleştirilmemiş Öğrenciler ({unplaced.length})</Typography><Typography variant="caption" color="text.secondary">Telefonda öğrenciyi sürükleyin veya öğrenciye dokunup koltuğu seçin.</Typography>{unplaced.map(s=><Chip className={selectedStudentId===s.id?'selected-student-chip':''} draggable onClick={()=>setSelectedStudentId(s.id)} onDragStart={e=>beginDrag(e,s.id)} onTouchStart={e=>beginTouch(e,s.id)} onTouchMove={moveTouch} onTouchEnd={endTouch} key={s.id} label={`${s.student_number} ${s.first_name} ${s.last_name}`} />)}</Paper>
       <Paper ref={printRef} className={`seating-print ${plan.orientation}`} variant="outlined"><div className="print-title"><b>{plan.school_name||'OKUL ADI'}</b><span>{className} SINIFI OTURMA PLANI</span><small>{plan.school_year} • {new Date().toLocaleDateString('tr-TR')}</small></div><div className="board">AKILLI TAHTA</div><div className="teacher-desk">ÖĞRETMEN MASASI</div><div className="seat-columns">{plan.columns.map((count,c)=><div className="seat-column" key={c}><div className="column-tools"><TextField size="small" type="number" label="Sıra" value={count} onChange={e=>rows(c,e.target.value)}/><Button size="small" color="error" onClick={()=>removeColumn(c)}><Delete/></Button></div>{Array.from({length:count}).map((_,r)=><div className="double-desk" key={deskId(c,r)}><Seat id={seatId(c,r,0)}/><Seat id={seatId(c,r,1)}/></div>)}</div>)}<Button className="add-column" startIcon={<Add/>} onClick={addColumn}>Sütun Ekle</Button></div></Paper></Box>
   </Box>

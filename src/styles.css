@@ -2100,3 +2100,24 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
 .reserved-icon{font-size:30px!important;color:#d14343!important;opacity:.9}
 .seat-enable-icon{font-size:10px!important;padding:3px 7px!important}
 .reserved-empty{cursor:not-allowed!important;user-select:none}
+
+/* V10.0.4 — profil avatarı sabit ve ortalı */
+.student-profile-avatar-frame{
+  width:88px;
+  height:88px;
+  min-width:88px;
+  border-radius:50%;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 88px;
+  background:#e9f4f0;
+}
+.student-profile-avatar-frame img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  object-position:center center !important;
+  display:block;
+}
