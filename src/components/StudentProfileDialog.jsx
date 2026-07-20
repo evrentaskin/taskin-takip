@@ -45,10 +45,18 @@ export default function StudentProfileDialog({ open, student, seatingCards, onCl
         ? Number(student.avatar_id)
         : automaticAvatarId(student, loaded.gender === 'female' ? 'girl' : 'boy', loaded.wears_glasses)
     )
-    if (c?.length) setCards(c)
+    const customCards = Array.isArray(c) ? c : []
+    const merged = [...DEFAULT_CARDS]
+    customCards.forEach(card => {
+      const index = merged.findIndex(item => item.group_name === card.group_name && item.label.toLocaleLowerCase('tr-TR') === card.label.toLocaleLowerCase('tr-TR'))
+      if (index >= 0) merged[index] = card
+      else merged.push(card)
+    })
+    setCards(merged)
   }
 
   const recognition = useMemo(() => cards.filter(x => x.group_name === 'recognition'), [cards])
+  const seatingFields = useMemo(() => cards.filter(x => x.group_name === 'seating'), [cards])
 
   function setValue(id, value) {
     setProfile(p => ({ ...p, recognition_data:{ ...(p.recognition_data || {}), [id]:value } }))
@@ -161,16 +169,28 @@ export default function StudentProfileDialog({ open, student, seatingCards, onCl
             </Typography>
           </Paper>
 
-          <Box sx={{ display:'grid', gridTemplateColumns:{ xs:'1fr', sm:'1fr 1fr' }, gap:1 }}>
-            {seatingCards.filter(card => card.label !== 'Gözlüklü').map(card =>
-              <Paper key={card.id} variant="outlined" sx={{ p:1, borderRadius:2 }}>
-                <FormControlLabel
-                  control={<Checkbox checked={(profile.tags || []).includes(card.label)} onChange={() => toggleTag(card.label)} />}
-                  label={card.label}
-                />
-              </Paper>
-            )}
+          <Box>
+            <Typography fontWeight={900} sx={{ mb:1 }}>Etiketler</Typography>
+            {seatingCards.length === 0 ? <Alert severity="info">Ayarlar bölümünden öğrenci profil etiketi ekleyebilirsin.</Alert> :
+              <Box sx={{ display:'grid', gridTemplateColumns:{ xs:'1fr', sm:'1fr 1fr' }, gap:1 }}>
+                {seatingCards.filter(card => card.label !== 'Gözlüklü').map(card =>
+                  <Paper key={card.id} variant="outlined" sx={{ p:1, borderRadius:2 }}>
+                    <FormControlLabel
+                      control={<Checkbox checked={(profile.tags || []).includes(card.label)} onChange={() => toggleTag(card.label)} />}
+                      label={card.label}
+                    />
+                  </Paper>
+                )}
+              </Box>
+            }
           </Box>
+
+          {seatingFields.length > 0 && <Box>
+            <Typography fontWeight={900} sx={{ mb:1 }}>Özel Oturma Bilgileri</Typography>
+            <Stack spacing={1.5}>
+              {seatingFields.map(card => <Field key={card.id} card={card} value={(profile.recognition_data || {})[card.id]} setValue={setValue} />)}
+            </Stack>
+          </Box>}
         </Stack> :
           <Stack spacing={2}>
             {recognition.map(card => <Field key={card.id} card={card} value={(profile.recognition_data || {})[card.id]} setValue={setValue} />)}

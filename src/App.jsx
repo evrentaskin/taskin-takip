@@ -5,7 +5,7 @@ import {
   Toolbar, Typography
 } from '@mui/material'
 import {
-  Campaign, CalendarMonth, Dashboard, EmojiEvents, EventSeat, Folder, Groups, Logout, Menu, NoteAlt, Psychology, Quiz, School, Settings, Star, Storage
+  Campaign, CalendarMonth, Dashboard, EmojiEvents, EventSeat, Folder, Groups, Logout, Menu, NoteAlt, Psychology, Quiz, School, Settings, Star, Storage, PersonPin
 } from '@mui/icons-material'
 import { supabase } from './services/supabase'
 import LoginPage from './pages/LoginPage'
@@ -26,6 +26,7 @@ import ReportsPage from './pages/ReportsPage'
 import StudentDetailPage from './pages/StudentDetailPage'
 import SeatingPlanPage from './pages/SeatingPlanPage'
 import YearlyPlanPage from './pages/YearlyPlanPage'
+import PrivateLessonsPage from './pages/PrivateLessonsPage'
 
 const drawerWidth = 258
 
@@ -138,6 +139,7 @@ export default function App() {
     ['Raporlar', Storage],
     ['Yıllık Plan', CalendarMonth],
     ['Oturma Planı', EventSeat],
+    ['Özel Dersler', PersonPin],
     ['Ayarlar', Settings],
   ]
 
@@ -220,6 +222,8 @@ export default function App() {
           <YearlyPlanPage />
         ) : page === 'Oturma Planı' ? (
           <SeatingPlanPage />
+        ) : page === 'Özel Dersler' ? (
+          <PrivateLessonsPage />
         ) : page === 'LGS Grubu' ? (
           <LgsPage />
         ) : page === 'Ödevler' ? (

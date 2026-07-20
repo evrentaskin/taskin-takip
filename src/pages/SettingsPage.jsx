@@ -9,6 +9,7 @@ import { isValidUsername, toAuthSafeUsername, USERNAME_HELP } from '../utils/use
 import { useSharedCloudState } from '../services/useSharedCloudState'
 import { parseYearlyPlanWorkbook, YEARLY_PLAN_GRADES, YEARLY_PLAN_LOCAL_KEY, YEARLY_PLAN_STATE_KEY } from '../utils/yearlyPlan'
 import StudentInformationCardsSettings from '../components/StudentInformationCardsSettings'
+import StudentProfileTagsSettings from '../components/StudentProfileTagsSettings'
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState({ full_name: '', username: '' })
@@ -391,6 +392,11 @@ export default function SettingsPage() {
         </Stack>
       </Box>
 
+
+      <StudentProfileTagsSettings
+        onError={text => { setMessage(''); setError(text) }}
+        onMessage={text => { setError(''); setMessage(text) }}
+      />
 
       <StudentInformationCardsSettings
         onError={text => { setMessage(''); setError(text) }}

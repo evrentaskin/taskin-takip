@@ -2048,3 +2048,34 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
     min-width:32px!important;width:32px!important;height:31px!important;
   }
 }
+
+/* V10.0 Özel Dersler takvimi */
+.private-calendar {
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:7px;
+  margin-top:14px;
+}
+.private-calendar-head {
+  text-align:center;
+  font-size:12px !important;
+  font-weight:900 !important;
+  color:var(--muted, #667085);
+}
+.private-calendar-day.MuiButton-root {
+  min-width:0;
+  min-height:72px;
+  padding:7px 3px;
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:12px;
+  display:flex;
+  flex-direction:column;
+  line-height:1.15;
+  text-transform:none;
+}
+.private-calendar-day small { font-size:9px; margin-top:3px; text-align:center; }
+@media (max-width:600px){
+  .private-calendar { gap:4px; }
+  .private-calendar-day.MuiButton-root { min-height:62px; padding:5px 1px; }
+  .private-calendar-day small { font-size:8px; }
+}

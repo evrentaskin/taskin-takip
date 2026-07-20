@@ -1,13 +1,10 @@
-V9.6.5 - Bilgi Kartı Yönetimi Ayarlara Taşındı
+1. ZIP içeriğini mevcut projenin kök klasörüne kopyalayın.
+2. Dosyaların üzerine yazılmasına izin verin.
+3. CMD/Terminal:
+   npm install
+   npm run build
+   git add .
+   git commit -m "V10.0 özel dersler ve profil düzeltmeleri"
+   git push
 
-1) ZIP içindeki src klasörünü mevcut proje köküne kopyalayın.
-2) Dosya değiştirme sorusuna "Üzerine yaz / Değiştir" deyin.
-3) CMD'de proje klasöründe:
-
-npm install
-npm run build
-git add .
-git commit -m "V9.6.5 bilgi karti yonetimi ayarlara tasindi"
-git push
-
-SQL çalıştırmak gerekmez.
+SQL çalıştırılması gerekmez. Özel ders verileri mevcut shared_app_state tablosunda saklanır.
