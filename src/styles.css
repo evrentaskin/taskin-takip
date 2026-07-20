@@ -749,11 +749,11 @@ body { margin: 0; min-width: 320px; }
 .online-pdf-report .report-table{font-size:11px}
 .online-pdf-report .report-table th{padding:7px 6px}
 .online-pdf-report .report-table td{padding:6px}
-.online-pdf-report .question-grid{grid-template-columns:repeat(10,1fr);gap:6px;margin:8px 0 12px}
-.online-pdf-report .question-box{min-height:58px;aspect-ratio:auto;border-radius:8px}
-.online-pdf-report .analysis-pair{margin:10px 0;gap:10px}
-.online-pdf-report .mini-analysis{padding:10px}
-.online-pdf-report .mini-analysis>div{padding:5px 0;font-size:11px}
+.online-pdf-report .question-grid{grid-template-columns:repeat(10,1fr);gap:3px;margin:4px 0 6px}
+.online-pdf-report .question-box{min-height:38px;aspect-ratio:auto;border-radius:6px;font-size:9px;padding:2px}
+.online-pdf-report .analysis-pair{margin:5px 0;gap:6px}
+.online-pdf-report .mini-analysis{padding:6px}
+.online-pdf-report .mini-analysis>div{padding:2px 0;font-size:9px}
 @media print{
   .pdf-report-page{break-after:page;page-break-after:always}
   .pdf-report-page:last-child{break-after:auto;page-break-after:auto}
@@ -2079,3 +2079,9 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
   .private-calendar-day.MuiButton-root { min-height:62px; padding:5px 1px; }
   .private-calendar-day small { font-size:8px; }
 }
+
+/* V10.0.2 seating clarity */
+.seat-empty,.seat-enable{font-size:0!important;min-width:28px!important;width:28px!important;height:28px!important;border-radius:50%!important;padding:0!important}
+.seat-empty::before{content:'⊘';font-size:17px}.seat-enable::before{content:'✓';font-size:16px}
+.reserved-label{font-size:11px;font-weight:900;color:#9b3b23}.reserved-empty{opacity:.82;cursor:not-allowed!important}
+.seating-rule-groups{display:grid;gap:12px;margin:10px 0}.seating-rule-group{padding:10px;border:1px solid #dbe5e1;border-radius:12px;background:#f8fbfa}.seating-rule-group-title{font-weight:900;margin-bottom:4px}

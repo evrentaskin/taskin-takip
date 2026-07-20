@@ -121,6 +121,7 @@ export default function StudentsPage() {
   const [reportType, setReportType] = useState('pdf')
   const [reportOrientation, setReportOrientation] = useState('portrait')
   const [reportFields, setReportFields] = useState(REPORT_FIELDS.map(x => x[0]))
+  const [customReportFields, setCustomReportFields] = useState([])
 
   const [importOpen, setImportOpen] = useState(false)
   const [importRows, setImportRows] = useState([])
@@ -976,8 +977,12 @@ export default function StudentsPage() {
     }
   }
 
-  function openReport(type) {
+  async function openReport(type) {
     setReportType(type)
+    const { data } = await supabase.from('student_information_cards').select('id,label,field_type').order('sort_order')
+    const fields = Array.isArray(data) ? data : []
+    setCustomReportFields(fields)
+    setReportFields(current => [...new Set([...current, ...fields.map(x => `custom:${x.id}`)])])
     setReportOpen(true)
   }
 
@@ -985,7 +990,7 @@ export default function StudentsPage() {
     const ids = students.map(x => x.id)
     const [{ data: profiles, error: profileError }, { data: customCards }] = await Promise.all([
       supabase.from('student_profiles').select('student_id,recognition_data,notes').in('student_id', ids),
-      supabase.from('student_information_cards').select('id,label').eq('group_name','recognition').order('sort_order')
+      supabase.from('student_information_cards').select('id,label').order('sort_order')
     ])
     if (profileError) throw profileError
     const byStudent = new Map((profiles || []).map(x => [x.student_id, x]))
@@ -1000,8 +1005,9 @@ export default function StudentsPage() {
         row[label] = typeof raw === 'boolean' ? (raw ? 'Evet' : 'Hayır') : (raw ?? '')
       }
       for (const card of customCards || []) {
+        if (!selected.has(`custom:${card.id}`)) continue
         const raw = values[card.id]
-        if (raw !== undefined && raw !== '') row[card.label] = typeof raw === 'boolean' ? (raw ? 'Evet' : 'Hayır') : raw
+        row[card.label] = typeof raw === 'boolean' ? (raw ? 'Evet' : 'Hayır') : (raw ?? '')
       }
       return row
     })
@@ -1457,6 +1463,7 @@ export default function StudentsPage() {
           <Typography fontWeight={900} sx={{mb:1}}>Raporda bulunacak bilgiler</Typography>
           <Box sx={{display:'grid',gridTemplateColumns:{xs:'1fr',sm:'1fr 1fr'},gap:.5}}>
             {REPORT_FIELDS.map(([key,label]) => <FormControlLabel key={key} control={<Checkbox checked={reportFields.includes(key)} onChange={() => setReportFields(x => x.includes(key) ? x.filter(y=>y!==key) : [...x,key])}/>} label={label}/>) }
+            {customReportFields.map(field => { const key=`custom:${field.id}`; return <FormControlLabel key={key} control={<Checkbox checked={reportFields.includes(key)} onChange={() => setReportFields(x => x.includes(key) ? x.filter(y=>y!==key) : [...x,key])}/>} label={`${field.label} • ${field.field_type==='number'?'Sayı':field.field_type==='date'?'Tarih':field.field_type==='phone'?'Telefon':field.field_type==='checkbox'?'Evet/Hayır':field.field_type==='select'?'Seçim':'Yazı'}`}/> })}
           </Box>
           {reportType === 'pdf' && <TextField select fullWidth sx={{mt:2}} label="Sayfa düzeni" value={reportOrientation} onChange={e=>setReportOrientation(e.target.value)}>
             <MenuItem value="portrait">Dikey — tek sayfalık sıkı düzen</MenuItem><MenuItem value="landscape">Yatay — en fazla iki sayfalık geniş düzen</MenuItem>

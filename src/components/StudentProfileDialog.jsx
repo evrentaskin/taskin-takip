@@ -55,8 +55,8 @@ export default function StudentProfileDialog({ open, student, seatingCards, onCl
     setCards(merged)
   }
 
-  const recognition = useMemo(() => cards.filter(x => x.group_name === 'recognition'), [cards])
-  const seatingFields = useMemo(() => cards.filter(x => x.group_name === 'seating'), [cards])
+  const recognition = useMemo(() => cards, [cards])
+  const seatingFields = []
 
   function setValue(id, value) {
     setProfile(p => ({ ...p, recognition_data:{ ...(p.recognition_data || {}), [id]:value } }))

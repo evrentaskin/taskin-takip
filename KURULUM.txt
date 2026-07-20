@@ -1,14 +1,10 @@
-V10.0.1 KURULUM
+1) ZIP içeriğini mevcut proje klasörünün üzerine kopyalayın.
+2) Dosyaların üzerine yazılmasını onaylayın.
+3) CMD/Terminal:
+   npm install
+   npm run build
+   git add .
+   git commit -m "V10.0.2 ogrenci profili ve akilli oturma"
+   git push
 
-1. ZIP dosyasını açın.
-2. İçindeki src klasörünü mevcut projenin köküne kopyalayın.
-3. Dosya değiştirme sorusuna "Değiştir / Üzerine yaz" yanıtı verin.
-4. Proje klasöründe çalıştırın:
-
-npm install
-npm run build
-git add .
-git commit -m "V10.0.1 menu ve etiket duzeltmeleri"
-git push
-
-SQL çalıştırmak gerekmez.
+SQL çalıştırılması gerekmez.

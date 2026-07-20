@@ -6,7 +6,7 @@ import {
 import { Add, DeleteOutline, ViewAgenda } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
 
-const EMPTY_CARD = { label: '', group_name: 'recognition', field_type: 'checkbox', options: '' }
+const EMPTY_CARD = { label: '', group_name: 'recognition', field_type: 'text', options: '' }
 
 const FIELD_TYPE_LABELS = {
   checkbox: 'Evet / Hayır',
@@ -17,10 +17,6 @@ const FIELD_TYPE_LABELS = {
   select: 'Seçim listesi'
 }
 
-const GROUP_LABELS = {
-  seating: 'Oturma Bilgileri',
-  recognition: 'Öğrenci Tanıma'
-}
 
 export default function StudentInformationCardsSettings({ onError, onMessage }) {
   const [cards, setCards] = useState([])
@@ -44,7 +40,7 @@ export default function StudentInformationCardsSettings({ onError, onMessage }) 
 
   async function addCard() {
     const label = newCard.label.trim()
-    if (!label) return onError?.('Bilgi kartı adı zorunlu.')
+    if (!label) return onError?.('Etiket adı zorunlu.')
 
     const options = newCard.field_type === 'select'
       ? newCard.options.split(',').map(item => item.trim()).filter(Boolean)
@@ -59,7 +55,7 @@ export default function StudentInformationCardsSettings({ onError, onMessage }) 
       .from('student_information_cards')
       .insert({
         label,
-        group_name: newCard.group_name,
+        group_name: 'recognition',
         field_type: newCard.field_type,
         options,
         sort_order: cards.length
@@ -72,11 +68,11 @@ export default function StudentInformationCardsSettings({ onError, onMessage }) 
 
     setCards(current => [...current, data])
     setNewCard(EMPTY_CARD)
-    onMessage?.(`“${label}” bilgi kartı eklendi.`)
+    onMessage?.(`“${label}” etiket eklendi.`)
   }
 
   async function removeCard(card) {
-    if (!window.confirm(`“${card.label}” bilgi kartı tüm öğrencilerden silinsin mi?`)) return
+    if (!window.confirm(`“${card.label}” etiket tüm öğrencilerden silinsin mi?`)) return
 
     const { error } = await supabase
       .from('student_information_cards')
@@ -86,35 +82,26 @@ export default function StudentInformationCardsSettings({ onError, onMessage }) 
     if (error) return onError?.(error.message)
 
     setCards(current => current.filter(item => item.id !== card.id))
-    onMessage?.(`“${card.label}” bilgi kartı silindi.`)
+    onMessage?.(`“${card.label}” etiket silindi.`)
   }
 
   return (
     <Box className="glass settings-card settings-term-card">
       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
         <ViewAgenda color="primary" />
-        <Typography variant="h6" fontWeight={900}>Öğrenci Bilgi Kartları</Typography>
+        <Typography variant="h6" fontWeight={900}>Öğrenci Profili</Typography>
       </Stack>
       <Typography color="text.secondary" sx={{ mb: 2 }}>
-        Öğrenci profillerinde kullanılacak özel bilgi alanlarını buradan ekleyip silebilirsin. Yönetim düğmesi öğrenci profillerinde gösterilmez.
+        Tüm öğrenci profil alanlarını tek yerden yönet. Eklediğin alanlar bütün öğrencilerde görünür ve tanıma raporunda seçilebilir.
       </Typography>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr 1fr' }, gap: 1.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 1.5 }}>
         <TextField
-          label="Kart adı"
+          label="Etiket adı"
           placeholder="Örnek: Boy (cm)"
           value={newCard.label}
           onChange={event => setNewCard(current => ({ ...current, label: event.target.value }))}
         />
-        <TextField
-          select
-          label="Bölüm"
-          value={newCard.group_name}
-          onChange={event => setNewCard(current => ({ ...current, group_name: event.target.value }))}
-        >
-          <MenuItem value="recognition">Öğrenci Tanıma</MenuItem>
-          <MenuItem value="seating">Oturma Bilgileri</MenuItem>
-        </TextField>
         <TextField
           select
           label="Veri tipi"
@@ -146,7 +133,7 @@ export default function StudentInformationCardsSettings({ onError, onMessage }) 
         onClick={addCard}
         disabled={saving || !newCard.label.trim()}
       >
-        Bilgi Kartı Ekle
+        Etiket Ekle
       </Button>
 
       <Divider sx={{ my: 2 }} />
@@ -154,7 +141,7 @@ export default function StudentInformationCardsSettings({ onError, onMessage }) 
       {loading ? (
         <Box sx={{ py: 2, textAlign: 'center' }}><CircularProgress size={26} /></Box>
       ) : cards.length === 0 ? (
-        <Alert severity="info">Henüz özel bilgi kartı eklenmemiş.</Alert>
+        <Alert severity="info">Henüz özel etiket eklenmemiş.</Alert>
       ) : (
         <Stack spacing={1}>
           {cards.map(card => (
@@ -162,7 +149,7 @@ export default function StudentInformationCardsSettings({ onError, onMessage }) 
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography fontWeight={850}>{card.label}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {GROUP_LABELS[card.group_name] || card.group_name} • {FIELD_TYPE_LABELS[card.field_type] || card.field_type}
+                  Öğrenci Profili • {FIELD_TYPE_LABELS[card.field_type] || card.field_type}
                   {Array.isArray(card.options) && card.options.length ? ` • ${card.options.join(', ')}` : ''}
                 </Typography>
               </Box>
