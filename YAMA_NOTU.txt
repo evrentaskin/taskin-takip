@@ -1,18 +1,16 @@
-V10.0.6.5 ÖZEL DERS SEÇİM, RENK VE PDF YAMASI
+V10.0.6.6 ÖZEL DERS RENK VE PDF KESİN DÜZELTME
 
-Yapılanlar:
-- Seçilen öğrencinin kartının tamamı turuncu yapıldı; isim, kullanıcı adı ve simgeler beyaz gösteriliyor.
-- Takvimdeki yeşil ve kırmızı renklerin tonu azaltıldı, yazılar koyu ve okunaklı hale getirildi.
-- Öğrenci düzenleme butonu yalnızca üstteki öğrenci kartında, öğrenci adının yanında bırakıldı.
-- Seçili öğrenci detay başlığındaki ikinci Düzenle butonu kaldırıldı.
-- Beyaz/boş PDF sorunu için PDF alanı negatif katmandan çıkarıldı ve html2canvas oluşturma ayarları yenilendi.
-- PDF oluştururken hata olursa kullanıcıya uyarı gösteriliyor.
+- Yapılan ders: açık yeşil
+- Yapılmayan ders: açık kırmızı
+- Telafi: açık sarı
+- Seçilen öğrenci kartı: turuncu zemin + koyu turuncu çerçeve
+- PDF oluşturma tamamen yenilendi; görünür geçici HTML üzerinden oluşturulur, boş/beyaz PDF sorunu giderildi.
+- Proje npm run build ile başarıyla test edildi.
 
 Kurulum:
-ZIP içindeki src/pages/PrivateLessonsPage.jsx dosyasını ana projedeki aynı dosyanın üzerine kopyalayın.
-Ardından:
-npm install
-npm run build
-git add .
-git commit -m "V10.0.6.5 özel ders seçim renk ve PDF düzeltmesi"
-git push
+1) ZIP içindeki src/pages/PrivateLessonsPage.jsx dosyasını projenizdeki aynı konuma kopyalayın.
+2) Mevcut dosyanın üzerine yazın.
+3) npm run build
+4) git add .
+5) git commit -m "V10.0.6.6 özel ders renk ve PDF kesin düzeltme"
+6) git push
