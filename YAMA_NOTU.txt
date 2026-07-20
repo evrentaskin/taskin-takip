@@ -1,27 +1,28 @@
-V10.0.6.2 - ÖĞRETMEN PANELİ FEN DENEME YAMASI
+V10.0.6.3 ÖZEL DERS PANEL YAMASI
 
-EKLENENLER
-- Özel Dersler bölümüne Fen Deneme Havuzu sekmesi
-- 20 soruluk manuel cevap anahtarı
-- İsteğe bağlı PDF/JPG/PNG/WEBP dosyası
-- Deneme düzenleme, arşivleme, geri alma ve kalıcı silme
-- Öğrenci başlığında Deneme Ata butonu
-- Havuzdan deneme seçip başlangıç ve bitiş tarih-saatini belirleme
-- Öğrenci atamasını değiştirme, arşivleme ve silme
-- Sonucu İptal Et altyapısı: cevap ve sonuç silinir, deneme yeniden aktif olur
-- Okul denemeleri için Fen doğru/yanlış/boş, net, okul sırası ve toplam öğrenci girişi
-- Analiz sekmesinde doğru yeşil, yanlış kırmızı, boş sarı renk açıklaması
-- Deneme sonuçlarının tarih sıralı gösterilmesi için altyapı
+Kurulum:
+1. ZIP'i açın.
+2. İçindeki src/pages/PrivateLessonsPage.jsx dosyasını projenizdeki aynı konuma kopyalayıp üzerine yazın.
+3. Proje klasöründe sırasıyla çalıştırın:
+   npm install
+   npm run build
+   git add .
+   git commit -m "V10.0.6.3 özel ders öğrenci ve deneme paneli"
+   git push
 
-KORUNANLAR
-- Mevcut özel ders takvimi
-- Ders ücretleri ve ödeme takibi
-- Notlar / haftalık ödevler
+Eklenenler:
+- Öğrenci kartları sayfanın üstünde sıralanır.
+- Her öğrenci kartında Düzenle ve Sil bulunur.
+- Öğrenci ekleme/düzenleme: ad soyad, kullanıcı adı, şifre, adres, ders ücreti ve ders süresi.
+- Adres zorunlu değildir; kullanıcı adı ve şifre düzenlenebilir.
+- Öğrenci seçilince tam genişlikte Takvim ve Ücret, Online Denemeler, Okul Denemeleri, Analiz sekmeleri açılır.
+- Online denemelerde Deneme Ata, Düzenle, Sil, Sonucu Gör, İptal Et ve Arşivle.
+- Okul denemelerinde deneme adı, tarih, doğru, yanlış, net ve okul sırası elle girilir; düzenlenebilir.
+- Analizde online ve okul denemeleri tek listede, eski tarihten yeni tarihe sıralanır.
+- Listenin altında doğru, yanlış, boş ve net ortalamaları bulunur.
+- En altta son 10 denemenin net çizgi grafiği bulunur.
+- Tüm sonuçlar PDF alınabilir; PDF tablosunda tarih sütunu bulunmaz.
+- Mevcut takvim ve ücret sistemi korunmuştur.
 
-KURULUM
-1. Projenin yedeğini alın.
-2. Bu yamadaki src/pages/PrivateLessonsPage.jsx dosyasını aynı konuma kopyalayın.
-3. Hazır yayın dosyası kullanılacaksa dist klasörünü mevcut dist klasörüyle değiştirin.
-
-NOT
-Bu yama öğretmen panelini hazırlar. Öğrencinin denemeyi çözme ekranı sonraki aşamada bağlanacaktır.
+Kontrol:
+- npm run build başarıyla tamamlandı.
