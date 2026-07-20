@@ -1,10 +1,14 @@
-1) ZIP içeriğini mevcut proje klasörünün üzerine kopyalayın.
-2) Dosyaların üzerine yazılmasını onaylayın.
-3) CMD/Terminal:
-   npm install
+V10.0.6.7 PDF BOŞ EKRAN KESİN DÜZELTME
+
+1) ZIP'i açın.
+2) src/pages/PrivateLessonsPage.jsx dosyasını ana projedeki aynı konuma kopyalayıp üzerine yazın.
+3) Terminalde çalıştırın:
    npm run build
    git add .
-   git commit -m "V10.0.2 ogrenci profili ve akilli oturma"
+   git commit -m "V10.0.6.7 PDF boş ekran düzeltmesi"
    git push
 
-SQL çalıştırılması gerekmez.
+NOT:
+PDF düğmesi artık html2canvas/html2pdf ile ekran görüntüsü almıyor.
+Tarayıcının yerleşik yazdırma sistemi açılır. Hedef olarak "PDF olarak kaydet" seçilmelidir.
+Bu yöntem beyaz/boş PDF sorununu ortadan kaldırır.

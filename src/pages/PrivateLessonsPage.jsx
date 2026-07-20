@@ -110,7 +110,7 @@ export default function PrivateLessonsPage(){
   function saveSchool(){if(!schoolForm.name.trim()||!schoolForm.date)return alert('Deneme adı ve tarih zorunludur.');const correct=numeric(schoolForm.correct),wrong=numeric(schoolForm.wrong);const item={...schoolForm,id:schoolForm.id||crypto.randomUUID(),name:schoolForm.name.trim(),correct,wrong,net:schoolForm.net===''?netOf(correct,wrong):Number(schoolForm.net),schoolRank:numeric(schoolForm.schoolRank)};const list=schoolForm.id?(selected.schoolExams||[]).map(x=>x.id===item.id?item:x):[...(selected.schoolExams||[]),item];updateSelected({schoolExams:list});setSchoolOpen(false)}
   function deleteSchool(id){if(!window.confirm('Okul denemesi silinsin mi?'))return;updateSelected({schoolExams:(selected.schoolExams||[]).filter(x=>x.id!==id)})}
 
-  async function exportPdf(){
+  function exportPdf(){
     if(!selected)return
     const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]))
     const rows=allResults.map((x,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(x.type)}</td><td>${escapeHtml(x.name)}</td><td>${x.correct}</td><td>${x.wrong}</td><td>${x.blank}</td><td>${Number(x.net).toFixed(2)}</td><td>${x.schoolRank||'—'}</td></tr>`).join('')
@@ -124,17 +124,14 @@ export default function PrivateLessonsPage(){
       const dots=points.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="5" fill="#ea580c"/><text x="${p.x}" y="${p.y-10}" text-anchor="middle" font-size="11" font-weight="700" fill="#111827">${p.value.toFixed(2)}</text><text x="${p.x}" y="${height-5}" text-anchor="middle" font-size="10" fill="#6b7280">${i+1}</text>`).join('')
       chartHtml=`<svg viewBox="0 0 ${width} ${height}" width="100%" xmlns="http://www.w3.org/2000/svg">${grid}<polyline points="${points.map(p=>`${p.x},${p.y}`).join(' ')}" fill="none" stroke="#ea580c" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>${dots}</svg>`
     }
-    const report=document.createElement('div')
-    report.style.cssText='position:fixed;left:0;top:0;width:794px;min-height:1123px;background:#fff;color:#111;padding:30px;z-index:2147483647;font-family:Arial,sans-serif;box-sizing:border-box;'
-    report.innerHTML=`<style>
-      .pdf-report *{box-sizing:border-box}.pdf-report h1{margin:0 0 5px;font-size:25px}.pdf-report h2{margin:0 0 20px;font-size:18px;color:#444}.pdf-report h3{margin:24px 0 8px;font-size:17px}.pdf-report table{width:100%;border-collapse:collapse;font-size:12px}.pdf-report th,.pdf-report td{border:1px solid #cbd5e1;padding:7px;text-align:left}.pdf-report th{background:#ffedd5;color:#7c2d12}.pdf-report .average{margin-top:12px;padding:10px;background:#fff7ed;border:1px solid #fdba74;font-weight:700}.pdf-report .empty{padding:18px;border:1px solid #ddd;background:#fafafa}.pdf-report svg{display:block;background:#fff}
-    </style><div class="pdf-report"><h1>Fen Deneme Sonuç Raporu</h1><h2>${escapeHtml(selected.fullName)}</h2><table><thead><tr><th>#</th><th>Tür</th><th>Deneme</th><th>Doğru</th><th>Yanlış</th><th>Boş</th><th>Net</th><th>Okul Sırası</th></tr></thead><tbody>${rows||'<tr><td colspan="8">Henüz deneme sonucu bulunmuyor.</td></tr>'}</tbody></table>${averages?`<div class="average">Ortalama net: ${averages.net.toFixed(2)}</div>`:''}<h3>Son 10 Denemenin Net Grafiği</h3>${chartHtml}</div>`
-    document.body.appendChild(report)
-    try{
-      const html2pdf=(await import('html2pdf.js')).default
-      await new Promise(resolve=>setTimeout(resolve,150))
-      await html2pdf().set({margin:7,filename:`${selected.fullName.replace(/\s+/g,'_')}_fen_deneme_raporu.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from(report).save()
-    }catch(error){console.error(error);alert('PDF oluşturulamadı. Lütfen tekrar deneyin.')}finally{report.remove()}
+    const reportHtml=`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(selected.fullName)} - Fen Deneme Raporu</title><style>
+      @page{size:A4;margin:12mm}*{box-sizing:border-box}body{margin:0;background:#fff;color:#111827;font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}h1{margin:0 0 5px;font-size:25px}h2{margin:0 0 20px;font-size:18px;color:#4b5563}h3{margin:24px 0 8px;font-size:17px}table{width:100%;border-collapse:collapse;font-size:12px;page-break-inside:auto}tr{page-break-inside:avoid}th,td{border:1px solid #cbd5e1;padding:7px;text-align:left}th{background:#ffedd5!important;color:#7c2d12}.average{margin-top:12px;padding:10px;background:#fff7ed!important;border:1px solid #fdba74;font-weight:700}.empty{padding:18px;border:1px solid #ddd;background:#fafafa}svg{display:block;background:#fff;max-height:230px}.hint{display:none}@media screen{body{padding:24px;max-width:900px;margin:auto}.hint{display:block;margin-bottom:16px;padding:10px;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;font-size:13px}}
+    </style></head><body><div class="hint">Yazdırma penceresinde hedef olarak “PDF olarak kaydet” seç.</div><h1>Fen Deneme Sonuç Raporu</h1><h2>${escapeHtml(selected.fullName)}</h2><table><thead><tr><th>#</th><th>Tür</th><th>Deneme</th><th>Doğru</th><th>Yanlış</th><th>Boş</th><th>Net</th><th>Okul Sırası</th></tr></thead><tbody>${rows||'<tr><td colspan="8">Henüz deneme sonucu bulunmuyor.</td></tr>'}</tbody></table>${averages?`<div class="average">Ortalama net: ${averages.net.toFixed(2)}</div>`:''}<h3>Son 10 Denemenin Net Grafiği</h3>${chartHtml}<script>window.addEventListener('load',()=>setTimeout(()=>window.print(),250));<\/script></body></html>`
+    const printWindow=window.open('','_blank','noopener,noreferrer')
+    if(!printWindow){alert('PDF penceresi engellendi. Tarayıcıda açılır pencerelere izin verip tekrar deneyin.');return}
+    printWindow.document.open()
+    printWindow.document.write(reportHtml)
+    printWindow.document.close()
   }
 
   const entries=Object.entries(selected?.lessons||{})
