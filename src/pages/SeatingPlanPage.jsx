@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Box, Button, Checkbox, Chip, CircularProgress, FormControlLabel, IconButton, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material'
 import { Add, AutoAwesome, Block, Delete, Lock, LockOpen, Print, Remove, Save } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
+import { avatarSrc } from '../utils/avatars'
 
 const defaults = { orientation: 'landscape', columns: [5,5,5,5], seats: {}, locked_students: [], school_name: '', school_year: '' }
 const rulesDefault = { glassesFront:true, shortFront:true, tallBack:true, separateTalkative:true, pairSupport:true, genderMode:'alternate' }
@@ -43,7 +44,7 @@ export default function SeatingPlanPage(){
   async function loadClass(){
     setLoading(true); const {data:u}=await supabase.auth.getUser()
     const [{data:ss},{data:pp},{data:sp}] = await Promise.all([
-      supabase.from('students').select('id,student_number,first_name,last_name').eq('class_id',classId).eq('is_active',true).order('student_number'),
+      supabase.from('students').select('id,student_number,first_name,last_name,avatar_id').eq('class_id',classId).eq('is_active',true).order('student_number'),
       supabase.from('student_profiles').select('*'),
       supabase.from('seating_plans').select('*').eq('teacher_id',u.user.id).eq('class_id',classId).eq('name','Normal Düzen').maybeSingle()
     ])
@@ -57,6 +58,7 @@ export default function SeatingPlanPage(){
   const placed=new Set(Object.values(plan.seats||{}).filter(value=>value && value!==EMPTY_SEAT))
   const unplaced=students.filter(s=>!placed.has(s.id))
   const className=classes.find(x=>x.id===classId)?.name||''
+  const maxRows=Math.max(1,...(plan.columns||[1]))
 
   function setSeat(id,studentId){setPlan(p=>({...p,seats:{...p.seats,[id]:studentId||null}}))}
   function moveStudent(studentId,targetSeatId,sourceSeatId=''){
@@ -207,7 +209,11 @@ export default function SeatingPlanPage(){
     const sid=plan.seats[id], reserved=sid===EMPTY_SEAT, st=studentById[sid], locked=(plan.locked_students||[]).includes(sid)
     return <div data-seat-id={id} className={`desk-seat ${st?'occupied':''} ${reserved?'reserved-empty':''} ${touchTargetSeat===id?'touch-drop-target':''}`} onClick={()=>chooseSeat(id)} onDragOver={e=>{if(!reserved)e.preventDefault()}} onDrop={e=>{if(!reserved)dropStudent(e,id)}}>
       {st?<>
-        <div className={`seat-student ${selectedStudentId===st.id?'selected':''}`} draggable onClick={e=>{e.stopPropagation();setSelectedStudentId(st.id)}} onDragStart={e=>beginDrag(e,st.id,id)} onTouchStart={e=>beginTouch(e,st.id,id)} onTouchMove={moveTouch} onTouchEnd={endTouch}>{st.first_name} {st.last_name}<small>{st.student_number}</small></div>
+        <div className={`seat-student ${selectedStudentId===st.id?'selected':''}`} draggable onClick={e=>{e.stopPropagation();setSelectedStudentId(st.id)}} onDragStart={e=>beginDrag(e,st.id,id)} onTouchStart={e=>beginTouch(e,st.id,id)} onTouchMove={moveTouch} onTouchEnd={endTouch}>
+          <img className="seat-avatar" src={avatarSrc({...st,...(profiles[st.id]||{})})} alt="" />
+          <span className="seat-name">{st.first_name} {st.last_name}</span>
+          <small>{st.student_number}</small>
+        </div>
         <button className="seat-lock" title={locked?'Sabitlemeyi kaldır':'Öğrenciyi sabitle'} onClick={e=>{e.stopPropagation();toggleLock(sid)}}>{locked?<Lock/>:<LockOpen/>}</button>
         <button className="seat-remove" title="Koltuktan kaldır" onClick={e=>{e.stopPropagation();setSeat(id,null)}}>×</button>
         <button className="seat-empty seat-empty-icon" aria-label="Bu koltuğu boş bırak" title="Bu koltuğu boş bırak" onClick={e=>{e.stopPropagation();reserveEmpty(id)}}><Block fontSize="small"/></button>
@@ -228,6 +234,8 @@ export default function SeatingPlanPage(){
     <Paper className="seating-toolbar" variant="outlined"><TextField select label="Sınıf" value={classId} onChange={e=>setClassId(e.target.value)}>{classes.map(c=><MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}</TextField><TextField label="Okul adı" value={plan.school_name} onChange={e=>setPlan(p=>({...p,school_name:e.target.value}))}/><TextField label="Eğitim yılı" value={plan.school_year} onChange={e=>setPlan(p=>({...p,school_year:e.target.value}))}/><TextField select label="Sayfa" value={plan.orientation} onChange={e=>setPlan(p=>({...p,orientation:e.target.value}))}><MenuItem value="landscape">Yatay</MenuItem><MenuItem value="portrait">Dikey</MenuItem></TextField></Paper>
     <Paper className="seating-rules" variant="outlined"><Typography fontWeight={900}>Akıllı dağıtım kuralları</Typography><div className="seating-rule-groups"><div className="seating-rule-group"><div className="seating-rule-group-title">Yan yana oturma düzeni</div><TextField select size="small" fullWidth value={rules.genderMode||'free'} onChange={e=>setRules(r=>({...r,genderMode:e.target.value}))}><MenuItem value="free">Serbest</MenuItem><MenuItem value="alternate">Bir kız – bir erkek</MenuItem><MenuItem value="girls">Kızlar yan yana</MenuItem><MenuItem value="boys">Erkekler yan yana</MenuItem></TextField></div><div className="seating-rule-group"><div className="seating-rule-group-title">Hazır kurallar</div><Stack direction="row" flexWrap="wrap">{[['glassesFront','Gözlüklüler önde'],['shortFront','Kısa boylular önde'],['tallBack','Uzun boylular arkada'],['separateTalkative','Çok konuşanları ayır'],['pairSupport','Çalışkan ile desteğe ihtiyacı olanı eşleştir']].map(([k,l])=><FormControlLabel key={k} control={<Checkbox checked={Boolean(rules[k])} onChange={e=>setRules(r=>({...r,[k]:e.target.checked}))}/>} label={l}/>)}</Stack></div></div><Button variant="contained" color="secondary" startIcon={<AutoAwesome/>} onClick={smartDistribute}>Akıllı Dağıt</Button></Paper>
     <Box className="seating-workspace"><Paper className="student-pool" variant="outlined"><Typography fontWeight={900}>Yerleştirilmemiş Öğrenciler ({unplaced.length})</Typography><Typography variant="caption" color="text.secondary">Telefonda öğrenciyi sürükleyin veya öğrenciye dokunup koltuğu seçin.</Typography>{unplaced.map(s=><Chip className={selectedStudentId===s.id?'selected-student-chip':''} draggable onClick={()=>setSelectedStudentId(s.id)} onDragStart={e=>beginDrag(e,s.id)} onTouchStart={e=>beginTouch(e,s.id)} onTouchMove={moveTouch} onTouchEnd={endTouch} key={s.id} label={`${s.student_number} ${s.first_name} ${s.last_name}`} />)}</Paper>
-      <Paper ref={printRef} className={`seating-print ${plan.orientation}`} variant="outlined"><div className="print-title"><b>{plan.school_name||'OKUL ADI'}</b><span>{className} SINIFI OTURMA PLANI</span><small>{plan.school_year} • {new Date().toLocaleDateString('tr-TR')}</small></div><div className="board">AKILLI TAHTA</div><div className="teacher-desk">ÖĞRETMEN MASASI</div><div className="seat-columns">{plan.columns.map((count,c)=><div className="seat-column" key={c}><div className="column-tools"><div className="row-stepper" aria-label={`${c+1}. sütundaki sıra sayısı`}><span className="row-stepper-label">Sıra</span><IconButton size="small" aria-label="Sıra sayısını azalt" disabled={count<=1} onClick={()=>rows(c,count-1)}><Remove/></IconButton><strong>{count}</strong><IconButton size="small" aria-label="Sıra sayısını artır" disabled={count>=12} onClick={()=>rows(c,count+1)}><Add/></IconButton></div><Button size="small" color="error" onClick={()=>removeColumn(c)}><Delete/></Button></div>{Array.from({length:count}).map((_,r)=><div className="double-desk" key={deskId(c,r)}><Seat id={seatId(c,r,0)}/><Seat id={seatId(c,r,1)}/></div>)}</div>)}<Button className="add-column" startIcon={<Add/>} onClick={addColumn}>Sütun Ekle</Button></div></Paper></Box>
+      <Paper ref={printRef} className={`seating-print ${plan.orientation}`} variant="outlined"><div className="print-title"><b>{plan.school_name||'OKUL ADI'}</b><span>{className} SINIFI OTURMA PLANI</span><small>{plan.school_year} • {new Date().toLocaleDateString('tr-TR')}</small></div><div className="board">AKILLI TAHTA</div><div className="teacher-desk">ÖĞRETMEN MASASI</div><div className="seat-columns">{plan.columns.map((count,c)=><div className="seat-column" key={c}><div className="column-tools"><div className="row-stepper" aria-label={`${c+1}. sütundaki sıra sayısı`}><span className="row-stepper-label">Sıra</span><IconButton size="small" aria-label="Sıra sayısını azalt" disabled={count<=1} onClick={()=>rows(c,count-1)}><Remove/></IconButton><strong>{count}</strong><IconButton size="small" aria-label="Sıra sayısını artır" disabled={count>=12} onClick={()=>rows(c,count+1)}><Add/></IconButton></div><Button size="small" color="error" onClick={()=>removeColumn(c)}><Delete/></Button></div>{Array.from({length:maxRows}).map((_,r)=>r<count
+  ? <div className="double-desk" key={deskId(c,r)}><Seat id={seatId(c,r,0)}/><Seat id={seatId(c,r,1)}/></div>
+  : <div className="double-desk desk-placeholder" aria-hidden="true" key={`placeholder-${c}-${r}`} />)}</div>)}<Button className="add-column" startIcon={<Add/>} onClick={addColumn}>Sütun Ekle</Button></div></Paper></Box>
   </Box>
 }
