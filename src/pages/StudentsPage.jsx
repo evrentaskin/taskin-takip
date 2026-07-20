@@ -10,6 +10,8 @@ import {
   Add, Close, Computer, ContentCopy, Delete, Download, Edit, Groups, Key, Person, PhoneAndroid, PictureAsPdf, Refresh, Save, TableView, Today, UploadFile, Visibility, VisibilityOff, WarningAmber
 } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
+import { readSharedState } from '../services/sharedState'
+import { DEFAULT_STUDENT_PROFILE_FIELDS, STUDENT_PROFILE_SCHEMA_STATE_KEY, mergeProfileFields } from '../utils/studentProfileSchema'
 import { isValidUsername, toAuthSafeUsername, USERNAME_HELP } from '../utils/username'
 import StudentProfileDialog from '../components/StudentProfileDialog'
 import { AVATARS, avatarSrc } from '../utils/avatars'
@@ -979,8 +981,12 @@ export default function StudentsPage() {
 
   async function openReport(type) {
     setReportType(type)
-    const { data } = await supabase.from('student_information_cards').select('id,label,field_type').order('sort_order')
-    const fields = Array.isArray(data) ? data : []
+    const [{ data }, schemaResult] = await Promise.all([
+      supabase.from('student_information_cards').select('id,label,field_type,options').order('sort_order'),
+      readSharedState(STUDENT_PROFILE_SCHEMA_STATE_KEY, DEFAULT_STUDENT_PROFILE_FIELDS).catch(()=>({payload:DEFAULT_STUDENT_PROFILE_FIELDS}))
+    ])
+    const legacy = (data || []).map(field => ({ ...field, id:String(field.id), legacy_card_id:field.id }))
+    const fields = mergeProfileFields(schemaResult?.payload || DEFAULT_STUDENT_PROFILE_FIELDS, legacy)
     setCustomReportFields(fields)
     setReportFields(current => [...new Set([...current, ...fields.map(x => `custom:${x.id}`)])])
     setReportOpen(true)
@@ -988,11 +994,16 @@ export default function StudentsPage() {
 
   async function buildRecognitionRows() {
     const ids = students.map(x => x.id)
-    const [{ data: profiles, error: profileError }, { data: customCards }] = await Promise.all([
-      supabase.from('student_profiles').select('student_id,recognition_data,notes').in('student_id', ids),
-      supabase.from('student_information_cards').select('id,label').order('sort_order')
+    const [{ data: profiles, error: profileError }, { data: legacyCards }, schemaResult] = await Promise.all([
+      supabase.from('student_profiles').select('student_id,recognition_data,notes,tags').in('student_id', ids),
+      supabase.from('student_information_cards').select('id,label,field_type,options').order('sort_order'),
+      readSharedState(STUDENT_PROFILE_SCHEMA_STATE_KEY, DEFAULT_STUDENT_PROFILE_FIELDS).catch(()=>({payload:DEFAULT_STUDENT_PROFILE_FIELDS}))
     ])
     if (profileError) throw profileError
+    const customCards = mergeProfileFields(
+      schemaResult?.payload || DEFAULT_STUDENT_PROFILE_FIELDS,
+      (legacyCards || []).map(field => ({ ...field, id:String(field.id), legacy_card_id:field.id }))
+    )
     const byStudent = new Map((profiles || []).map(x => [x.student_id, x]))
     const selected = new Set(reportFields)
     const rows = [...students].sort((a,b)=>Number(a.student_number)-Number(b.student_number)).map(student => {
@@ -1006,7 +1017,9 @@ export default function StudentsPage() {
       }
       for (const card of customCards || []) {
         if (!selected.has(`custom:${card.id}`)) continue
-        const raw = values[card.id]
+        let raw = values[card.id]
+        if (raw === undefined && card.legacy_card_id) raw = values[card.legacy_card_id]
+        if (raw === undefined && card.field_type === 'checkbox') raw = (profile.tags || []).includes(card.label)
         row[card.label] = typeof raw === 'boolean' ? (raw ? 'Evet' : 'Hayır') : (raw ?? '')
       }
       return row

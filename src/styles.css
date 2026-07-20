@@ -2085,3 +2085,18 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
 .seat-empty::before{content:'⊘';font-size:17px}.seat-enable::before{content:'✓';font-size:16px}
 .reserved-label{font-size:11px;font-weight:900;color:#9b3b23}.reserved-empty{opacity:.82;cursor:not-allowed!important}
 .seating-rule-groups{display:grid;gap:12px;margin:10px 0}.seating-rule-group{padding:10px;border:1px solid #dbe5e1;border-radius:12px;background:#f8fbfa}.seating-rule-group-title{font-weight:900;margin-bottom:4px}
+
+/* V10.0.3 — sade koltuk boş bırakma kontrolü */
+.seat-empty-icon{
+  width:28px!important;
+  min-width:28px!important;
+  height:28px!important;
+  padding:2px!important;
+  display:grid!important;
+  place-items:center!important;
+  font-size:0!important;
+  border-radius:8px!important;
+}
+.reserved-icon{font-size:30px!important;color:#d14343!important;opacity:.9}
+.seat-enable-icon{font-size:10px!important;padding:3px 7px!important}
+.reserved-empty{cursor:not-allowed!important;user-select:none}
