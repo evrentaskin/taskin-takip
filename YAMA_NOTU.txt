@@ -1,0 +1,27 @@
+V10.0.6.2 - ÖĞRETMEN PANELİ FEN DENEME YAMASI
+
+EKLENENLER
+- Özel Dersler bölümüne Fen Deneme Havuzu sekmesi
+- 20 soruluk manuel cevap anahtarı
+- İsteğe bağlı PDF/JPG/PNG/WEBP dosyası
+- Deneme düzenleme, arşivleme, geri alma ve kalıcı silme
+- Öğrenci başlığında Deneme Ata butonu
+- Havuzdan deneme seçip başlangıç ve bitiş tarih-saatini belirleme
+- Öğrenci atamasını değiştirme, arşivleme ve silme
+- Sonucu İptal Et altyapısı: cevap ve sonuç silinir, deneme yeniden aktif olur
+- Okul denemeleri için Fen doğru/yanlış/boş, net, okul sırası ve toplam öğrenci girişi
+- Analiz sekmesinde doğru yeşil, yanlış kırmızı, boş sarı renk açıklaması
+- Deneme sonuçlarının tarih sıralı gösterilmesi için altyapı
+
+KORUNANLAR
+- Mevcut özel ders takvimi
+- Ders ücretleri ve ödeme takibi
+- Notlar / haftalık ödevler
+
+KURULUM
+1. Projenin yedeğini alın.
+2. Bu yamadaki src/pages/PrivateLessonsPage.jsx dosyasını aynı konuma kopyalayın.
+3. Hazır yayın dosyası kullanılacaksa dist klasörünü mevcut dist klasörüyle değiştirin.
+
+NOT
+Bu yama öğretmen panelini hazırlar. Öğrencinin denemeyi çözme ekranı sonraki aşamada bağlanacaktır.
