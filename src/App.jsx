@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import {
   AppBar, Avatar, Box, Button, CircularProgress, Divider, Drawer,
   IconButton, List, ListItemButton, ListItemIcon, ListItemText,
@@ -9,24 +9,25 @@ import {
 } from '@mui/icons-material'
 import { supabase } from './services/supabase'
 import LoginPage from './pages/LoginPage'
-import StudentsPage from './pages/StudentsPage'
-import LgsPage from './pages/LgsPage'
 import DashboardPage from './pages/DashboardPage'
-import ModulePage from './pages/ModulePage'
-import SettingsPage from './pages/SettingsPage'
-import HomeworkPage from './pages/HomeworkPage'
-import ExamsPage from './pages/ExamsPage'
-import PlusPage from './pages/PlusPage'
-import ExamGradesPage from './pages/ExamGradesPage'
-import ProjectsPage from './pages/ProjectsPage'
-import CommentsPage from './pages/CommentsPage'
-import AnnouncementsPage from './pages/AnnouncementsPage'
 import StudentHomePage from './pages/StudentHomePage'
-import ReportsPage from './pages/ReportsPage'
-import StudentDetailPage from './pages/StudentDetailPage'
-import SeatingPlanPage from './pages/SeatingPlanPage'
-import YearlyPlanPage from './pages/YearlyPlanPage'
-import PrivateLessonsPage from './pages/PrivateLessonsPage'
+
+const StudentsPage = lazy(() => import('./pages/StudentsPage'))
+const LgsPage = lazy(() => import('./pages/LgsPage'))
+const ModulePage = lazy(() => import('./pages/ModulePage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const HomeworkPage = lazy(() => import('./pages/HomeworkPage'))
+const ExamsPage = lazy(() => import('./pages/ExamsPage'))
+const PlusPage = lazy(() => import('./pages/PlusPage'))
+const ExamGradesPage = lazy(() => import('./pages/ExamGradesPage'))
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage'))
+const CommentsPage = lazy(() => import('./pages/CommentsPage'))
+const AnnouncementsPage = lazy(() => import('./pages/AnnouncementsPage'))
+const ReportsPage = lazy(() => import('./pages/ReportsPage'))
+const StudentDetailPage = lazy(() => import('./pages/StudentDetailPage'))
+const SeatingPlanPage = lazy(() => import('./pages/SeatingPlanPage'))
+const YearlyPlanPage = lazy(() => import('./pages/YearlyPlanPage'))
+const PrivateLessonsPage = lazy(() => import('./pages/PrivateLessonsPage'))
 
 const drawerWidth = 258
 
@@ -42,6 +43,21 @@ export default function App() {
   useEffect(() => {
     pageRef.current = page
   }, [page])
+
+  useEffect(() => {
+    const openHome = () => {
+      setPage('Ana Sayfa')
+      setSelectedStudentId(null)
+      setMobileOpen(false)
+    }
+
+    openHome()
+    const handlePageShow = (event) => {
+      if (event.persisted) openHome()
+    }
+    window.addEventListener('pageshow', handlePageShow)
+    return () => window.removeEventListener('pageshow', handlePageShow)
+  }, [])
 
   useEffect(() => {
     const disableSuggestions = (root = document) => {
@@ -99,12 +115,16 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session)
+      setPage('Ana Sayfa')
+      setSelectedStudentId(null)
       if (data.session) await loadProfile(data.session.user.id)
       setLoading(false)
     })
 
     const { data } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
       setSession(nextSession)
+      setPage('Ana Sayfa')
+      setSelectedStudentId(null)
       if (nextSession) await loadProfile(nextSession.user.id)
       else setProfile(null)
     })
@@ -203,6 +223,7 @@ export default function App() {
 
       <Box component="main" className={page === 'Ana Sayfa' ? 'main main-home' : 'main'}>
         {page !== 'Ana Sayfa' && <Toolbar />}
+        <Suspense fallback={<PageLoader />}>
         {page === 'Ana Sayfa' ? (
           <DashboardPage
             onNavigate={setPage}
@@ -256,6 +277,7 @@ export default function App() {
             }[page] || 'Modül yönetimi'}
           />
         )}
+        </Suspense>
       </Box>
 
       <Box className="ai-fab"><Psychology /></Box>
@@ -265,4 +287,8 @@ export default function App() {
 
 function CenterLoader() {
   return <Box className="loader"><CircularProgress /></Box>
+}
+
+function PageLoader() {
+  return <Box sx={{ minHeight: 260, display: 'grid', placeItems: 'center' }}><CircularProgress size={34} /></Box>
 }
