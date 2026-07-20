@@ -1,22 +1,13 @@
-V9.6.2 ONLINE DENEME BEYAZ EKRAN DÜZELTMESİ
+V9.6.5 - Bilgi Kartı Yönetimi Ayarlara Taşındı
 
-Sorun:
-Supabase save_my_science_online_attempt RPC fonksiyonu güncellenen tek denemeyi nesne olarak döndürürken öğrenci paneli bunu tüm deneme listesi sanıp state'e yazıyordu. Ardından exams.filter çalışınca "filter is not a function" hatası oluşuyor ve ekran beyaza dönüyordu.
+1) ZIP içindeki src klasörünü mevcut proje köküne kopyalayın.
+2) Dosya değiştirme sorusuna "Üzerine yaz / Değiştir" deyin.
+3) CMD'de proje klasöründe:
 
-Düzeltme:
-- RPC'nin tek deneme nesnesi dönüşü mevcut deneme listesine güvenli biçimde birleştirildi.
-- Eski RPC sürümlerinin dizi döndürmesi de desteklenmeye devam ediyor.
-- localStorage veya buluttan hatalı tip gelirse öğrenci ekranının çökmesini önleyen dizi kontrolleri eklendi.
-- Deneme başlatma ve cevap kaydetme sonrası aktif sınav güvenli biçimde güncelleniyor.
+npm install
+npm run build
+git add .
+git commit -m "V9.6.5 bilgi karti yonetimi ayarlara tasindi"
+git push
 
-Kurulum:
-1. ZIP içindeki src klasörünü proje klasörünün üzerine kopyalayın.
-2. npm run build
-3. git add .
-4. git commit -m "Online deneme beyaz ekran duzeltmesi"
-5. git push
-
-SQL GEREKMEZ.
-
-Kontrol:
-Üretim derlemesi başarıyla tamamlandı.
+SQL çalıştırmak gerekmez.

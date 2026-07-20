@@ -4,7 +4,7 @@ import {
   DialogTitle, Divider, FormControlLabel, IconButton, MenuItem, Paper, Stack,
   Tab, Tabs, TextField, Typography
 } from '@mui/material'
-import { Add, Autorenew, Close, Delete, Save, Settings } from '@mui/icons-material'
+import { Autorenew, Close, Save } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
 import { AVATARS, automaticAvatarId, avatarMatches, nextAvatarId } from '../utils/avatars'
 
@@ -23,8 +23,6 @@ export default function StudentProfileDialog({ open, student, seatingCards, onCl
   const [profile, setProfile] = useState({ tags:[], recognition_data:{}, notes:'', gender:'', wears_glasses:false })
   const [cards, setCards] = useState(DEFAULT_CARDS)
   const [avatarId, setAvatarId] = useState(1)
-  const [manage, setManage] = useState(false)
-  const [newCard, setNewCard] = useState({ label:'', group_name:'recognition', field_type:'checkbox', options:'' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -122,26 +120,6 @@ export default function StudentProfileDialog({ open, student, seatingCards, onCl
     else { onSaved?.(); onClose() }
   }
 
-  async function addCard() {
-    if (!newCard.label.trim()) return
-    const options = newCard.field_type === 'select'
-      ? newCard.options.split(',').map(x => x.trim()).filter(Boolean)
-      : []
-    const { data, error } = await supabase
-      .from('student_information_cards')
-      .insert({ ...newCard, label:newCard.label.trim(), options })
-      .select().single()
-    if (error) { setError(error.message); return }
-    setCards(x => [...x, data])
-    setNewCard({ label:'', group_name:'recognition', field_type:'checkbox', options:'' })
-  }
-
-  async function removeCard(card) {
-    if (!confirm(`“${card.label}” bilgi kartı tüm öğrencilerden silinsin mi?`)) return
-    const { error } = await supabase.from('student_information_cards').delete().eq('id', card.id)
-    if (error) setError(error.message)
-    else setCards(x => x.filter(y => y.id !== card.id))
-  }
 
   const avatar = AVATARS.find(item => item.id === avatarId) || AVATARS[0]
 
@@ -153,13 +131,10 @@ export default function StudentProfileDialog({ open, student, seatingCards, onCl
       </DialogTitle>
       <DialogContent>
         {error && <Alert severity="error" sx={{ mb:2 }}>{error}</Alert>}
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Tabs value={tab} onChange={(_,v) => setTab(v)}>
-            <Tab label="Oturma Bilgileri" />
-            <Tab label="Öğrenci Tanıma" />
-          </Tabs>
-          <Button startIcon={<Settings />} onClick={() => setManage(true)}>Bilgi Kartı Yönetimi</Button>
-        </Stack>
+        <Tabs value={tab} onChange={(_,v) => setTab(v)}>
+          <Tab label="Oturma Bilgileri" />
+          <Tab label="Öğrenci Tanıma" />
+        </Tabs>
         <Divider sx={{ mb:2 }} />
 
         {tab === 0 ? <Stack spacing={2}>
@@ -208,36 +183,6 @@ export default function StudentProfileDialog({ open, student, seatingCards, onCl
       </DialogActions>
     </Dialog>
 
-    <Dialog open={manage} onClose={() => setManage(false)} fullWidth maxWidth="sm">
-      <DialogTitle>Bilgi Kartı Yönetimi</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ mt:1 }}>
-          <TextField label="Kart adı" value={newCard.label} onChange={e => setNewCard(x => ({ ...x, label:e.target.value }))} />
-          <TextField select label="Grup" value={newCard.group_name} onChange={e => setNewCard(x => ({ ...x, group_name:e.target.value }))}>
-            <MenuItem value="seating">Oturma Bilgileri</MenuItem>
-            <MenuItem value="recognition">Öğrenci Tanıma</MenuItem>
-          </TextField>
-          <TextField select label="Veri tipi" value={newCard.field_type} onChange={e => setNewCard(x => ({ ...x, field_type:e.target.value }))}>
-            {['checkbox','text','number','date','phone','select'].map(x => <MenuItem key={x} value={x}>{x}</MenuItem>)}
-          </TextField>
-          {newCard.field_type === 'select' &&
-            <TextField label="Seçenekler (virgülle)" value={newCard.options} onChange={e => setNewCard(x => ({ ...x, options:e.target.value }))} />
-          }
-          <Button variant="contained" startIcon={<Add />} onClick={addCard}>Bilgi Kartı Ekle</Button>
-          <Divider />
-          {cards.filter(x => !String(x.id).startsWith('default-')).map(card =>
-            <Paper key={card.id} variant="outlined" sx={{ p:1, display:'flex', alignItems:'center' }}>
-              <Box sx={{ flex:1 }}>
-                <b>{card.label}</b>
-                <Typography variant="caption" display="block">{card.group_name} • {card.field_type}</Typography>
-              </Box>
-              <IconButton color="error" onClick={() => removeCard(card)}><Delete /></IconButton>
-            </Paper>
-          )}
-        </Stack>
-      </DialogContent>
-      <DialogActions><Button onClick={() => setManage(false)}>Kapat</Button></DialogActions>
-    </Dialog>
   </>
 }
 

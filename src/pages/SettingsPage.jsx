@@ -8,6 +8,7 @@ import { supabase } from '../services/supabase'
 import { isValidUsername, toAuthSafeUsername, USERNAME_HELP } from '../utils/username'
 import { useSharedCloudState } from '../services/useSharedCloudState'
 import { parseYearlyPlanWorkbook, YEARLY_PLAN_GRADES, YEARLY_PLAN_LOCAL_KEY, YEARLY_PLAN_STATE_KEY } from '../utils/yearlyPlan'
+import StudentInformationCardsSettings from '../components/StudentInformationCardsSettings'
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState({ full_name: '', username: '' })
@@ -389,6 +390,12 @@ export default function SettingsPage() {
           </Button>
         </Stack>
       </Box>
+
+
+      <StudentInformationCardsSettings
+        onError={text => { setMessage(''); setError(text) }}
+        onMessage={text => { setError(''); setMessage(text) }}
+      />
 
 
       <Box className="glass settings-card settings-term-card">
