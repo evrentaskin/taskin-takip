@@ -5,7 +5,7 @@ import {
   Toolbar, Typography
 } from '@mui/material'
 import {
-  Campaign, CalendarMonth, Dashboard, EmojiEvents, EventSeat, Folder, Groups, Logout, Menu, NoteAlt, Psychology, Quiz, School, Settings, Star, Storage, PersonPin
+  Campaign, CalendarMonth, Dashboard, EmojiEvents, EventSeat, Folder, Groups, Menu, NoteAlt, Psychology, Quiz, School, Settings, Star, Storage, PersonPin
 } from '@mui/icons-material'
 import { supabase } from './services/supabase'
 import LoginPage from './pages/LoginPage'
@@ -153,7 +153,7 @@ export default function App() {
         </Box>
       </Box>
       <Divider sx={{ my: 1.5 }} />
-      <List sx={{ px: 1 }}>
+      <List sx={{ px: 1, flex: 1, minHeight: 0, overflowY: 'auto', pb: 2 }}>
         {menuItems.map(([label, Icon]) => (
           <ListItemButton
             key={label}
@@ -166,10 +166,6 @@ export default function App() {
           </ListItemButton>
         ))}
       </List>
-      <Box sx={{ flex: 1 }} />
-      <Button startIcon={<Logout />} onClick={() => supabase.auth.signOut()}>
-        Çıkış
-      </Button>
     </Box>
   )
 

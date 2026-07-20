@@ -1,10 +1,14 @@
-1. ZIP içeriğini mevcut projenin kök klasörüne kopyalayın.
-2. Dosyaların üzerine yazılmasına izin verin.
-3. CMD/Terminal:
-   npm install
-   npm run build
-   git add .
-   git commit -m "V10.0 özel dersler ve profil düzeltmeleri"
-   git push
+V10.0.1 KURULUM
 
-SQL çalıştırılması gerekmez. Özel ders verileri mevcut shared_app_state tablosunda saklanır.
+1. ZIP dosyasını açın.
+2. İçindeki src klasörünü mevcut projenin köküne kopyalayın.
+3. Dosya değiştirme sorusuna "Değiştir / Üzerine yaz" yanıtı verin.
+4. Proje klasöründe çalıştırın:
+
+npm install
+npm run build
+git add .
+git commit -m "V10.0.1 menu ve etiket duzeltmeleri"
+git push
+
+SQL çalıştırmak gerekmez.
