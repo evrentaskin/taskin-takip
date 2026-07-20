@@ -2095,3 +2095,84 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
   }
   .seat-student small{font-size:6pt!important;line-height:1!important}
 }
+
+/* V10.0.6.1 — tek sayfa dinamik PDF ve hızlı oturma planı */
+@media print {
+  .seating-print.landscape,
+  .seating-print.portrait {
+    width:297mm!important;
+    height:210mm!important;
+    min-height:210mm!important;
+    padding:5mm 6mm!important;
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  .print-title{margin-bottom:1.5mm!important;line-height:1.05!important}
+  .print-title b{font-size:11pt!important}
+  .print-title span{font-size:9pt!important}
+  .print-title small{font-size:6.5pt!important}
+  .board{height:10mm!important;min-height:10mm!important;padding:1.5mm!important;margin-bottom:2mm!important;display:grid!important;place-items:center!important;font-size:9pt!important}
+  .teacher-desk{height:8mm!important;min-height:8mm!important;padding:1mm!important;margin-bottom:3mm!important;display:grid!important;place-items:center!important;font-size:8pt!important}
+  .seat-columns{
+    flex:1 1 auto!important;
+    width:100%!important;
+    min-height:0!important;
+    gap:var(--column-gap,4mm)!important;
+    align-items:start!important;
+    justify-content:stretch!important;
+  }
+  .seat-column{
+    flex:1 1 0!important;
+    min-width:0!important;
+    width:calc((100% - (var(--print-columns) - 1) * var(--column-gap,4mm)) / var(--print-columns))!important;
+    grid-auto-rows:var(--seat-height,23mm)!important;
+    gap:var(--seat-gap,2mm)!important;
+  }
+  .double-desk{
+    height:var(--seat-height,23mm)!important;
+    min-height:var(--seat-height,23mm)!important;
+    max-height:var(--seat-height,23mm)!important;
+    border-width:.45mm!important;
+    border-radius:2mm!important;
+  }
+  .desk-seat{
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+    padding:1.2mm .8mm!important;
+    overflow:hidden!important;
+  }
+  .seat-student{
+    height:100%!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-rows:minmax(0,1fr) 3.6mm!important;
+    align-items:center!important;
+    justify-items:center!important;
+    overflow:hidden!important;
+  }
+  .seat-avatar{display:none!important}
+  .seat-name{
+    align-self:center!important;
+    width:100%!important;
+    font-size:7.2pt!important;
+    line-height:1.02!important;
+    max-height:3.06em!important;
+    -webkit-line-clamp:3!important;
+    overflow:hidden!important;
+    overflow-wrap:anywhere!important;
+    word-break:normal!important;
+    text-align:center!important;
+  }
+  .seat-student small{
+    display:block!important;
+    align-self:end!important;
+    width:100%!important;
+    height:3.2mm!important;
+    font-size:6.2pt!important;
+    line-height:3.2mm!important;
+    margin:0!important;
+    text-align:center!important;
+    overflow:hidden!important;
+  }
+}

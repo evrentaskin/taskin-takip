@@ -42,16 +42,30 @@ export default function SeatingPlanPage(){
   }
 
   async function loadClass(){
-    setLoading(true); const {data:u}=await supabase.auth.getUser()
-    const [{data:ss},{data:pp},{data:sp}] = await Promise.all([
-      supabase.from('students').select('id,student_number,first_name,last_name,avatar_id').eq('class_id',classId).eq('is_active',true).order('student_number'),
-      supabase.from('student_profiles').select('*'),
-      supabase.from('seating_plans').select('*').eq('teacher_id',u.user.id).eq('class_id',classId).eq('name','Normal Düzen').maybeSingle()
-    ])
-    setStudents(ss||[])
-    setProfiles(Object.fromEntries((pp||[]).map(x=>[x.student_id,x])))
-    setPlan(sp ? {...defaults,...sp,seats:migrateLegacySeats(sp.seats)} : {...defaults,seats:{}})
-    setLoading(false)
+    setLoading(true)
+    try {
+      const {data:u}=await supabase.auth.getUser()
+      if(!u.user)return
+      const [{data:ss},{data:sp}] = await Promise.all([
+        supabase.from('students').select('id,student_number,first_name,last_name,avatar_id').eq('class_id',classId).eq('is_active',true).order('student_number'),
+        supabase.from('seating_plans').select('*').eq('teacher_id',u.user.id).eq('class_id',classId).eq('name','Normal Düzen').maybeSingle()
+      ])
+      const studentList=ss||[]
+      setStudents(studentList)
+      setPlan(sp ? {...defaults,...sp,seats:migrateLegacySeats(sp.seats)} : {...defaults,seats:{}})
+
+      // Yalnızca seçili sınıf öğrencilerinin profillerini getirir.
+      // Önceki sürüm tüm okulun profil tablosunu çektiği için sayfa giderek yavaşlıyordu.
+      if(studentList.length){
+        const ids=studentList.map(x=>x.id)
+        const {data:pp}=await supabase.from('student_profiles').select('*').in('student_id',ids)
+        setProfiles(Object.fromEntries((pp||[]).map(x=>[x.student_id,x])))
+      } else {
+        setProfiles({})
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   const studentById=useMemo(()=>Object.fromEntries(students.map(s=>[s.id,s])),[students])
@@ -195,10 +209,23 @@ export default function SeatingPlanPage(){
     setMessage(error?error.message:'Oturma planı kaydedildi.')
   }
   function print(){
+    const rows=Math.max(1,...(plan.columns||[1]))
+    const columns=Math.max(1,(plan.columns||[]).length)
     let style=document.getElementById('taskin-print-page')
     if(!style){style=document.createElement('style');style.id='taskin-print-page';document.head.appendChild(style)}
-    style.textContent=`@page { size: A4 ${plan.orientation}; margin: 0; }`
-    window.print()
+    style.textContent=`
+      @page { size: A4 landscape; margin: 0; }
+      @media print {
+        .seating-print {
+          --print-columns: ${columns};
+          --print-rows: ${rows};
+          --seat-gap: ${rows >= 7 ? '1.4mm' : '2mm'};
+          --column-gap: ${columns >= 6 ? '2.5mm' : '4mm'};
+          --seat-height: calc((151mm - (var(--print-rows) - 1) * var(--seat-gap)) / var(--print-rows));
+        }
+      }
+    `
+    requestAnimationFrame(()=>window.print())
   }
   function toggleLock(studentId){
     if(!studentId)return
