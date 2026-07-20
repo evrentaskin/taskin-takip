@@ -1,12 +1,16 @@
 import { useMemo, useState } from 'react'
 import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material'
-import { Add, ArrowBack, ArrowForward, DeleteOutline, Edit, PersonAdd, Save } from '@mui/icons-material'
+import { ArrowBack, ArrowForward, CancelRounded, CheckCircleRounded, DeleteOutline, Edit, PersonAdd, ReplayCircleFilledRounded, Save } from '@mui/icons-material'
 import { useSharedCloudState } from '../services/useSharedCloudState'
 
 const STATE_KEY='private-lessons-v1'
 const LOCAL_KEY='taskin-private-lessons-v1'
 const emptyStudent={ fullName:'', address:'', hourlyFee:'', lessonMinutes:60, notes:'' }
-const statuses={ done:{label:'Yapıldı',color:'#2e7d32',bg:'#e8f5e9'}, missed:{label:'Yapılmadı',color:'#c62828',bg:'#ffebee'}, makeup:{label:'Telafi yapılacak',color:'#ef6c00',bg:'#fff3e0'} }
+const statuses={
+  done:{label:'Yapıldı',color:'#ffffff',bg:'#16a34a',border:'#15803d',Icon:CheckCircleRounded},
+  missed:{label:'Yapılmadı',color:'#ffffff',bg:'#dc2626',border:'#b91c1c',Icon:CancelRounded},
+  makeup:{label:'Telafi yapılacak',color:'#ffffff',bg:'#f59e0b',border:'#d97706',Icon:ReplayCircleFilledRounded}
+}
 
 const pad=n=>String(n).padStart(2,'0')
 const dateKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
@@ -65,7 +69,7 @@ export default function PrivateLessonsPage(){
         <Box sx={{display:'grid',gridTemplateColumns:{xs:'1fr',xl:'1fr 280px'},gap:2}}>
           <Paper className="glass" sx={{p:2,borderRadius:3}}>
             <Stack direction="row" alignItems="center" justifyContent="space-between"><IconButton onClick={()=>setMonth(new Date(month.getFullYear(),month.getMonth()-1,1))}><ArrowBack/></IconButton><Typography fontWeight={950}>{month.toLocaleDateString('tr-TR',{month:'long',year:'numeric'})}</Typography><IconButton onClick={()=>setMonth(new Date(month.getFullYear(),month.getMonth()+1,1))}><ArrowForward/></IconButton></Stack>
-            <Box className="private-calendar"><>{['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'].map(x=><Typography key={x} className="private-calendar-head">{x}</Typography>)}</>{days.map((d,i)=>{if(!d)return <Box key={`e${i}`}/>; const key=dateKey(d); const rec=selected.lessons?.[key]; const style=rec?statuses[rec.status]:null; return <Button key={key} onClick={()=>openDay(key)} className="private-calendar-day" sx={{backgroundColor:style?.bg||'transparent',color:style?.color||'inherit',borderColor:style?.color||'rgba(0,0,0,.12)'}}><b>{d.getDate()}</b>{rec&&<small>{statuses[rec.status]?.label}</small>}{rec&&<small>{rec.payment==='paid'?'Ödendi':'Ödenmedi'}</small>}</Button>})}</Box>
+            <Box className="private-calendar"><>{['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'].map(x=><Typography key={x} className="private-calendar-head">{x}</Typography>)}</>{days.map((d,i)=>{if(!d)return <Box key={`e${i}`}/>; const key=dateKey(d); const rec=selected.lessons?.[key]; const style=rec?statuses[rec.status]:null; const StatusIcon=style?.Icon; return <Button key={key} onClick={()=>openDay(key)} className={`private-calendar-day ${rec?`is-${rec.status}`:''}`} sx={{backgroundColor:style?.bg||'transparent',color:style?.color||'inherit',borderColor:style?.border||'rgba(0,0,0,.12)'}}><b>{d.getDate()}</b>{rec&&<span className="private-calendar-status-icon">{StatusIcon&&<StatusIcon fontSize="inherit"/>}</span>}{rec&&<small>{statuses[rec.status]?.label}</small>}{rec&&<small className="private-calendar-payment">{rec.payment==='paid'?'Ödendi':'Ödenmedi'}</small>}</Button>})}</Box>
           </Paper>
           <Stack spacing={1.25}>
             {[['Toplam kayıt',summary.total],['Yapılan ders',summary.done],['Telafi bekleyen',summary.makeup],['Ödenmemiş ders',summary.unpaid],['Ödenmemiş süre',`${Math.floor(summary.unpaidMinutes/60)} sa ${summary.unpaidMinutes%60} dk`],['Toplam borç',money(summary.debt)]].map(([a,b])=><Paper key={a} className="glass" sx={{p:1.5,borderRadius:3}}><Typography variant="caption" color="text.secondary">{a}</Typography><Typography variant="h6" fontWeight={950}>{b}</Typography></Paper>)}

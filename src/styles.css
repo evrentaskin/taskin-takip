@@ -749,11 +749,11 @@ body { margin: 0; min-width: 320px; }
 .online-pdf-report .report-table{font-size:11px}
 .online-pdf-report .report-table th{padding:7px 6px}
 .online-pdf-report .report-table td{padding:6px}
-.online-pdf-report .question-grid{grid-template-columns:repeat(10,1fr);gap:6px;margin:8px 0 12px}
-.online-pdf-report .question-box{min-height:58px;aspect-ratio:auto;border-radius:8px}
-.online-pdf-report .analysis-pair{margin:10px 0;gap:10px}
-.online-pdf-report .mini-analysis{padding:10px}
-.online-pdf-report .mini-analysis>div{padding:5px 0;font-size:11px}
+.online-pdf-report .question-grid{grid-template-columns:repeat(10,1fr);gap:3px;margin:4px 0 6px}
+.online-pdf-report .question-box{min-height:38px;aspect-ratio:auto;border-radius:6px;font-size:9px;padding:2px}
+.online-pdf-report .analysis-pair{margin:5px 0;gap:6px}
+.online-pdf-report .mini-analysis{padding:6px}
+.online-pdf-report .mini-analysis>div{padding:2px 0;font-size:9px}
 @media print{
   .pdf-report-page{break-after:page;page-break-after:always}
   .pdf-report-page:last-child{break-after:auto;page-break-after:auto}
@@ -2000,179 +2000,201 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
   }
 }
 
-/* V10.0.5 — mobil sıra sayacı */
-.row-stepper {
-  min-width: 148px;
-  height: 42px;
-  padding: 0 6px;
-  border: 1px solid rgba(20, 75, 65, .28);
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  background: rgba(255,255,255,.68);
+/* V9.6.4 Final - ortak, sıkı online cevap ekranı */
+.compact-online-answer-grid .student-online-question{
+  display:grid!important;
+  grid-template-columns:36px max-content!important;
+  justify-content:start!important;
+  align-items:center!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:48px!important;
+  gap:8px!important;
+  padding:7px 9px!important;
 }
-.row-stepper-label {
-  padding-left: 6px;
-  font-size: .76rem;
-  font-weight: 800;
-  color: #45635d;
+.compact-online-answer-grid .student-online-question>b{
+  width:32px!important;
+  height:32px!important;
+  font-size:15px!important;
 }
-.row-stepper strong {
-  min-width: 26px;
-  text-align: center;
-  font-size: 1rem;
-  font-variant-numeric: tabular-nums;
+.compact-online-answer-grid .student-online-question .MuiStack-root{
+  justify-content:flex-start!important;
+  flex-wrap:nowrap!important;
+  gap:6px!important;
 }
-.row-stepper .MuiIconButton-root {
-  width: 34px;
-  height: 34px;
-  border: 1px solid rgba(20, 75, 65, .16);
-  background: rgba(231, 244, 239, .9);
+.compact-online-answer-grid .student-online-question .MuiButton-root{
+  min-width:34px!important;
+  width:34px!important;
+  height:32px!important;
+  padding:0!important;
+  border-radius:9px!important;
 }
-@media (max-width: 700px) {
-  .column-tools { gap: 6px !important; }
-  .row-stepper { min-width: 136px; }
+.student-online-two-columns.compact-online-answer-grid{
+  gap:12px!important;
+}
+.student-online-two-columns.compact-online-answer-grid .student-online-column{
+  gap:7px!important;
+}
+.lgs-online-four-row-grid.compact-online-answer-grid{
+  grid-template-rows:repeat(4,minmax(48px,auto))!important;
+  grid-auto-columns:minmax(225px,1fr)!important;
+  gap:7px!important;
+}
+@media(max-width:800px){
+  .compact-online-answer-grid .student-online-question{
+    grid-template-columns:34px max-content!important;
+  }
+  .compact-online-answer-grid .student-online-question .MuiButton-root{
+    min-width:32px!important;width:32px!important;height:31px!important;
+  }
 }
 
-/* V10.0.6 — hizalı oturma planı, sabit punto ve avatar */
-.seat-column{display:grid!important;grid-auto-rows:auto;align-content:start}
-.double-desk{height:76px;min-height:76px!important}
-.desk-placeholder{visibility:hidden;pointer-events:none}
-.seat-student{
-  width:100%;
-  height:100%;
+/* V10.0 Özel Dersler takvimi */
+.private-calendar {
   display:grid;
-  grid-template-rows:26px minmax(28px,1fr) 12px;
-  place-items:center;
-  align-content:center;
-  overflow:hidden;
-  line-height:1.05;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:7px;
+  margin-top:14px;
 }
-.seat-avatar{
-  width:26px;
-  height:26px;
-  border-radius:50%;
-  object-fit:cover;
-  object-position:center;
-  display:block;
-  flex:0 0 auto;
-}
-.seat-name{
-  width:100%;
-  display:-webkit-box;
-  -webkit-box-orient:vertical;
-  -webkit-line-clamp:3;
-  overflow:hidden;
-  overflow-wrap:anywhere;
-  word-break:normal;
+.private-calendar-head {
   text-align:center;
-  font-size:12px;
+  font-size:12px !important;
+  font-weight:900 !important;
+  color:var(--muted, #667085);
+}
+.private-calendar-day.MuiButton-root {
+  min-width:0;
+  min-height:72px;
+  padding:7px 3px;
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:12px;
+  display:flex;
+  flex-direction:column;
+  line-height:1.15;
+  text-transform:none;
+}
+.private-calendar-day small { font-size:9px; margin-top:3px; text-align:center; }
+@media (max-width:600px){
+  .private-calendar { gap:4px; }
+  .private-calendar-day.MuiButton-root { min-height:62px; padding:5px 1px; }
+  .private-calendar-day small { font-size:8px; }
+}
+
+/* V10.0.2 seating clarity */
+.seat-empty,.seat-enable{font-size:0!important;min-width:28px!important;width:28px!important;height:28px!important;border-radius:50%!important;padding:0!important}
+.seat-empty::before{content:'⊘';font-size:17px}.seat-enable::before{content:'✓';font-size:16px}
+.reserved-label{font-size:11px;font-weight:900;color:#9b3b23}.reserved-empty{opacity:.82;cursor:not-allowed!important}
+.seating-rule-groups{display:grid;gap:12px;margin:10px 0}.seating-rule-group{padding:10px;border:1px solid #dbe5e1;border-radius:12px;background:#f8fbfa}.seating-rule-group-title{font-weight:900;margin-bottom:4px}
+
+/* V10.0.3 — sade koltuk boş bırakma kontrolü */
+.seat-empty-icon{
+  width:28px!important;
+  min-width:28px!important;
+  height:28px!important;
+  padding:2px!important;
+  display:grid!important;
+  place-items:center!important;
+  font-size:0!important;
+  border-radius:8px!important;
+}
+.reserved-icon{font-size:30px!important;color:#d14343!important;opacity:.9}
+.seat-enable-icon{font-size:10px!important;padding:3px 7px!important}
+.reserved-empty{cursor:not-allowed!important;user-select:none}
+
+/* V10.0.4 — profil avatarı sabit ve ortalı */
+.student-profile-avatar-frame{
+  width:88px;
+  height:88px;
+  min-width:88px;
+  border-radius:50%;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 88px;
+  background:#e9f4f0;
+}
+.student-profile-avatar-frame img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  object-position:center center !important;
+  display:block;
+}
+
+
+/* V10.0.6.2 — Özel Dersler takvim görünümü ve belirgin durum renkleri */
+.private-calendar {
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:7px;
+  margin-top:14px;
+  align-items:stretch;
+}
+.private-calendar-head {
+  text-align:center;
+  font-size:12px !important;
+  font-weight:900 !important;
+  color:var(--muted, #667085);
+  padding:2px 0 5px;
+}
+.private-calendar-day.MuiButton-root {
+  min-width:0;
+  min-height:76px;
+  padding:6px 3px;
+  border:2px solid rgba(0,0,0,.12);
+  border-radius:12px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:1px;
+  line-height:1.1;
+  text-transform:none;
+  font-weight:800;
+  box-shadow:0 2px 6px rgba(15,23,42,.08);
+  transition:transform .14s ease, box-shadow .14s ease, filter .14s ease;
+}
+.private-calendar-day.MuiButton-root:hover {
+  transform:translateY(-1px);
+  box-shadow:0 5px 12px rgba(15,23,42,.16);
+  filter:saturate(1.08);
+}
+.private-calendar-day.MuiButton-root b {
+  font-size:15px;
+  line-height:1;
+}
+.private-calendar-status-icon {
+  display:grid;
+  place-items:center;
+  font-size:18px;
+  line-height:1;
+  margin-top:1px;
+}
+.private-calendar-day small {
+  font-size:9px;
+  line-height:1.1;
+  margin-top:1px;
+  text-align:center;
   font-weight:900;
-  line-height:1.05;
-  max-height:3.15em;
 }
-.seat-student small{font-size:10px;line-height:1;margin-top:0!important}
-
-@media print{
-  .seat-columns{align-items:stretch!important}
-  .seat-column{display:grid!important;grid-auto-rows:15mm!important;align-content:start!important}
-  .double-desk{height:15mm!important;min-height:15mm!important;max-height:15mm!important;margin:0!important}
-  .desk-placeholder{visibility:hidden!important}
-  .desk-seat{height:15mm!important;min-height:15mm!important;max-height:15mm!important;padding:1mm!important;overflow:hidden!important}
-  .seat-student{
-    grid-template-rows:6mm minmax(6mm,1fr) 3mm!important;
-    height:13mm!important;
-    overflow:hidden!important;
-  }
-  .seat-avatar{width:6mm!important;height:6mm!important}
-  .seat-name{
-    font-size:7.5pt!important;
-    line-height:1.02!important;
-    max-height:3.06em!important;
-    -webkit-line-clamp:3!important;
-  }
-  .seat-student small{font-size:6pt!important;line-height:1!important}
+.private-calendar-payment {
+  opacity:.95;
+  font-weight:800 !important;
 }
-
-/* V10.0.6.1 — tek sayfa dinamik PDF ve hızlı oturma planı */
-@media print {
-  .seating-print.landscape,
-  .seating-print.portrait {
-    width:297mm!important;
-    height:210mm!important;
-    min-height:210mm!important;
-    padding:5mm 6mm!important;
-    display:flex!important;
-    flex-direction:column!important;
+.private-calendar-day.is-done.MuiButton-root,
+.private-calendar-day.is-missed.MuiButton-root,
+.private-calendar-day.is-makeup.MuiButton-root {
+  color:#fff !important;
+}
+@media (max-width:600px){
+  .private-calendar { gap:4px; }
+  .private-calendar-day.MuiButton-root {
+    min-height:66px;
+    padding:4px 1px;
+    border-radius:9px;
   }
-  .print-title{margin-bottom:1.5mm!important;line-height:1.05!important}
-  .print-title b{font-size:11pt!important}
-  .print-title span{font-size:9pt!important}
-  .print-title small{font-size:6.5pt!important}
-  .board{height:10mm!important;min-height:10mm!important;padding:1.5mm!important;margin-bottom:2mm!important;display:grid!important;place-items:center!important;font-size:9pt!important}
-  .teacher-desk{height:8mm!important;min-height:8mm!important;padding:1mm!important;margin-bottom:3mm!important;display:grid!important;place-items:center!important;font-size:8pt!important}
-  .seat-columns{
-    flex:1 1 auto!important;
-    width:100%!important;
-    min-height:0!important;
-    gap:var(--column-gap,4mm)!important;
-    align-items:start!important;
-    justify-content:stretch!important;
-  }
-  .seat-column{
-    flex:1 1 0!important;
-    min-width:0!important;
-    width:calc((100% - (var(--print-columns) - 1) * var(--column-gap,4mm)) / var(--print-columns))!important;
-    grid-auto-rows:var(--seat-height,23mm)!important;
-    gap:var(--seat-gap,2mm)!important;
-  }
-  .double-desk{
-    height:var(--seat-height,23mm)!important;
-    min-height:var(--seat-height,23mm)!important;
-    max-height:var(--seat-height,23mm)!important;
-    border-width:.45mm!important;
-    border-radius:2mm!important;
-  }
-  .desk-seat{
-    height:100%!important;
-    min-height:0!important;
-    max-height:none!important;
-    padding:1.2mm .8mm!important;
-    overflow:hidden!important;
-  }
-  .seat-student{
-    height:100%!important;
-    min-height:0!important;
-    display:grid!important;
-    grid-template-rows:minmax(0,1fr) 3.6mm!important;
-    align-items:center!important;
-    justify-items:center!important;
-    overflow:hidden!important;
-  }
-  .seat-avatar{display:none!important}
-  .seat-name{
-    align-self:center!important;
-    width:100%!important;
-    font-size:7.2pt!important;
-    line-height:1.02!important;
-    max-height:3.06em!important;
-    -webkit-line-clamp:3!important;
-    overflow:hidden!important;
-    overflow-wrap:anywhere!important;
-    word-break:normal!important;
-    text-align:center!important;
-  }
-  .seat-student small{
-    display:block!important;
-    align-self:end!important;
-    width:100%!important;
-    height:3.2mm!important;
-    font-size:6.2pt!important;
-    line-height:3.2mm!important;
-    margin:0!important;
-    text-align:center!important;
-    overflow:hidden!important;
-  }
+  .private-calendar-day.MuiButton-root b { font-size:13px; }
+  .private-calendar-status-icon { font-size:15px; }
+  .private-calendar-day small { font-size:7.5px; }
 }
