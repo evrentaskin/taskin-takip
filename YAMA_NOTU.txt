@@ -1,28 +1,22 @@
-V10.0.6.3 ÖZEL DERS PANEL YAMASI
+V10.0.6.4 ÖZEL DERS GÖRSEL VE PDF DÜZELTME YAMASI
+
+Yapılanlar:
+- Analiz sekmesinde öğrenci düzenle butonu gizlendi.
+- Boş/beyaz çıkan analiz PDF'i için PDF oluşturma alanı ve html2canvas ayarları düzeltildi.
+- Takvim ve ücret bölümü iki sütunlu yapıldı: solda ücret özeti, sağda takvim.
+- Solda yapılan ders saati, ödenen ders ücreti, ödenmeyen ders ücreti ve toplam borç gösteriliyor.
+- Takvimde yapılan ders yeşili koyulaştırıldı, yazı okunurluğu artırıldı.
+- Takvim günlerinin içinde Ödendi / Ödenmedi bilgisi eklendi.
+- Seçili öğrenci kartı turuncu çerçeve ve hafif turuncu zeminle belirginleştirildi.
+- Seçili öğrenci panelinde çerçeveler turuncu yapıldı.
 
 Kurulum:
-1. ZIP'i açın.
-2. İçindeki src/pages/PrivateLessonsPage.jsx dosyasını projenizdeki aynı konuma kopyalayıp üzerine yazın.
-3. Proje klasöründe sırasıyla çalıştırın:
-   npm install
-   npm run build
-   git add .
-   git commit -m "V10.0.6.3 özel ders öğrenci ve deneme paneli"
-   git push
+ZIP içindeki src/pages/PrivateLessonsPage.jsx dosyasını ana projedeki aynı dosyanın üzerine kopyalayın.
+Ardından:
+npm install
+npm run build
+git add .
+git commit -m "V10.0.6.4 özel ders görsel ve PDF düzeltmeleri"
+git push
 
-Eklenenler:
-- Öğrenci kartları sayfanın üstünde sıralanır.
-- Her öğrenci kartında Düzenle ve Sil bulunur.
-- Öğrenci ekleme/düzenleme: ad soyad, kullanıcı adı, şifre, adres, ders ücreti ve ders süresi.
-- Adres zorunlu değildir; kullanıcı adı ve şifre düzenlenebilir.
-- Öğrenci seçilince tam genişlikte Takvim ve Ücret, Online Denemeler, Okul Denemeleri, Analiz sekmeleri açılır.
-- Online denemelerde Deneme Ata, Düzenle, Sil, Sonucu Gör, İptal Et ve Arşivle.
-- Okul denemelerinde deneme adı, tarih, doğru, yanlış, net ve okul sırası elle girilir; düzenlenebilir.
-- Analizde online ve okul denemeleri tek listede, eski tarihten yeni tarihe sıralanır.
-- Listenin altında doğru, yanlış, boş ve net ortalamaları bulunur.
-- En altta son 10 denemenin net çizgi grafiği bulunur.
-- Tüm sonuçlar PDF alınabilir; PDF tablosunda tarih sütunu bulunmaz.
-- Mevcut takvim ve ücret sistemi korunmuştur.
-
-Kontrol:
-- npm run build başarıyla tamamlandı.
+Build kontrolü başarıyla tamamlandı.
