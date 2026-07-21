@@ -119,6 +119,7 @@ export default function StudentsPage() {
   const [inactiveStudents, setInactiveStudents] = useState([])
   const [inactiveStudentsLoading, setInactiveStudentsLoading] = useState(false)
   const [inactiveStudentsOpen, setInactiveStudentsOpen] = useState(false)
+  const [inactiveStudentsSort, setInactiveStudentsSort] = useState('least-logins')
   const [reportOpen, setReportOpen] = useState(false)
   const [reportType, setReportType] = useState('pdf')
   const [reportFields, setReportFields] = useState(REPORT_FIELDS.map(x => x[0]))
@@ -261,8 +262,10 @@ export default function StudentsPage() {
       }
 
       const latestByUser = new Map()
+      const loginCountByUser = new Map()
       for (const event of events) {
         if (!latestByUser.has(event.user_id)) latestByUser.set(event.user_id, event.logged_in_at)
+        loginCountByUser.set(event.user_id, (loginCountByUser.get(event.user_id) || 0) + 1)
       }
       const classById = new Map(activeClasses.map(item => [item.id, item.name]))
       const now = Date.now()
@@ -275,6 +278,7 @@ export default function StudentsPage() {
           class_name: classById.get(student.class_id) || '-',
           last_login_at: last,
           days_inactive: last ? Math.floor(elapsed / (24 * 60 * 60 * 1000)) : null,
+          login_count: loginCountByUser.get(student.auth_user_id) || 0,
           elapsed
         }
       }).filter(item => item.elapsed >= threshold)
@@ -287,6 +291,34 @@ export default function StudentsPage() {
       setInactiveStudentsLoading(false)
     }
   }
+
+  const sortedInactiveStudents = useMemo(() => {
+    const rows = [...inactiveStudents]
+    const nameOf = item => `${safeText(item.first_name)} ${safeText(item.last_name)}`.trim()
+    const numberOf = item => {
+      const value = Number(item.student_number)
+      return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER
+    }
+
+    if (inactiveStudentsSort === 'name') {
+      return rows.sort((a, b) => nameOf(a).localeCompare(nameOf(b), 'tr-TR', { sensitivity: 'base' }) || numberOf(a) - numberOf(b))
+    }
+    if (inactiveStudentsSort === 'number') {
+      return rows.sort((a, b) => numberOf(a) - numberOf(b) || nameOf(a).localeCompare(nameOf(b), 'tr-TR', { sensitivity: 'base' }))
+    }
+    if (inactiveStudentsSort === 'never-first') {
+      return rows.sort((a, b) => {
+        const aNever = a.last_login_at ? 1 : 0
+        const bNever = b.last_login_at ? 1 : 0
+        return aNever - bNever || b.elapsed - a.elapsed || nameOf(a).localeCompare(nameOf(b), 'tr-TR', { sensitivity: 'base' })
+      })
+    }
+    return rows.sort((a, b) =>
+      Number(a.login_count || 0) - Number(b.login_count || 0) ||
+      b.elapsed - a.elapsed ||
+      nameOf(a).localeCompare(nameOf(b), 'tr-TR', { sensitivity: 'base' })
+    )
+  }, [inactiveStudents, inactiveStudentsSort])
 
   async function loadStudents(classId) {
     setLoading(true)
@@ -450,11 +482,6 @@ export default function StudentsPage() {
         username: toAuthSafeUsername(form.username),
         avatar_id: Number(form.avatar_id || 1)
       }
-
-      const privateState = await readSharedState('private-lessons-v1', { students: [] })
-      const privateStudents = Array.isArray(privateState?.payload?.students) ? privateState.payload.students : []
-      const usedByPrivateStudent = privateStudents.some(student => toAuthSafeUsername(student?.username) === base.username)
-      if (usedByPrivateStudent) throw new Error('Bu kullanıcı adı başka bir aktif öğrenci tarafından kullanılıyor. Lütfen farklı bir kullanıcı adı girin.')
 
       if (!form.id) {
         await invokeAccount({
@@ -1228,19 +1255,39 @@ export default function StudentsPage() {
         <DialogActions><Button onClick={() => setTodayLoginsOpen(false)}>Kapat</Button></DialogActions>
       </Dialog>
 
-      <Dialog open={inactiveStudentsOpen} onClose={() => setInactiveStudentsOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle fontWeight={950}>5 Gündür Giriş Yapmayan Öğrenciler ({inactiveStudents.length})
+      <Dialog
+        open={inactiveStudentsOpen}
+        onClose={() => setInactiveStudentsOpen(false)}
+        fullWidth
+        maxWidth="md"
+        PaperProps={{ sx: { height: 'min(92vh, 860px)', maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
+      >
+        <DialogTitle fontWeight={950} sx={{ flex: '0 0 auto', pr: 7 }}>5 Gündür Giriş Yapmayan Öğrenciler ({inactiveStudents.length})
           <IconButton onClick={() => setInactiveStudentsOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><Close /></IconButton>
         </DialogTitle>
-        <DialogContent>
-          <Alert severity="warning" sx={{ mb: 2 }}>Hiç giriş yapmamış öğrenciler de bu listede gösterilir.</Alert>
-          <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: '62vh' }}>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', pt: 1 }}>
+          <Alert severity="warning" sx={{ mb: 1.5, flex: '0 0 auto' }}>Hiç giriş yapmamış öğrenciler de bu listede gösterilir.</Alert>
+          <TextField
+            select
+            size="small"
+            label="Sırala"
+            value={inactiveStudentsSort}
+            onChange={event => setInactiveStudentsSort(event.target.value)}
+            sx={{ width: { xs: '100%', sm: 320 }, mb: 1.5, flex: '0 0 auto' }}
+          >
+            <MenuItem value="least-logins">En az giriş yapanlar</MenuItem>
+            <MenuItem value="never-first">Hiç giriş yapmayanlar önce</MenuItem>
+            <MenuItem value="name">Ada göre A–Z</MenuItem>
+            <MenuItem value="number">Numaraya göre küçükten büyüğe</MenuItem>
+          </TextField>
+          <TableContainer component={Paper} variant="outlined" sx={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <Table stickyHeader size="small">
-              <TableHead><TableRow><TableCell>Öğrenci</TableCell><TableCell>Sınıf</TableCell><TableCell>Son Giriş</TableCell><TableCell align="center">Durum</TableCell></TableRow></TableHead>
+              <TableHead><TableRow><TableCell>Öğrenci</TableCell><TableCell>Sınıf</TableCell><TableCell align="center">Giriş Sayısı</TableCell><TableCell>Son Giriş</TableCell><TableCell align="center">Durum</TableCell></TableRow></TableHead>
               <TableBody>
-                {inactiveStudents.map(item => <TableRow key={item.id}>
+                {sortedInactiveStudents.map(item => <TableRow key={item.id}>
                   <TableCell>{item.student_number} — {item.first_name} {item.last_name}</TableCell>
                   <TableCell>{item.class_name}</TableCell>
+                  <TableCell align="center"><b>{item.login_count || 0}</b></TableCell>
                   <TableCell>{item.last_login_at ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(item.last_login_at)) : 'Hiç giriş yapmadı'}</TableCell>
                   <TableCell align="center"><Chip color="error" size="small" label={item.days_inactive == null ? 'Hiç giriş yapmadı' : `${item.days_inactive} gündür`} /></TableCell>
                 </TableRow>)}
@@ -1248,7 +1295,9 @@ export default function StudentsPage() {
             </Table>
           </TableContainer>
         </DialogContent>
-        <DialogActions><Button onClick={() => setInactiveStudentsOpen(false)}>Kapat</Button></DialogActions>
+        <DialogActions sx={{ flex: '0 0 auto', borderTop: '1px solid', borderColor: 'divider', px: 2, py: 1.25 }}>
+          <Button onClick={() => setInactiveStudentsOpen(false)}>Kapat</Button>
+        </DialogActions>
       </Dialog>
 
       <Dialog open={classDeleteOpen} onClose={() => !classDeleting && setClassDeleteOpen(false)} fullWidth maxWidth="sm">
