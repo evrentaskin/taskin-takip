@@ -1,17 +1,19 @@
-# V10.0.6.11 PDF Başlık Görünürlük Yaması
+# V10.0.6.12 Okul Denemesi Otomatik Net Yaması
 
-1. ZIP içindeki `src/pages/PrivateLessonsPage.jsx` dosyasını ana projedeki aynı konuma kopyalayıp üzerine yazın.
-2. Proje klasöründe çalıştırın:
+1. `src/pages/PrivateLessonsPage.jsx` dosyasını ana projedeki aynı konuma kopyalayıp üzerine yazın.
+2. Proje klasöründe aşağıdaki komutları çalıştırın:
 
 ```bash
 npm run build
 git add .
-git commit -m "V10.0.6.11 PDF tablo başlık görünürlük düzeltmesi"
+git commit -m "V10.0.6.12 okul denemesi otomatik net"
 git push
 ```
 
-Düzeltmeler:
-- PDF tablo başlıkları açık turuncu zemin ve koyu yazıyla görünür hale getirildi.
-- Her başlık hücresinin rengi ayrı ayrı uygulanıyor.
-- Sonuç yokken tek satırlık açıklama tüm tablo genişliğini kaplıyor.
-- Boş sonuç satırında anlamsız tire ve bölünmüş hücre görünümü kaldırıldı.
+## Eklenenler
+- Doğru ve yanlış değerleri 0–20 aralığıyla sınırlandırıldı.
+- Doğru + yanlış toplamı 20'yi aşarsa giriş kabul edilmez ve uyarı gösterilir.
+- Boş sayısı otomatik hesaplanır: `20 - doğru - yanlış`.
+- Net otomatik hesaplanır: `doğru - yanlış / 3`.
+- Net ve boş alanları salt okunurdur; elle değiştirilemez.
+- Kayıt sırasında ikinci doğrulama yapılarak hatalı veri kaydedilmesi engellenir.
