@@ -3,13 +3,15 @@ import { jsPDF } from 'jspdf'
 import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, MenuItem, Paper, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
 import { Archive, ArrowBack, ArrowForward, AssignmentTurnedIn, CancelRounded, CheckCircleRounded, DeleteOutline, Edit, PersonAdd, PictureAsPdf, ReplayCircleFilledRounded, Restore, Save, School, Science, UploadFile, Visibility } from '@mui/icons-material'
 import { useSharedCloudState } from '../services/useSharedCloudState'
+import { supabase } from '../services/supabase'
+import { toAuthSafeUsername } from '../utils/username'
 import { ONLINE_EXAM_ACCEPT, removeOnlineExamFile, uploadOnlineExamFile, validateOnlineExamFile } from '../services/onlineExamFiles'
 
 const STATE_KEY='private-lessons-v1'
 const LOCAL_KEY='taskin-private-lessons-v1'
 const POOL_STATE_KEY='private-science-exam-pool-v1'
 const POOL_LOCAL_KEY='taskin-private-science-exam-pool-v1'
-const emptyStudent={fullName:'',username:'',password:'',address:'',hourlyFee:'',lessonMinutes:60,notes:''}
+const emptyStudent={fullName:'',studentNumber:'',username:'',password:'',address:'',hourlyFee:'',lessonMinutes:60,notes:''}
 const emptyExam={name:'',answers:{},attachment:null,archived:false}
 const ANSWERS=['A','B','C','D']
 const statuses={
@@ -72,11 +74,25 @@ export default function PrivateLessonsPage(){
   function savePool(nextExams){setPoolData({...(poolData||{}),exams:nextExams})}
   function openNew(){setForm(emptyStudent);setFormOpen(true)}
   function openEditStudent(student){setSelectedId(student.id);setForm({...emptyStudent,...student});setFormOpen(true)}
-  function saveStudent(){
+  async function saveStudent(){
     if(!form.fullName.trim()||!form.username.trim()||!form.password.trim()) return alert('Ad soyad, kullanıcı adı ve şifre zorunludur.')
-    const duplicate=students.some(s=>s.id!==form.id&&String(s.username||'').trim().toLowerCase()===form.username.trim().toLowerCase())
-    if(duplicate)return alert('Bu kullanıcı adı başka bir öğrencide kullanılıyor.')
-    const clean={...form,fullName:form.fullName.trim(),username:form.username.trim(),password:form.password.trim(),address:(form.address||'').trim(),hourlyFee:Number(form.hourlyFee||0),lessonMinutes:Number(form.lessonMinutes||60)}
+    const username=toAuthSafeUsername(form.username)
+    const duplicatePrivate=students.some(s=>s.id!==form.id&&toAuthSafeUsername(s.username)===username)
+    if(duplicatePrivate)return alert('Bu kullanıcı adı başka bir aktif öğrenci tarafından kullanılıyor. Lütfen farklı bir kullanıcı adı girin.')
+    try{
+      const {data:duplicateSchool,error}=await supabase
+        .from('students')
+        .select('id')
+        .eq('is_active',true)
+        .eq('username',username)
+        .limit(1)
+      if(error)throw error
+      if(duplicateSchool?.length)return alert('Bu kullanıcı adı başka bir aktif öğrenci tarafından kullanılıyor. Lütfen farklı bir kullanıcı adı girin.')
+    }catch(error){
+      console.error('Kullanıcı adı kontrolü başarısız:',error)
+      return alert('Kullanıcı adı kontrol edilemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.')
+    }
+    const clean={...form,fullName:form.fullName.trim(),studentNumber:String(form.studentNumber||'').trim(),username,password:form.password.trim(),address:(form.address||'').trim(),hourlyFee:Number(form.hourlyFee||0),lessonMinutes:Number(form.lessonMinutes||60)}
     if(form.id) saveData(students.map(s=>s.id===form.id?{...s,...clean}:s))
     else {const item={...clean,id:crypto.randomUUID(),lessons:{},examAssignments:[],schoolExams:[]};saveData([...students,item]);setSelectedId(item.id)}
     setFormOpen(false)
@@ -124,16 +140,23 @@ export default function PrivateLessonsPage(){
 
       doc.setTextColor(17,24,39)
       doc.setFont('helvetica','bold');doc.setFontSize(17)
-      doc.text('Fen Deneme Sonuc Raporu',margin,y);y+=7
-      doc.setFontSize(12);doc.setFont('helvetica','normal')
-      doc.text(safe(selected.fullName),margin,y);y+=9
+      doc.text('Fen Deneme Sonuc Raporu',margin,y);y+=9
+
+      doc.setFillColor(255,247,237);doc.setDrawColor(251,146,60)
+      doc.roundedRect(margin,y,usable,22,2,2,'FD')
+      doc.setTextColor(67,20,7);doc.setFont('helvetica','bold');doc.setFontSize(10)
+      doc.text(`Adi Soyadi: ${safe(selected.fullName)}`,margin+4,y+6.5)
+      doc.text(`Ogrenci Numarasi: ${safe(selected.studentNumber||selected.student_number||'—')}`,margin+4,y+13)
+      doc.text(`Toplam Deneme: ${allResults.length}`,margin+103,y+6.5)
+      doc.text(`Ortalama Net: ${averages?averages.net.toFixed(2):'—'}`,margin+103,y+13)
+      y+=29
 
       const cols=[8,24,54,19,19,17,19,26]
-      const headers=['#','Tur','Deneme','Dogru','Yanlis','Bos','Net','Okul Sirasi']
+      const headers=['No','Tur','Deneme Adi','Dogru','Yanlis','Bos','Net','Okul Sirasi']
       const drawHeader=()=>{
         let x=margin
-        doc.setFillColor(255,237,213);doc.setDrawColor(203,213,225)
-        doc.setTextColor(124,45,18);doc.setFont('helvetica','bold');doc.setFontSize(8)
+        doc.setFillColor(255,237,213);doc.setDrawColor(251,146,60)
+        doc.setTextColor(67,20,7);doc.setFont('helvetica','bold');doc.setFontSize(8)
         headers.forEach((h,i)=>{doc.rect(x,y,cols[i],8,'FD');doc.text(h,x+1.4,y+5.2);x+=cols[i]})
         y+=8
         doc.setTextColor(17,24,39);doc.setFont('helvetica','normal')
@@ -244,7 +267,7 @@ export default function PrivateLessonsPage(){
 
 
 
-    <Dialog open={formOpen} onClose={()=>setFormOpen(false)} fullWidth maxWidth="sm"><DialogTitle fontWeight={950}>{form.id?'Öğrenciyi Düzenle':'Özel Ders Öğrencisi Ekle'}</DialogTitle><DialogContent><Stack spacing={2} sx={{mt:1}}><TextField required label="Ad Soyad" value={form.fullName} onChange={e=>setForm({...form,fullName:e.target.value})}/><TextField required label="Kullanıcı adı" value={form.username||''} onChange={e=>setForm({...form,username:e.target.value})}/><TextField required label="Şifre" value={form.password||''} onChange={e=>setForm({...form,password:e.target.value})}/><TextField label="Adres (zorunlu değil)" multiline minRows={2} value={form.address||''} onChange={e=>setForm({...form,address:e.target.value})}/><TextField label="Saatlik ders ücreti (TL)" type="number" value={form.hourlyFee} onChange={e=>setForm({...form,hourlyFee:e.target.value})}/><TextField select label="Varsayılan ders süresi" value={form.lessonMinutes||60} onChange={e=>setForm({...form,lessonMinutes:Number(e.target.value)})}>{[40,60,80,90,120].map(x=><MenuItem key={x} value={x}>{x} dakika</MenuItem>)}</TextField></Stack></DialogContent><DialogActions><Button onClick={()=>setFormOpen(false)}>Vazgeç</Button><Button variant="contained" startIcon={<Save/>} onClick={saveStudent}>Kaydet</Button></DialogActions></Dialog>
+    <Dialog open={formOpen} onClose={()=>setFormOpen(false)} fullWidth maxWidth="sm"><DialogTitle fontWeight={950}>{form.id?'Öğrenciyi Düzenle':'Özel Ders Öğrencisi Ekle'}</DialogTitle><DialogContent><Stack spacing={2} sx={{mt:1}}><TextField required label="Ad Soyad" value={form.fullName} onChange={e=>setForm({...form,fullName:e.target.value})}/><TextField label="Öğrenci Numarası (isteğe bağlı)" value={form.studentNumber||''} onChange={e=>setForm({...form,studentNumber:e.target.value})}/><TextField required label="Kullanıcı adı" value={form.username||''} onChange={e=>setForm({...form,username:e.target.value})}/><TextField required label="Şifre" value={form.password||''} onChange={e=>setForm({...form,password:e.target.value})}/><TextField label="Adres (zorunlu değil)" multiline minRows={2} value={form.address||''} onChange={e=>setForm({...form,address:e.target.value})}/><TextField label="Saatlik ders ücreti (TL)" type="number" value={form.hourlyFee} onChange={e=>setForm({...form,hourlyFee:e.target.value})}/><TextField select label="Varsayılan ders süresi" value={form.lessonMinutes||60} onChange={e=>setForm({...form,lessonMinutes:Number(e.target.value)})}>{[40,60,80,90,120].map(x=><MenuItem key={x} value={x}>{x} dakika</MenuItem>)}</TextField></Stack></DialogContent><DialogActions><Button onClick={()=>setFormOpen(false)}>Vazgeç</Button><Button variant="contained" startIcon={<Save/>} onClick={saveStudent}>Kaydet</Button></DialogActions></Dialog>
     <Dialog open={dayOpen} onClose={()=>setDayOpen(false)} fullWidth maxWidth="xs"><DialogTitle fontWeight={950}>{selectedDate&&new Date(`${selectedDate}T12:00:00`).toLocaleDateString('tr-TR')}</DialogTitle><DialogContent><Stack spacing={2} sx={{mt:1}}><TextField select label="Ders durumu" value={entry.status} onChange={e=>setEntry({...entry,status:e.target.value})}>{Object.entries(statuses).map(([k,v])=><MenuItem key={k} value={k}>{v.label}</MenuItem>)}</TextField><TextField select label="Ödeme durumu" value={entry.payment} onChange={e=>setEntry({...entry,payment:e.target.value})}><MenuItem value="paid">Ödendi</MenuItem><MenuItem value="unpaid">Ödenmedi</MenuItem></TextField><TextField type="number" label="Ders süresi (dakika)" value={entry.durationMinutes} onChange={e=>setEntry({...entry,durationMinutes:e.target.value})}/><TextField multiline minRows={2} label="Ders notu / ödev" value={entry.note||''} onChange={e=>setEntry({...entry,note:e.target.value})}/></Stack></DialogContent><DialogActions><Button color="error" onClick={deleteDay}>Kaydı Sil</Button><Box sx={{flex:1}}/><Button onClick={()=>setDayOpen(false)}>Vazgeç</Button><Button variant="contained" onClick={saveDay}>Kaydet</Button></DialogActions></Dialog>
     <Dialog open={examOpen} onClose={()=>setExamOpen(false)} fullWidth maxWidth="md"><DialogTitle fontWeight={950}>{examForm.id?'Denemeyi Düzenle':'Fen Denemesi Oluştur'}</DialogTitle><DialogContent dividers><Stack spacing={2} sx={{pt:1}}><TextField label="Deneme adı" value={examForm.name} onChange={e=>setExamForm({...examForm,name:e.target.value})}/><Paper variant="outlined" sx={{p:2,borderRadius:3}}><Typography fontWeight={900}>Deneme Dosyası (isteğe bağlı)</Typography><Typography variant="body2" color="text.secondary" sx={{mb:1}}>PDF, JPG, PNG veya WEBP • En fazla 20 MB</Typography><Button component="label" variant="outlined" startIcon={<UploadFile/>}>{examFile?.name||examForm.attachment?.name||'Dosya Seç'}<input hidden type="file" accept={ONLINE_EXAM_ACCEPT} onChange={e=>setExamFile(e.target.files?.[0]||null)}/></Button></Paper><Typography variant="h6" fontWeight={950}>20 Soruluk Cevap Anahtarı</Typography><Box sx={{display:'grid',gridTemplateColumns:{xs:'1fr',md:'1fr 1fr'},gap:2}}>{[1,11].map(start=><Stack key={start} spacing={1}>{Array.from({length:10},(_,i)=>start+i).map(q=><Paper key={q} variant="outlined" sx={{p:.75,display:'grid',gridTemplateColumns:'32px repeat(4,1fr)',gap:.5,alignItems:'center'}}><b>{q}</b>{ANSWERS.map(a=><Button key={a} size="small" variant={examForm.answers?.[q]===a?'contained':'outlined'} onClick={()=>setExamForm({...examForm,answers:{...(examForm.answers||{}),[q]:a}})}>{a}</Button>)}</Paper>)}</Stack>)}</Box></Stack></DialogContent><DialogActions><Button onClick={()=>setExamOpen(false)}>Vazgeç</Button><Button variant="contained" disabled={examUploading} onClick={saveExam}>{examUploading?'Yükleniyor…':'Kaydet'}</Button></DialogActions></Dialog>
     <Dialog open={assignOpen} onClose={()=>setAssignOpen(false)} fullWidth maxWidth="sm"><DialogTitle fontWeight={950}>{assignForm.assignmentId?'Deneme Atamasını Düzenle':'Deneme Ata'}</DialogTitle><DialogContent><Stack spacing={2} sx={{mt:1}}><TextField select label="Deneme" value={assignForm.examId} onChange={e=>setAssignForm({...assignForm,examId:e.target.value})}>{exams.filter(e=>!e.archived).map(e=><MenuItem key={e.id} value={e.id}>{e.name}</MenuItem>)}</TextField><TextField type="datetime-local" label="Başlangıç" value={assignForm.startAt} onChange={e=>setAssignForm({...assignForm,startAt:e.target.value})} InputLabelProps={{shrink:true}}/><TextField type="datetime-local" label="Bitiş" value={assignForm.endAt} onChange={e=>setAssignForm({...assignForm,endAt:e.target.value})} InputLabelProps={{shrink:true}}/></Stack></DialogContent><DialogActions><Button onClick={()=>setAssignOpen(false)}>Vazgeç</Button><Button variant="contained" onClick={assignForm.assignmentId?saveAssignmentEdit:assignExam}>{assignForm.assignmentId?'Kaydet':'Öğrenciye Gönder'}</Button></DialogActions></Dialog>

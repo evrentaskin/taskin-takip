@@ -451,6 +451,11 @@ export default function StudentsPage() {
         avatar_id: Number(form.avatar_id || 1)
       }
 
+      const privateState = await readSharedState('private-lessons-v1', { students: [] })
+      const privateStudents = Array.isArray(privateState?.payload?.students) ? privateState.payload.students : []
+      const usedByPrivateStudent = privateStudents.some(student => toAuthSafeUsername(student?.username) === base.username)
+      if (usedByPrivateStudent) throw new Error('Bu kullanıcı adı başka bir aktif öğrenci tarafından kullanılıyor. Lütfen farklı bir kullanıcı adı girin.')
+
       if (!form.id) {
         await invokeAccount({
           action: 'create',

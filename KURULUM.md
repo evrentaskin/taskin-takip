@@ -1,22 +1,20 @@
-# V10.0.6.9 PDF Doğrudan Oluşturma Yaması
+# V10.0.6.10 Kurulum
 
-Bu yama PDF'yi ekran görüntüsünden üretmez. jsPDF ile tabloyu ve grafiği doğrudan PDF içine çizer.
-Bu nedenle `oklch` / html2canvas kaynaklı beyaz PDF sorunu ortadan kalkar.
-
-## Kurulum
-
-ZIP içindeki dosyaları ana proje klasörüne kopyalayıp aynı dosyaların üzerine yazın:
-
-- `src/pages/PrivateLessonsPage.jsx`
-- `package.json`
-- `package-lock.json`
+ZIP içindeki dosyaları ana projenin aynı klasörlerine kopyalayıp üzerine yazın.
 
 Ardından:
 
-```bash
 npm install
 npm run build
 git add .
-git commit -m "V10.0.6.9 PDF doğrudan oluşturma düzeltmesi"
+git commit -m "V10.0.6.10 PDF başlık ve kullanıcı adı düzeltmesi"
 git push
-```
+
+## Düzeltilenler
+- PDF üst bilgi alanına öğrenci adı soyadı, öğrenci numarası, toplam deneme ve ortalama net eklendi.
+- PDF tablo başlıkları açık turuncu zemin ve koyu yazıyla okunur hale getirildi.
+- Deneme yokken de tablo başlıkları görünür.
+- Özel ders öğrencisi eklerken aktif sınıf öğrencilerinin kullanıcı adları kontrol edilir.
+- Sınıf öğrencisi eklerken aktif özel ders öğrencilerinin kullanıcı adları kontrol edilir.
+- Silinmiş/pasif sınıf öğrencilerinin kullanıcı adları tekrar kullanılabilir.
+- Özel ders öğrenci formuna isteğe bağlı öğrenci numarası alanı eklendi.
