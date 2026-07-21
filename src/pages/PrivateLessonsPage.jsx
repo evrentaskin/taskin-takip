@@ -155,29 +155,50 @@ export default function PrivateLessonsPage(){
       const headers=['No','Tur','Deneme Adi','Dogru','Yanlis','Bos','Net','Okul Sirasi']
       const drawHeader=()=>{
         let x=margin
-        doc.setFillColor(255,237,213);doc.setDrawColor(251,146,60)
-        doc.setTextColor(67,20,7);doc.setFont('helvetica','bold');doc.setFontSize(8)
-        headers.forEach((h,i)=>{doc.rect(x,y,cols[i],8,'FD');doc.text(h,x+1.4,y+5.2);x+=cols[i]})
-        y+=8
-        doc.setTextColor(17,24,39);doc.setFont('helvetica','normal')
-      }
-      drawHeader()
-      const results=allResults.length?allResults:[{type:'-',name:'Henuz deneme sonucu bulunmuyor.',correct:'',wrong:'',blank:'',net:'',schoolRank:''}]
-      results.forEach((row,index)=>{
-        const nameLines=doc.splitTextToSize(safe(row.name),cols[2]-2.8)
-        const rowH=Math.max(8,nameLines.length*4.2+3)
-        if(y+rowH>pageHeight-18){y=newPage();drawHeader()}
-        const cells=[allResults.length?String(index+1):'',safe(row.type),nameLines,String(row.correct??''),String(row.wrong??''),String(row.blank??''),row.net===''?'':Number(row.net).toFixed(2),row.schoolRank?String(row.schoolRank):'—']
-        let x=margin
-        doc.setFontSize(8);doc.setDrawColor(203,213,225)
-        cells.forEach((value,i)=>{
-          doc.rect(x,y,cols[i],rowH)
-          if(Array.isArray(value))doc.text(value,x+1.4,y+4.2)
-          else doc.text(safe(value),x+1.4,y+5.1)
+        doc.setFont('helvetica','bold')
+        doc.setFontSize(8)
+        headers.forEach((h,i)=>{
+          doc.setFillColor(255,237,213)
+          doc.setDrawColor(251,146,60)
+          doc.setTextColor(17,24,39)
+          doc.rect(x,y,cols[i],8,'FD')
+          doc.text(h,x+cols[i]/2,y+5.2,{align:'center'})
           x+=cols[i]
         })
-        y+=rowH
-      })
+        y+=8
+        doc.setTextColor(17,24,39)
+        doc.setFont('helvetica','normal')
+      }
+      drawHeader()
+      if(!allResults.length){
+        doc.setFillColor(255,255,255)
+        doc.setDrawColor(203,213,225)
+        doc.rect(margin,y,usable,10,'FD')
+        doc.setTextColor(75,85,99)
+        doc.setFont('helvetica','normal')
+        doc.setFontSize(8.5)
+        doc.text('Henuz deneme sonucu bulunmuyor.',margin+3,y+6.3)
+        y+=10
+      }else{
+        allResults.forEach((row,index)=>{
+          const nameLines=doc.splitTextToSize(safe(row.name),cols[2]-2.8)
+          const rowH=Math.max(8,nameLines.length*4.2+3)
+          if(y+rowH>pageHeight-18){y=newPage();drawHeader()}
+          const cells=[String(index+1),safe(row.type),nameLines,String(row.correct??''),String(row.wrong??''),String(row.blank??''),Number(row.net||0).toFixed(2),row.schoolRank?String(row.schoolRank):'—']
+          let x=margin
+          doc.setFontSize(8)
+          doc.setTextColor(17,24,39)
+          doc.setDrawColor(203,213,225)
+          cells.forEach((value,i)=>{
+            doc.setFillColor(255,255,255)
+            doc.rect(x,y,cols[i],rowH,'FD')
+            if(Array.isArray(value))doc.text(value,x+1.4,y+4.2)
+            else doc.text(safe(value),x+1.4,y+5.1)
+            x+=cols[i]
+          })
+          y+=rowH
+        })
+      }
 
       if(averages){
         y+=4
