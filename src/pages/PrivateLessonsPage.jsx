@@ -93,11 +93,28 @@ export default function PrivateLessonsPage(){
       return alert('Kullanıcı adı kontrol edilemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.')
     }
     const clean={...form,fullName:form.fullName.trim(),studentNumber:String(form.studentNumber||'').trim(),username,password:form.password.trim(),address:(form.address||'').trim(),hourlyFee:Number(form.hourlyFee||0),lessonMinutes:Number(form.lessonMinutes||60)}
-    if(form.id) saveData(students.map(s=>s.id===form.id?{...s,...clean}:s))
-    else {const item={...clean,id:crypto.randomUUID(),lessons:{},examAssignments:[],schoolExams:[]};saveData([...students,item]);setSelectedId(item.id)}
-    setFormOpen(false)
+    try{
+      if(form.id){
+        let authUserId=form.authUserId||form.auth_user_id||null
+        if(authUserId){
+          const {data:account,error:accountError}=await supabase.functions.invoke('student-account',{body:{action:'update_private_student',auth_user_id:authUserId,student_id:form.id,username,password:form.password,full_name:clean.fullName}})
+          if(accountError||!account?.ok)throw new Error(account?.error||accountError?.message||'Öğrenci hesabı güncellenemedi.')
+        }else{
+          const {data:account,error:accountError}=await supabase.functions.invoke('student-account',{body:{action:'create_private_student',student:{id:form.id,username,password:form.password,full_name:clean.fullName}}})
+          if(accountError||!account?.ok)throw new Error(account?.error||accountError?.message||'Öğrenci hesabı oluşturulamadı.')
+          authUserId=account.auth_user_id
+        }
+        saveData(students.map(s=>s.id===form.id?{...s,...clean,authUserId}:s))
+      }else{
+        const id=crypto.randomUUID()
+        const {data:account,error:accountError}=await supabase.functions.invoke('student-account',{body:{action:'create_private_student',student:{id,username,password:clean.password,full_name:clean.fullName}}})
+        if(accountError||!account?.ok)throw new Error(account?.error||accountError?.message||'Öğrenci hesabı oluşturulamadı.')
+        const item={...clean,id,authUserId:account.auth_user_id,lessons:{},homeworks:[],examAssignments:[],schoolExams:[]};saveData([...students,item]);setSelectedId(item.id)
+      }
+      setFormOpen(false)
+    }catch(error){alert(error.message||'Öğrenci kaydedilemedi.')}
   }
-  function removeStudent(student){if(!window.confirm(`${student.fullName} ve tüm özel ders kayıtları silinsin mi?`))return;const next=students.filter(s=>s.id!==student.id);saveData(next);if(selected?.id===student.id)setSelectedId(next[0]?.id||null)}
+  async function removeStudent(student){if(!window.confirm(`${student.fullName} ve tüm özel ders kayıtları silinsin mi?`))return;try{const authUserId=student.authUserId||student.auth_user_id;if(authUserId){const {data:account,error}=await supabase.functions.invoke('student-account',{body:{action:'delete_private_student',auth_user_id:authUserId}});if(error||!account?.ok)throw new Error(account?.error||error?.message||'Hesap silinemedi.')}}catch(error){return alert(error.message)}const next=students.filter(s=>s.id!==student.id);saveData(next);if(selected?.id===student.id)setSelectedId(next[0]?.id||null)}
   function openDay(key){if(!selected)return;const old=selected.lessons?.[key];setSelectedDate(key);setEntry(old?{...old}:{status:'done',payment:'unpaid',durationMinutes:selected.lessonMinutes||60,note:''});setDayOpen(true)}
   function saveDay(){const updated={...selected,lessons:{...(selected.lessons||{}),[selectedDate]:{...entry,durationMinutes:Number(entry.durationMinutes||selected.lessonMinutes||60)}}};saveData(students.map(s=>s.id===selected.id?updated:s));setDayOpen(false)}
   function deleteDay(){const lessons={...(selected.lessons||{})};delete lessons[selectedDate];updateSelected({lessons});setDayOpen(false)}

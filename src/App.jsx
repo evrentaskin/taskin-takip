@@ -11,6 +11,7 @@ import { supabase } from './services/supabase'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import StudentHomePage from './pages/StudentHomePage'
+import PrivateStudentHomePage from './pages/PrivateStudentHomePage'
 
 const StudentsPage = lazy(() => import('./pages/StudentsPage'))
 const LgsPage = lazy(() => import('./pages/LgsPage'))
@@ -144,6 +145,7 @@ export default function App() {
   if (loading) return <CenterLoader />
   if (!session) return <LoginPage />
   if (profile?.role === 'student') return <StudentHomePage session={session} profile={profile} />
+  if (profile?.role === 'private_student') return <PrivateStudentHomePage session={session} profile={profile} />
 
   const menuItems = [
     ['Ana Sayfa', Dashboard],

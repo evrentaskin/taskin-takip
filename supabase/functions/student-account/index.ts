@@ -242,6 +242,50 @@ Deno.serve(async (req) => {
     }
 
 
+
+    if (action === "create_private_student") {
+      const student = body.student || {}
+      const privateStudentId = String(student.id || "")
+      const username = normalizeUsername(student.username)
+      const password = String(student.password || "")
+      const fullName = String(student.full_name || "").trim()
+      if (!privateStudentId || !fullName) return json({ ok:false, error:"Öğrenci bilgileri eksik." },400)
+      if (!isValidUsername(username)) return json({ ok:false, error:"Kullanıcı adı geçersiz." },400)
+      if (password.length < 6) return json({ ok:false, error:"Şifre en az 6 karakter olmalı." },400)
+      const email = `${username}@taskin.local`
+      const { data:created, error:createError } = await admin.auth.admin.createUser({
+        email, password, email_confirm:true,
+        user_metadata:{ full_name:fullName, private_student_id:privateStudentId }
+      })
+      if (createError) return json({ok:false,error:createError.message},400)
+      const { error:profileError } = await admin.from("profiles").upsert({id:created.user.id,full_name:fullName,role:"private_student"},{onConflict:"id"})
+      if (profileError) { await admin.auth.admin.deleteUser(created.user.id); return json({ok:false,error:profileError.message},400) }
+      return json({ok:true,auth_user_id:created.user.id,username})
+    }
+
+    if (action === "update_private_student") {
+      const authUserId=String(body.auth_user_id||"")
+      const privateStudentId=String(body.student_id||"")
+      const username=normalizeUsername(body.username)
+      const password=body.password?String(body.password):""
+      const fullName=String(body.full_name||"").trim()
+      if(!authUserId||!privateStudentId)return json({ok:false,error:"Öğrenci hesabı bağlı değil."},400)
+      if(!isValidUsername(username))return json({ok:false,error:"Kullanıcı adı geçersiz."},400)
+      if(password&&password.length<6)return json({ok:false,error:"Şifre en az 6 karakter olmalı."},400)
+      const attrs:Record<string,unknown>={email:`${username}@taskin.local`,email_confirm:true,user_metadata:{full_name:fullName,private_student_id:privateStudentId}}
+      if(password)attrs.password=password
+      const {error}=await admin.auth.admin.updateUserById(authUserId,attrs)
+      if(error)return json({ok:false,error:error.message},400)
+      await admin.from("profiles").upsert({id:authUserId,full_name:fullName,role:"private_student"},{onConflict:"id"})
+      return json({ok:true,username})
+    }
+
+    if (action === "delete_private_student") {
+      const authUserId=String(body.auth_user_id||"")
+      if(authUserId){await admin.from("profiles").delete().eq("id",authUserId);const {error}=await admin.auth.admin.deleteUser(authUserId);if(error)return json({ok:false,error:error.message},400)}
+      return json({ok:true})
+    }
+
     if (action === "create_lgs_exam") {
       const exam = body.exam
       const name = String(exam?.name || "").trim()
