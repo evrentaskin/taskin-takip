@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import html2pdf from 'html2pdf.js'
+import { jsPDF } from 'jspdf'
 import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, MenuItem, Paper, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
 import { Archive, ArrowBack, ArrowForward, AssignmentTurnedIn, CancelRounded, CheckCircleRounded, DeleteOutline, Edit, PersonAdd, PictureAsPdf, ReplayCircleFilledRounded, Restore, Save, School, Science, UploadFile, Visibility } from '@mui/icons-material'
 import { useSharedCloudState } from '../services/useSharedCloudState'
@@ -111,42 +111,93 @@ export default function PrivateLessonsPage(){
   function saveSchool(){if(!schoolForm.name.trim()||!schoolForm.date)return alert('Deneme adı ve tarih zorunludur.');const correct=numeric(schoolForm.correct),wrong=numeric(schoolForm.wrong);const item={...schoolForm,id:schoolForm.id||crypto.randomUUID(),name:schoolForm.name.trim(),correct,wrong,net:schoolForm.net===''?netOf(correct,wrong):Number(schoolForm.net),schoolRank:numeric(schoolForm.schoolRank)};const list=schoolForm.id?(selected.schoolExams||[]).map(x=>x.id===item.id?item:x):[...(selected.schoolExams||[]),item];updateSelected({schoolExams:list});setSchoolOpen(false)}
   function deleteSchool(id){if(!window.confirm('Okul denemesi silinsin mi?'))return;updateSelected({schoolExams:(selected.schoolExams||[]).filter(x=>x.id!==id)})}
 
-  async function exportPdf(){
+  function exportPdf(){
     if(!selected)return
-    const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]))
-    const rows=allResults.map((x,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(x.type)}</td><td>${escapeHtml(x.name)}</td><td>${x.correct}</td><td>${x.wrong}</td><td>${x.blank}</td><td>${Number(x.net).toFixed(2)}</td><td>${x.schoolRank||'—'}</td></tr>`).join('')
-    const chartItems=lastTen
-    let chartHtml='<div class="empty">Grafik için henüz sonuç yok.</div>'
-    if(chartItems.length){
-      const width=720,height=230,padX=48,padY=30
-      const values=chartItems.map(x=>Number(x.net||0)),min=Math.min(0,...values),max=Math.max(1,...values),range=Math.max(1,max-min)
-      const points=chartItems.map((x,i)=>({x:chartItems.length===1?width/2:padX+i*(width-padX*2)/(chartItems.length-1),y:height-padY-(Number(x.net||0)-min)*(height-padY*2)/range,value:Number(x.net||0)}))
-      const grid=[0,.25,.5,.75,1].map(t=>{const y=padY+t*(height-padY*2),value=max-t*range;return `<line x1="${padX}" x2="${width-padX}" y1="${y}" y2="${y}" stroke="#e5e7eb"/><text x="4" y="${y+4}" font-size="11" fill="#6b7280">${value.toFixed(1)}</text>`}).join('')
-      const dots=points.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="5" fill="#ea580c"/><text x="${p.x}" y="${p.y-10}" text-anchor="middle" font-size="11" font-weight="700" fill="#111827">${p.value.toFixed(2)}</text><text x="${p.x}" y="${height-5}" text-anchor="middle" font-size="10" fill="#6b7280">${i+1}</text>`).join('')
-      chartHtml=`<svg viewBox="0 0 ${width} ${height}" width="100%" xmlns="http://www.w3.org/2000/svg">${grid}<polyline points="${points.map(p=>`${p.x},${p.y}`).join(' ')}" fill="none" stroke="#ea580c" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>${dots}</svg>`
-    }
-
-    const host=document.createElement('div')
-    host.setAttribute('aria-hidden','true')
-    host.style.cssText='position:fixed;left:0;top:0;width:794px;min-height:1123px;padding:42px;background:#fff;color:#111827;font-family:Arial,Helvetica,sans-serif;z-index:2147483647;box-sizing:border-box;overflow:visible;'
-    host.innerHTML=`<style>*{box-sizing:border-box}h1{margin:0 0 5px;font-size:25px}h2{margin:0 0 20px;font-size:18px;color:#4b5563}h3{margin:24px 0 8px;font-size:17px}table{width:100%;border-collapse:collapse;font-size:12px}tr{page-break-inside:avoid}th,td{border:1px solid #cbd5e1;padding:7px;text-align:left}th{background:#ffedd5;color:#7c2d12}.average{margin-top:12px;padding:10px;background:#fff7ed;border:1px solid #fdba74;font-weight:700}.empty{padding:18px;border:1px solid #ddd;background:#fafafa}svg{display:block;background:#fff;max-height:230px}</style><h1>Fen Deneme Sonuç Raporu</h1><h2>${escapeHtml(selected.fullName)}</h2><table><thead><tr><th>#</th><th>Tür</th><th>Deneme</th><th>Doğru</th><th>Yanlış</th><th>Boş</th><th>Net</th><th>Okul Sırası</th></tr></thead><tbody>${rows||'<tr><td colspan="8">Henüz deneme sonucu bulunmuyor.</td></tr>'}</tbody></table>${averages?`<div class="average">Ortalama net: ${averages.net.toFixed(2)}</div>`:''}<h3>Son 10 Denemenin Net Grafiği</h3>${chartHtml}`
-    document.body.appendChild(host)
-
     try{
-      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))
-      await html2pdf().set({
-        margin:[10,10,10,10],
-        filename:`${selected.fullName.replace(/[^a-zA-Z0-9çğıöşüÇĞİÖŞÜ_-]+/g,'_')}_fen_deneme_raporu.pdf`,
-        image:{type:'jpeg',quality:.98},
-        html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0,windowWidth:794},
-        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-        pagebreak:{mode:['css','legacy'],avoid:['tr']}
-      }).from(host).save()
+      const doc=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'})
+      const pageWidth=210,pageHeight=297,margin=12
+      const usable=pageWidth-margin*2
+      const tr=value=>String(value??'').replace(/[çÇğĞıİöÖşŞüÜ]/g,ch=>({ç:'c',Ç:'C',ğ:'g',Ğ:'G',ı:'i',İ:'I',ö:'o',Ö:'O',ş:'s',Ş:'S',ü:'u',Ü:'U'}[ch]))
+      const safe=value=>tr(value).replace(/[^\x20-\x7E]/g,'')
+      const newPage=()=>{doc.addPage();return 15}
+      let y=16
+
+      doc.setTextColor(17,24,39)
+      doc.setFont('helvetica','bold');doc.setFontSize(17)
+      doc.text('Fen Deneme Sonuc Raporu',margin,y);y+=7
+      doc.setFontSize(12);doc.setFont('helvetica','normal')
+      doc.text(safe(selected.fullName),margin,y);y+=9
+
+      const cols=[8,24,54,19,19,17,19,26]
+      const headers=['#','Tur','Deneme','Dogru','Yanlis','Bos','Net','Okul Sirasi']
+      const drawHeader=()=>{
+        let x=margin
+        doc.setFillColor(255,237,213);doc.setDrawColor(203,213,225)
+        doc.setTextColor(124,45,18);doc.setFont('helvetica','bold');doc.setFontSize(8)
+        headers.forEach((h,i)=>{doc.rect(x,y,cols[i],8,'FD');doc.text(h,x+1.4,y+5.2);x+=cols[i]})
+        y+=8
+        doc.setTextColor(17,24,39);doc.setFont('helvetica','normal')
+      }
+      drawHeader()
+      const results=allResults.length?allResults:[{type:'-',name:'Henuz deneme sonucu bulunmuyor.',correct:'',wrong:'',blank:'',net:'',schoolRank:''}]
+      results.forEach((row,index)=>{
+        const nameLines=doc.splitTextToSize(safe(row.name),cols[2]-2.8)
+        const rowH=Math.max(8,nameLines.length*4.2+3)
+        if(y+rowH>pageHeight-18){y=newPage();drawHeader()}
+        const cells=[allResults.length?String(index+1):'',safe(row.type),nameLines,String(row.correct??''),String(row.wrong??''),String(row.blank??''),row.net===''?'':Number(row.net).toFixed(2),row.schoolRank?String(row.schoolRank):'—']
+        let x=margin
+        doc.setFontSize(8);doc.setDrawColor(203,213,225)
+        cells.forEach((value,i)=>{
+          doc.rect(x,y,cols[i],rowH)
+          if(Array.isArray(value))doc.text(value,x+1.4,y+4.2)
+          else doc.text(safe(value),x+1.4,y+5.1)
+          x+=cols[i]
+        })
+        y+=rowH
+      })
+
+      if(averages){
+        y+=4
+        if(y+11>pageHeight-15)y=newPage()
+        doc.setFillColor(255,247,237);doc.setDrawColor(253,186,116)
+        doc.rect(margin,y,usable,10,'FD')
+        doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(124,45,18)
+        doc.text(`Ortalama net: ${averages.net.toFixed(2)}`,margin+3,y+6.5)
+        y+=16
+      }else y+=8
+
+      if(y+73>pageHeight-15)y=newPage()
+      doc.setTextColor(17,24,39);doc.setFont('helvetica','bold');doc.setFontSize(12)
+      doc.text('Son 10 Denemenin Net Grafigi',margin,y);y+=7
+      const chartX=margin+10,chartY=y,chartW=usable-20,chartH=55
+      doc.setDrawColor(229,231,235);doc.setLineWidth(.2)
+      if(lastTen.length){
+        const vals=lastTen.map(x=>Number(x.net||0)),min=Math.min(0,...vals),max=Math.max(1,...vals),range=Math.max(1,max-min)
+        for(let i=0;i<=4;i++){
+          const gy=chartY+i*chartH/4
+          doc.line(chartX,gy,chartX+chartW,gy)
+          doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(107,114,128)
+          doc.text((max-i*range/4).toFixed(1),margin,gy+1.8)
+        }
+        const pts=lastTen.map((item,i)=>({x:lastTen.length===1?chartX+chartW/2:chartX+i*chartW/(lastTen.length-1),y:chartY+chartH-(Number(item.net||0)-min)*chartH/range,v:Number(item.net||0)}))
+        doc.setDrawColor(234,88,12);doc.setFillColor(234,88,12);doc.setLineWidth(1)
+        for(let i=1;i<pts.length;i++)doc.line(pts[i-1].x,pts[i-1].y,pts[i].x,pts[i].y)
+        pts.forEach((p,i)=>{
+          doc.circle(p.x,p.y,1.4,'F')
+          doc.setFontSize(7);doc.setTextColor(17,24,39)
+          doc.text(p.v.toFixed(2),p.x,p.y-2.4,{align:'center'})
+          doc.setTextColor(107,114,128);doc.text(String(i+1),p.x,chartY+chartH+5,{align:'center'})
+        })
+      }else{
+        doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(107,114,128)
+        doc.text('Grafik icin henuz sonuc yok.',chartX,chartY+12)
+      }
+
+      const fileName=`${safe(selected.fullName).trim().replace(/\s+/g,'_')||'ogrenci'}_fen_deneme_raporu.pdf`
+      doc.save(fileName)
     }catch(error){
-      console.error('PDF oluşturma hatası:',error)
-      alert('PDF oluşturulamadı. Sayfayı yenileyip tekrar deneyin.')
-    }finally{
-      host.remove()
+      console.error('PDF olusturma hatasi:',error)
+      alert('PDF olusturulamadi. Lutfen tekrar deneyin.')
     }
   }
 
