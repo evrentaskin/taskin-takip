@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import html2pdf from 'html2pdf.js'
 import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, MenuItem, Paper, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
 import { Archive, ArrowBack, ArrowForward, AssignmentTurnedIn, CancelRounded, CheckCircleRounded, DeleteOutline, Edit, PersonAdd, PictureAsPdf, ReplayCircleFilledRounded, Restore, Save, School, Science, UploadFile, Visibility } from '@mui/icons-material'
 import { useSharedCloudState } from '../services/useSharedCloudState'
@@ -110,7 +111,7 @@ export default function PrivateLessonsPage(){
   function saveSchool(){if(!schoolForm.name.trim()||!schoolForm.date)return alert('Deneme adı ve tarih zorunludur.');const correct=numeric(schoolForm.correct),wrong=numeric(schoolForm.wrong);const item={...schoolForm,id:schoolForm.id||crypto.randomUUID(),name:schoolForm.name.trim(),correct,wrong,net:schoolForm.net===''?netOf(correct,wrong):Number(schoolForm.net),schoolRank:numeric(schoolForm.schoolRank)};const list=schoolForm.id?(selected.schoolExams||[]).map(x=>x.id===item.id?item:x):[...(selected.schoolExams||[]),item];updateSelected({schoolExams:list});setSchoolOpen(false)}
   function deleteSchool(id){if(!window.confirm('Okul denemesi silinsin mi?'))return;updateSelected({schoolExams:(selected.schoolExams||[]).filter(x=>x.id!==id)})}
 
-  function exportPdf(){
+  async function exportPdf(){
     if(!selected)return
     const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]))
     const rows=allResults.map((x,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(x.type)}</td><td>${escapeHtml(x.name)}</td><td>${x.correct}</td><td>${x.wrong}</td><td>${x.blank}</td><td>${Number(x.net).toFixed(2)}</td><td>${x.schoolRank||'—'}</td></tr>`).join('')
@@ -124,14 +125,29 @@ export default function PrivateLessonsPage(){
       const dots=points.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="5" fill="#ea580c"/><text x="${p.x}" y="${p.y-10}" text-anchor="middle" font-size="11" font-weight="700" fill="#111827">${p.value.toFixed(2)}</text><text x="${p.x}" y="${height-5}" text-anchor="middle" font-size="10" fill="#6b7280">${i+1}</text>`).join('')
       chartHtml=`<svg viewBox="0 0 ${width} ${height}" width="100%" xmlns="http://www.w3.org/2000/svg">${grid}<polyline points="${points.map(p=>`${p.x},${p.y}`).join(' ')}" fill="none" stroke="#ea580c" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>${dots}</svg>`
     }
-    const reportHtml=`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(selected.fullName)} - Fen Deneme Raporu</title><style>
-      @page{size:A4;margin:12mm}*{box-sizing:border-box}body{margin:0;background:#fff;color:#111827;font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}h1{margin:0 0 5px;font-size:25px}h2{margin:0 0 20px;font-size:18px;color:#4b5563}h3{margin:24px 0 8px;font-size:17px}table{width:100%;border-collapse:collapse;font-size:12px;page-break-inside:auto}tr{page-break-inside:avoid}th,td{border:1px solid #cbd5e1;padding:7px;text-align:left}th{background:#ffedd5!important;color:#7c2d12}.average{margin-top:12px;padding:10px;background:#fff7ed!important;border:1px solid #fdba74;font-weight:700}.empty{padding:18px;border:1px solid #ddd;background:#fafafa}svg{display:block;background:#fff;max-height:230px}.hint{display:none}@media screen{body{padding:24px;max-width:900px;margin:auto}.hint{display:block;margin-bottom:16px;padding:10px;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;font-size:13px}}
-    </style></head><body><div class="hint">Yazdırma penceresinde hedef olarak “PDF olarak kaydet” seç.</div><h1>Fen Deneme Sonuç Raporu</h1><h2>${escapeHtml(selected.fullName)}</h2><table><thead><tr><th>#</th><th>Tür</th><th>Deneme</th><th>Doğru</th><th>Yanlış</th><th>Boş</th><th>Net</th><th>Okul Sırası</th></tr></thead><tbody>${rows||'<tr><td colspan="8">Henüz deneme sonucu bulunmuyor.</td></tr>'}</tbody></table>${averages?`<div class="average">Ortalama net: ${averages.net.toFixed(2)}</div>`:''}<h3>Son 10 Denemenin Net Grafiği</h3>${chartHtml}<script>window.addEventListener('load',()=>setTimeout(()=>window.print(),250));<\/script></body></html>`
-    const printWindow=window.open('','_blank','noopener,noreferrer')
-    if(!printWindow){alert('PDF penceresi engellendi. Tarayıcıda açılır pencerelere izin verip tekrar deneyin.');return}
-    printWindow.document.open()
-    printWindow.document.write(reportHtml)
-    printWindow.document.close()
+
+    const host=document.createElement('div')
+    host.setAttribute('aria-hidden','true')
+    host.style.cssText='position:fixed;left:0;top:0;width:794px;min-height:1123px;padding:42px;background:#fff;color:#111827;font-family:Arial,Helvetica,sans-serif;z-index:2147483647;box-sizing:border-box;overflow:visible;'
+    host.innerHTML=`<style>*{box-sizing:border-box}h1{margin:0 0 5px;font-size:25px}h2{margin:0 0 20px;font-size:18px;color:#4b5563}h3{margin:24px 0 8px;font-size:17px}table{width:100%;border-collapse:collapse;font-size:12px}tr{page-break-inside:avoid}th,td{border:1px solid #cbd5e1;padding:7px;text-align:left}th{background:#ffedd5;color:#7c2d12}.average{margin-top:12px;padding:10px;background:#fff7ed;border:1px solid #fdba74;font-weight:700}.empty{padding:18px;border:1px solid #ddd;background:#fafafa}svg{display:block;background:#fff;max-height:230px}</style><h1>Fen Deneme Sonuç Raporu</h1><h2>${escapeHtml(selected.fullName)}</h2><table><thead><tr><th>#</th><th>Tür</th><th>Deneme</th><th>Doğru</th><th>Yanlış</th><th>Boş</th><th>Net</th><th>Okul Sırası</th></tr></thead><tbody>${rows||'<tr><td colspan="8">Henüz deneme sonucu bulunmuyor.</td></tr>'}</tbody></table>${averages?`<div class="average">Ortalama net: ${averages.net.toFixed(2)}</div>`:''}<h3>Son 10 Denemenin Net Grafiği</h3>${chartHtml}`
+    document.body.appendChild(host)
+
+    try{
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))
+      await html2pdf().set({
+        margin:[10,10,10,10],
+        filename:`${selected.fullName.replace(/[^a-zA-Z0-9çğıöşüÇĞİÖŞÜ_-]+/g,'_')}_fen_deneme_raporu.pdf`,
+        image:{type:'jpeg',quality:.98},
+        html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0,windowWidth:794},
+        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+        pagebreak:{mode:['css','legacy'],avoid:['tr']}
+      }).from(host).save()
+    }catch(error){
+      console.error('PDF oluşturma hatası:',error)
+      alert('PDF oluşturulamadı. Sayfayı yenileyip tekrar deneyin.')
+    }finally{
+      host.remove()
+    }
   }
 
   const entries=Object.entries(selected?.lessons||{})

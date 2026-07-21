@@ -1,14 +1,10 @@
-V10.0.6.7 PDF BOŞ EKRAN KESİN DÜZELTME
+V10.0.6.8 PDF POPUPSUZ KESIN DUZELTME
 
-1) ZIP'i açın.
-2) src/pages/PrivateLessonsPage.jsx dosyasını ana projedeki aynı konuma kopyalayıp üzerine yazın.
-3) Terminalde çalıştırın:
+1) src/pages/PrivateLessonsPage.jsx dosyasini ana projedeki ayni konuma kopyalayip uzerine yazin.
+2) Ardindan:
    npm run build
    git add .
-   git commit -m "V10.0.6.7 PDF boş ekran düzeltmesi"
+   git commit -m "V10.0.6.8 PDF popupsuz kesin duzeltme"
    git push
 
-NOT:
-PDF düğmesi artık html2canvas/html2pdf ile ekran görüntüsü almıyor.
-Tarayıcının yerleşik yazdırma sistemi açılır. Hedef olarak "PDF olarak kaydet" seçilmelidir.
-Bu yöntem beyaz/boş PDF sorununu ortadan kaldırır.
+Bu surum acilir pencere kullanmaz. PDF dogrudan indirilir.
