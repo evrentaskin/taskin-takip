@@ -160,13 +160,22 @@ export default function PrivateStudentHomePage({ session, profile }) {
         <SummaryCard icon={<BarChart />} label="Ortalama Net" value={avg.toFixed(2)} tone="purple" />
       </Box>
 
+      <Box className="private-student-section-cards">
+        <button type="button" className={`private-student-section-card ${tab === 0 ? 'active' : ''}`} onClick={() => setTab(0)}>
+          <span className="private-student-section-icon homework"><Assignment /></span>
+          <span><b>Ödevler</b><small>Verilen ödevleri görüntüle</small></span>
+        </button>
+        <button type="button" className={`private-student-section-card ${tab === 1 ? 'active' : ''}`} onClick={() => setTab(1)}>
+          <span className="private-student-section-icon exam"><Quiz /></span>
+          <span><b>Online Denemeler</b><small>Aktif denemelere katıl</small></span>
+        </button>
+        <button type="button" className={`private-student-section-card ${tab === 2 ? 'active' : ''}`} onClick={() => setTab(2)}>
+          <span className="private-student-section-icon analysis"><BarChart /></span>
+          <span><b>Deneme Analizi</b><small>Sonuçlarını ve gelişimini gör</small></span>
+        </button>
+      </Box>
+
       <Paper className="private-student-main-card" elevation={0}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" className="private-student-tabs">
-          <Tab icon={<Assignment />} iconPosition="start" label="Ödevler" />
-          <Tab icon={<Quiz />} iconPosition="start" label="Online Denemeler" />
-          <Tab icon={<BarChart />} iconPosition="start" label="Deneme Analizi" />
-        </Tabs>
-        <Divider />
         <Box sx={{ p: { xs: 1.5, md: 3 } }}>
           {tab === 0 && (homeworks.length ? <Stack spacing={1.5}>{homeworks.map(h => <Paper key={h.id} variant="outlined" className="private-student-list-card"><Box className="private-student-list-icon"><Assignment /></Box><Box sx={{ flex: 1 }}><Typography fontWeight={950}>{h.title || h.name}</Typography><Typography color="text.secondary" sx={{ my: .5 }}>{h.description || 'Açıklama yok.'}</Typography><Chip size="small" label={h.dueDate ? `Son tarih: ${new Date(h.dueDate).toLocaleDateString('tr-TR')}` : 'Son tarih yok'} /></Box></Paper>)}</Stack> : <Alert severity="info">Henüz verilmiş ödev bulunmuyor.</Alert>)}
 
