@@ -36,29 +36,21 @@ export default function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState('Ana Sayfa')
+  const [page, setPage] = useState(() => sessionStorage.getItem('taskin-active-page') || 'Ana Sayfa')
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [selectedStudentId, setSelectedStudentId] = useState(null)
+  const [selectedStudentId, setSelectedStudentId] = useState(() => sessionStorage.getItem('taskin-selected-student-id') || null)
   const pageRef = useRef(page)
+  const sessionRef = useRef(null)
 
   useEffect(() => {
     pageRef.current = page
   }, [page])
 
   useEffect(() => {
-    const openHome = () => {
-      setPage('Ana Sayfa')
-      setSelectedStudentId(null)
-      setMobileOpen(false)
-    }
-
-    openHome()
-    const handlePageShow = (event) => {
-      if (event.persisted) openHome()
-    }
-    window.addEventListener('pageshow', handlePageShow)
-    return () => window.removeEventListener('pageshow', handlePageShow)
-  }, [])
+    sessionStorage.setItem('taskin-active-page', page)
+    if (selectedStudentId) sessionStorage.setItem('taskin-selected-student-id', selectedStudentId)
+    else sessionStorage.removeItem('taskin-selected-student-id')
+  }, [page, selectedStudentId])
 
   useEffect(() => {
     const disableSuggestions = (root = document) => {
@@ -115,19 +107,33 @@ export default function App() {
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
+      sessionRef.current = data.session
       setSession(data.session)
-      setPage('Ana Sayfa')
-      setSelectedStudentId(null)
       if (data.session) await loadProfile(data.session.user.id)
       setLoading(false)
     })
 
-    const { data } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+    const { data } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
+      const hadSession = Boolean(sessionRef.current)
+      sessionRef.current = nextSession
       setSession(nextSession)
-      setPage('Ana Sayfa')
-      setSelectedStudentId(null)
-      if (nextSession) await loadProfile(nextSession.user.id)
-      else setProfile(null)
+
+      if (!nextSession) {
+        setProfile(null)
+        setPage('Ana Sayfa')
+        setSelectedStudentId(null)
+        sessionStorage.removeItem('taskin-active-page')
+        sessionStorage.removeItem('taskin-selected-student-id')
+        return
+      }
+
+      // Yeni girişte ana sayfadan başla; token yenileme veya uygulamaya geri dönmede
+      // kullanıcının açık bıraktığı bölüm korunur.
+      if (event === 'SIGNED_IN' && !hadSession) {
+        setPage('Ana Sayfa')
+        setSelectedStudentId(null)
+      }
+      await loadProfile(nextSession.user.id)
     })
 
     return () => data.subscription.unsubscribe()
