@@ -1022,7 +1022,7 @@ export default function StudentsPage() {
       }
 
       const selected = new Set(studentListPdfFields)
-      const columns = STUDENT_LIST_PDF_FIELDS.filter(([key]) => selected.has(key))
+      const columns = [['sequence', 'Sıra No'], ...STUDENT_LIST_PDF_FIELDS.filter(([key]) => selected.has(key))]
       const genderText = value => {
         const normalized = safeText(value).toLocaleLowerCase('tr-TR')
         if (['female', 'kız', 'kiz', 'kadın', 'kadin'].includes(normalized)) return 'Kız'
@@ -1031,7 +1031,8 @@ export default function StudentsPage() {
       }
       const rows = [...students]
         .sort((a, b) => Number(a.student_number || 0) - Number(b.student_number || 0))
-        .map(student => ({
+        .map((student, index) => ({
+          sequence: index + 1,
           name: `${safeText(student.first_name)} ${safeText(student.last_name)}`.trim(),
           class: selectedClassName,
           number: student.student_number || '',
@@ -1042,32 +1043,36 @@ export default function StudentsPage() {
         }))
 
       const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]))
-      const columnCount = columns.length
       const rowCount = rows.length
-      const landscape = columnCount >= 5
-      const widthMm = landscape ? 287 : 200
-      const fontSize = rowCount >= 40 ? 6.5 : rowCount > 32 ? 7.5 : rowCount > 24 ? 8.5 : 10
-      const padding = rowCount >= 40 ? 1.5 : rowCount > 32 ? 2 : rowCount > 24 ? 3 : 4
-      const rowHeight = rowCount >= 40 ? 13 : rowCount > 32 ? 15 : rowCount > 24 ? 18 : 20
+      const pageSize = 45
+      const pages = []
+      for (let index = 0; index < rows.length; index += pageSize) pages.push(rows.slice(index, index + pageSize))
+      const fontSize = 6.4
+      const padding = 1.25
+      const rowHeight = 12.2
       const widths = {
-        name: 26, class: 10, number: 8, gender: 10, blank1: 15, blank2: 15, lastLogin: 16
+        sequence: 7, number: 9, name: 28, class: 10, gender: 10, blank1: 14, blank2: 14, lastLogin: 18
       }
       const totalWidth = columns.reduce((sum, [key]) => sum + (widths[key] || 12), 0)
 
-      const container = document.createElement('div')
-      container.style.cssText = `width:${widthMm}mm;padding:7mm 8mm;background:#fff;color:#111;font-family:Arial,sans-serif;box-sizing:border-box;`
-      container.innerHTML = `
-        <div style="display:flex;align-items:center;gap:9px;border-bottom:2px solid #178b58;padding-bottom:5px;margin-bottom:7px">
-          <img src="/taskin-takip-sistemi-logo.png" style="width:42px;height:42px;object-fit:contain">
-          <div style="flex:1">
-            <div style="font-size:17px;font-weight:900">${escapeHtml(selectedClassName)} Sınıf Listesi</div>
-            <div style="font-size:9px;color:#555">Taşkın Takip • ${new Date().toLocaleDateString('tr-TR')} • ${rowCount} öğrenci</div>
+      const renderPage = (pageRows, pageIndex) => `
+        <section style="width:210mm;min-height:297mm;padding:6mm 7mm;background:#fff;color:#111;font-family:Arial,sans-serif;box-sizing:border-box;${pageIndex < pages.length - 1 ? 'page-break-after:always;' : ''}">
+          <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid #178b58;padding-bottom:4px;margin-bottom:5px">
+            <img src="/taskin-takip-sistemi-logo.png" style="width:34px;height:34px;object-fit:contain">
+            <div style="flex:1">
+              <div style="font-size:15px;font-weight:900">${escapeHtml(selectedClassName)} Sınıf Listesi</div>
+              <div style="font-size:8px;color:#555">Taşkın Takip • ${new Date().toLocaleDateString('tr-TR')} • ${rowCount} öğrenci${pages.length > 1 ? ` • Sayfa ${pageIndex + 1}/${pages.length}` : ''}</div>
+            </div>
           </div>
-        </div>
-        <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:${fontSize}px;line-height:1.08">
-          <thead><tr>${columns.map(([key, label]) => `<th style="border:1px solid #667;padding:${padding}px;background:#eaf4ef;width:${((widths[key] || 12) / totalWidth * 100).toFixed(2)}%;text-align:center">${escapeHtml(label)}</th>`).join('')}</tr></thead>
-          <tbody>${rows.map(row => `<tr>${columns.map(([key]) => `<td style="border:1px solid #999;padding:${padding}px;height:${rowHeight}px;text-align:${['number','class','gender'].includes(key) ? 'center' : 'left'};overflow-wrap:anywhere">${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('')}</tbody>
-        </table>`
+          <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:${fontSize}px;line-height:1.02">
+            <thead><tr>${columns.map(([key, label]) => `<th style="border:1px solid #667;padding:${padding}px;background:#eaf4ef;width:${((widths[key] || 12) / totalWidth * 100).toFixed(2)}%;text-align:center">${escapeHtml(label)}</th>`).join('')}</tr></thead>
+            <tbody>${pageRows.map(row => `<tr>${columns.map(([key]) => `<td style="border:1px solid #999;padding:${padding}px;height:${rowHeight}px;text-align:${['sequence','number','class','gender'].includes(key) ? 'center' : 'left'};overflow-wrap:anywhere">${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('')}</tbody>
+          </table>
+        </section>`
+
+      const container = document.createElement('div')
+      container.style.cssText = 'background:#fff;'
+      container.innerHTML = pages.map(renderPage).join('')
       document.body.appendChild(container)
       try {
         await html2pdf().set({
@@ -1075,8 +1080,8 @@ export default function StudentsPage() {
           filename: `${selectedClassName}_Sinif_Listesi.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: landscape ? 'landscape' : 'portrait' },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'legacy'], after: 'section' }
         }).from(container).save()
       } finally {
         container.remove()
@@ -1425,7 +1430,7 @@ export default function StudentsPage() {
         </DialogTitle>
         <DialogContent>
           <Typography color="text.secondary" sx={{ mb: 2 }}>
-            PDF'de görünmesini istediğiniz sütunları seçin. Sütun sırası No, Adı Soyadı ve ardından seçtiğiniz diğer bilgilerdir. 45 öğrenciye kadar liste tek sayfaya sığacak şekilde hazırlanır.
+            PDF her zaman dikey A4 hazırlanır. İlk sütun sabit olarak Sıra No'dur; ardından No, Adı Soyadı ve seçtiğiniz diğer bilgiler gelir. Her sayfada en fazla 45 öğrenci yer alır.
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1 }}>
             {STUDENT_LIST_PDF_FIELDS.map(([key, label]) => (
