@@ -88,6 +88,16 @@ const REPORT_PROFILE_KEYS = {
   guidance:'default-25', teacherNotes:'default-26'
 }
 
+const STUDENT_LIST_PDF_FIELDS = [
+  ['name', 'Adı Soyadı'],
+  ['class', 'Sınıfı'],
+  ['number', 'No'],
+  ['gender', 'Cinsiyet'],
+  ['blank1', 'Boş 1'],
+  ['blank2', 'Boş 2'],
+  ['lastLogin', 'En Son Giriş Tarihi']
+]
+
 export default function StudentsPage() {
   const [classes, setClasses] = useState([])
   const [activeClasses, setActiveClasses] = useState([])
@@ -124,6 +134,9 @@ export default function StudentsPage() {
   const [reportType, setReportType] = useState('pdf')
   const [reportFields, setReportFields] = useState(REPORT_FIELDS.map(x => x[0]))
   const [customReportFields, setCustomReportFields] = useState([])
+  const [studentListPdfOpen, setStudentListPdfOpen] = useState(false)
+  const [studentListPdfFields, setStudentListPdfFields] = useState(['name', 'class', 'number', 'gender', 'lastLogin'])
+  const [studentListPdfGenerating, setStudentListPdfGenerating] = useState(false)
 
   const [importOpen, setImportOpen] = useState(false)
   const [importRows, setImportRows] = useState([])
@@ -972,45 +985,107 @@ export default function StudentsPage() {
     XLSX.writeFile(workbook, `${selectedClassName}_Ogrenci_Listesi.xlsx`)
   }
 
+  function formatPdfLoginDate(value) {
+    if (!value) return 'Hiç giriş yapmadı'
+    return new Intl.DateTimeFormat('tr-TR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    }).format(new Date(value))
+  }
+
   async function downloadStudentListPdf() {
     if (!students.length) return setError('İndirilecek öğrenci bulunamadı.')
-    const html2pdf = (await import('html2pdf.js')).default
-    const rows = studentListRows()
-    const fontSize = rows.length > 42 ? 7 : rows.length > 32 ? 8 : rows.length > 24 ? 9 : 10
-    const padding = rows.length > 42 ? 2 : rows.length > 32 ? 3 : 4
-    const container = document.createElement('div')
-    container.style.cssText = 'width:277mm;padding:8mm 10mm;background:#fff;color:#111;font-family:Arial,sans-serif;box-sizing:border-box;'
-    container.innerHTML = `
-      <div style="text-align:center;margin-bottom:8px">
-        <div style="font-size:18px;font-weight:800">${selectedClassName} Öğrenci Listesi</div>
-        <div style="font-size:10px;color:#555">Toplam ${rows.length} öğrenci</div>
-      </div>
-      <table style="width:100%;border-collapse:collapse;font-size:${fontSize}px;line-height:1.05">
-        <thead><tr style="background:#eef2f7">
-          <th style="border:1px solid #777;padding:${padding}px;width:12%">Numara</th>
-          <th style="border:1px solid #777;padding:${padding}px;width:30%">Ad</th>
-          <th style="border:1px solid #777;padding:${padding}px;width:38%">Soyad</th>
-          <th style="border:1px solid #777;padding:${padding}px;width:20%">Sınıf</th>
-        </tr></thead>
-        <tbody>${rows.map(row => `<tr>
-          <td style="border:1px solid #aaa;padding:${padding}px;text-align:center">${row.Numara}</td>
-          <td style="border:1px solid #aaa;padding:${padding}px">${row.Ad}</td>
-          <td style="border:1px solid #aaa;padding:${padding}px">${row.Soyad}</td>
-          <td style="border:1px solid #aaa;padding:${padding}px;text-align:center">${row.Sınıf}</td>
-        </tr>`).join('')}</tbody>
-      </table>`
-    document.body.appendChild(container)
+    if (!studentListPdfFields.length) return setError('PDF için en az bir bilgi seçmelisiniz.')
+
+    setStudentListPdfGenerating(true)
+    setError('')
     try {
-      await html2pdf().set({
-        margin: 0,
-        filename: `${selectedClassName}_Ogrenci_Listesi.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 1.8, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-        pagebreak: { mode: ['avoid-all'] }
-      }).from(container).save()
+      const html2pdf = (await import('html2pdf.js')).default
+      const studentIds = students.map(student => student.id)
+      const authUserIds = students.map(student => student.auth_user_id).filter(Boolean)
+
+      const [{ data: profileRows, error: profileError }, { data: loginRows, error: loginError }] = await Promise.all([
+        studentIds.length
+          ? supabase.from('student_profiles').select('student_id,gender').in('student_id', studentIds)
+          : Promise.resolve({ data: [], error: null }),
+        authUserIds.length
+          ? supabase.from('student_login_events').select('user_id,logged_in_at').in('user_id', authUserIds).order('logged_in_at', { ascending: false })
+          : Promise.resolve({ data: [], error: null })
+      ])
+      if (profileError && !String(profileError.message || '').toLowerCase().includes('does not exist')) throw profileError
+      if (loginError && !String(loginError.message || '').toLowerCase().includes('does not exist')) throw loginError
+
+      const genderByStudent = new Map((profileRows || []).map(row => [row.student_id, row.gender]))
+      const lastLoginByUser = new Map()
+      for (const row of loginRows || []) {
+        if (row.user_id && !lastLoginByUser.has(row.user_id)) lastLoginByUser.set(row.user_id, row.logged_in_at)
+      }
+
+      const selected = new Set(studentListPdfFields)
+      const columns = STUDENT_LIST_PDF_FIELDS.filter(([key]) => selected.has(key))
+      const genderText = value => {
+        const normalized = safeText(value).toLocaleLowerCase('tr-TR')
+        if (['female', 'kız', 'kiz', 'kadın', 'kadin'].includes(normalized)) return 'Kız'
+        if (['male', 'erkek'].includes(normalized)) return 'Erkek'
+        return value || '-'
+      }
+      const rows = [...students]
+        .sort((a, b) => Number(a.student_number || 0) - Number(b.student_number || 0))
+        .map(student => ({
+          name: `${safeText(student.first_name)} ${safeText(student.last_name)}`.trim(),
+          class: selectedClassName,
+          number: student.student_number || '',
+          gender: genderText(genderByStudent.get(student.id)),
+          blank1: '',
+          blank2: '',
+          lastLogin: formatPdfLoginDate(lastLoginByUser.get(student.auth_user_id))
+        }))
+
+      const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]))
+      const columnCount = columns.length
+      const rowCount = rows.length
+      const landscape = columnCount >= 5
+      const widthMm = landscape ? 287 : 200
+      const fontSize = rowCount > 42 ? 7 : rowCount > 32 ? 8 : rowCount > 24 ? 9 : 10
+      const padding = rowCount > 42 ? 2 : rowCount > 32 ? 3 : 4
+      const widths = {
+        name: 26, class: 10, number: 8, gender: 10, blank1: 15, blank2: 15, lastLogin: 16
+      }
+      const totalWidth = columns.reduce((sum, [key]) => sum + (widths[key] || 12), 0)
+
+      const container = document.createElement('div')
+      container.style.cssText = `width:${widthMm}mm;padding:7mm 8mm;background:#fff;color:#111;font-family:Arial,sans-serif;box-sizing:border-box;`
+      container.innerHTML = `
+        <div style="display:flex;align-items:center;gap:9px;border-bottom:2px solid #178b58;padding-bottom:5px;margin-bottom:7px">
+          <img src="/taskin-takip-sistemi-logo.png" style="width:42px;height:42px;object-fit:contain">
+          <div style="flex:1">
+            <div style="font-size:17px;font-weight:900">${escapeHtml(selectedClassName)} Sınıf Listesi</div>
+            <div style="font-size:9px;color:#555">Taşkın Takip • ${new Date().toLocaleDateString('tr-TR')} • ${rowCount} öğrenci</div>
+          </div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:${fontSize}px;line-height:1.08">
+          <thead><tr>${columns.map(([key, label]) => `<th style="border:1px solid #667;padding:${padding}px;background:#eaf4ef;width:${((widths[key] || 12) / totalWidth * 100).toFixed(2)}%;text-align:center">${escapeHtml(label)}</th>`).join('')}</tr></thead>
+          <tbody>${rows.map(row => `<tr>${columns.map(([key]) => `<td style="border:1px solid #999;padding:${padding}px;height:${rowCount > 38 ? 16 : 20}px;text-align:${['number','class','gender'].includes(key) ? 'center' : 'left'};overflow-wrap:anywhere">${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>`
+      document.body.appendChild(container)
+      try {
+        await html2pdf().set({
+          margin: 0,
+          filename: `${selectedClassName}_Sinif_Listesi.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: landscape ? 'landscape' : 'portrait' },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        }).from(container).save()
+      } finally {
+        container.remove()
+      }
+      setStudentListPdfOpen(false)
+      setMessage(`${selectedClassName} sınıf listesi PDF olarak hazırlandı.`)
+    } catch (err) {
+      setError(err?.message || 'Sınıf listesi PDF olarak oluşturulamadı.')
     } finally {
-      container.remove()
+      setStudentListPdfGenerating(false)
     }
   }
 
@@ -1137,8 +1212,8 @@ export default function StudentsPage() {
           </Typography>
         </Box>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} width={{ xs: '100%', sm: 'auto' }}>
-          <Button variant="outlined" startIcon={<Key />} onClick={() => setCredentialsOpen(true)}>
-            Sınıf Giriş Bilgileri
+          <Button variant="outlined" startIcon={<PictureAsPdf />} onClick={() => setStudentListPdfOpen(true)} disabled={!students.length}>
+            Sınıf Listesi PDF
           </Button>
           <Button
             variant="outlined"
@@ -1336,6 +1411,37 @@ export default function StudentsPage() {
           <Button color="error" variant="contained" startIcon={<Delete />} onClick={deleteWholeClass}
             disabled={classDeleting || classDeleteText.trim().toLocaleUpperCase('tr-TR') !== selectedClassName.trim().toLocaleUpperCase('tr-TR')}>
             {classDeleting ? 'Tüm veriler siliniyor…' : 'Kalıcı Olarak Sil'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={studentListPdfOpen} onClose={() => !studentListPdfGenerating && setStudentListPdfOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle fontWeight={900}>
+          {selectedClassName} — Sınıf Listesi PDF
+          <IconButton onClick={() => setStudentListPdfOpen(false)} disabled={studentListPdfGenerating} sx={{ position: 'absolute', right: 8, top: 8 }}>
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary" sx={{ mb: 2 }}>
+            PDF'de görünmesini istediğiniz sütunları seçin. Boş sütunlar yoklama, imza veya not almak için kullanılabilir.
+          </Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1 }}>
+            {STUDENT_LIST_PDF_FIELDS.map(([key, label]) => (
+              <FormControlLabel
+                key={key}
+                control={<Checkbox checked={studentListPdfFields.includes(key)} onChange={event => setStudentListPdfFields(current => event.target.checked ? [...current, key] : current.filter(item => item !== key))} />}
+                label={label}
+                sx={{ m: 0, px: 1, py: .5, border: '1px solid #d9e3df', borderRadius: 2 }}
+              />
+            ))}
+          </Box>
+          {!studentListPdfFields.length && <Alert severity="warning" sx={{ mt: 2 }}>En az bir sütun seçmelisiniz.</Alert>}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setStudentListPdfOpen(false)} disabled={studentListPdfGenerating}>Vazgeç</Button>
+          <Button variant="contained" startIcon={studentListPdfGenerating ? <CircularProgress size={17} color="inherit" /> : <PictureAsPdf />} onClick={downloadStudentListPdf} disabled={studentListPdfGenerating || !studentListPdfFields.length}>
+            PDF Hazırla
           </Button>
         </DialogActions>
       </Dialog>
