@@ -197,7 +197,12 @@ export default function PrivateStudentHomePage({ session, profile }) {
 
     <Dialog open={Boolean(solve)} onClose={() => !saving && setSolve(null)} fullWidth maxWidth="md">
       <DialogTitle fontWeight={950}>{exams.find(x => x.id === solve?.examId)?.name || 'Online Deneme'}</DialogTitle>
-      <DialogContent dividers><Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1 }}>{Array.from({ length: 20 }, (_, i) => i + 1).map(q => <Paper key={q} variant="outlined" sx={{ p: 1, display: 'grid', gridTemplateColumns: '36px repeat(4,1fr)', gap: .5, alignItems: 'center' }}><b>{q}</b>{ANSWERS.map(a => <Button key={a} size="small" variant={answers[q] === a ? 'contained' : 'outlined'} onClick={() => setAnswers({ ...answers, [q]: a })}>{a}</Button>)}</Paper>)}</Box></DialogContent>
+      <DialogContent dividers><Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1 }}>{Array.from({ length: 20 }, (_, i) => i + 1).map(q => <Paper key={q} variant="outlined" sx={{ p: 1, display: 'grid', gridTemplateColumns: '36px repeat(4,1fr)', gap: .5, alignItems: 'center' }}><b>{q}</b>{ANSWERS.map(a => <Button key={a} size="small" variant={answers[q] === a ? 'contained' : 'outlined'} onClick={() => setAnswers(current => {
+          const next = { ...current }
+          if (next[q] === a) delete next[q]
+          else next[q] = a
+          return next
+        })}>{a}</Button>)}</Paper>)}</Box></DialogContent>
       <DialogActions><Button onClick={() => setSolve(null)} disabled={saving}>Vazgeç</Button><Button variant="contained" onClick={submit} disabled={saving}>{saving ? 'Kaydediliyor…' : 'Denemeyi Bitir'}</Button></DialogActions>
     </Dialog>
   </Box>
