@@ -89,9 +89,9 @@ const REPORT_PROFILE_KEYS = {
 }
 
 const STUDENT_LIST_PDF_FIELDS = [
+  ['number', 'No'],
   ['name', 'Adı Soyadı'],
   ['class', 'Sınıfı'],
-  ['number', 'No'],
   ['gender', 'Cinsiyet'],
   ['blank1', 'Boş 1'],
   ['blank2', 'Boş 2'],
@@ -135,7 +135,7 @@ export default function StudentsPage() {
   const [reportFields, setReportFields] = useState(REPORT_FIELDS.map(x => x[0]))
   const [customReportFields, setCustomReportFields] = useState([])
   const [studentListPdfOpen, setStudentListPdfOpen] = useState(false)
-  const [studentListPdfFields, setStudentListPdfFields] = useState(['name', 'class', 'number', 'gender', 'lastLogin'])
+  const [studentListPdfFields, setStudentListPdfFields] = useState(['number', 'name', 'class', 'gender', 'lastLogin'])
   const [studentListPdfGenerating, setStudentListPdfGenerating] = useState(false)
 
   const [importOpen, setImportOpen] = useState(false)
@@ -1046,8 +1046,9 @@ export default function StudentsPage() {
       const rowCount = rows.length
       const landscape = columnCount >= 5
       const widthMm = landscape ? 287 : 200
-      const fontSize = rowCount > 42 ? 7 : rowCount > 32 ? 8 : rowCount > 24 ? 9 : 10
-      const padding = rowCount > 42 ? 2 : rowCount > 32 ? 3 : 4
+      const fontSize = rowCount >= 40 ? 6.5 : rowCount > 32 ? 7.5 : rowCount > 24 ? 8.5 : 10
+      const padding = rowCount >= 40 ? 1.5 : rowCount > 32 ? 2 : rowCount > 24 ? 3 : 4
+      const rowHeight = rowCount >= 40 ? 13 : rowCount > 32 ? 15 : rowCount > 24 ? 18 : 20
       const widths = {
         name: 26, class: 10, number: 8, gender: 10, blank1: 15, blank2: 15, lastLogin: 16
       }
@@ -1065,7 +1066,7 @@ export default function StudentsPage() {
         </div>
         <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:${fontSize}px;line-height:1.08">
           <thead><tr>${columns.map(([key, label]) => `<th style="border:1px solid #667;padding:${padding}px;background:#eaf4ef;width:${((widths[key] || 12) / totalWidth * 100).toFixed(2)}%;text-align:center">${escapeHtml(label)}</th>`).join('')}</tr></thead>
-          <tbody>${rows.map(row => `<tr>${columns.map(([key]) => `<td style="border:1px solid #999;padding:${padding}px;height:${rowCount > 38 ? 16 : 20}px;text-align:${['number','class','gender'].includes(key) ? 'center' : 'left'};overflow-wrap:anywhere">${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('')}</tbody>
+          <tbody>${rows.map(row => `<tr>${columns.map(([key]) => `<td style="border:1px solid #999;padding:${padding}px;height:${rowHeight}px;text-align:${['number','class','gender'].includes(key) ? 'center' : 'left'};overflow-wrap:anywhere">${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('')}</tbody>
         </table>`
       document.body.appendChild(container)
       try {
@@ -1424,7 +1425,7 @@ export default function StudentsPage() {
         </DialogTitle>
         <DialogContent>
           <Typography color="text.secondary" sx={{ mb: 2 }}>
-            PDF'de görünmesini istediğiniz sütunları seçin. Boş sütunlar yoklama, imza veya not almak için kullanılabilir.
+            PDF'de görünmesini istediğiniz sütunları seçin. Sütun sırası No, Adı Soyadı ve ardından seçtiğiniz diğer bilgilerdir. 45 öğrenciye kadar liste tek sayfaya sığacak şekilde hazırlanır.
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1 }}>
             {STUDENT_LIST_PDF_FIELDS.map(([key, label]) => (
