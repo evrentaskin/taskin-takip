@@ -1049,14 +1049,19 @@ export default function StudentsPage() {
       for (let index = 0; index < rows.length; index += pageSize) pages.push(rows.slice(index, index + pageSize))
       const fontSize = 7.2
       const padding = 1.1
-      const rowHeightMm = 5.25
+      // Her sayfadaki tablo alanını sayfanın altına kadar kullan.
+      // 45 öğrenci olduğunda 45 satır tam sayfayı doldurur; daha az öğrenci
+      // olduğunda satırlar eşit biçimde büyüyerek boş alan bırakmaz.
+      const tableBodyHeightMm = 252
       const widths = {
         sequence: 7, number: 9, name: 28, class: 10, gender: 10, blank1: 14, blank2: 14, lastLogin: 18
       }
       const totalWidth = columns.reduce((sum, [key]) => sum + (widths[key] || 12), 0)
 
-      const renderPage = (pageRows, pageIndex) => `
-        <section style="width:210mm;height:297mm;padding:6mm 7mm;overflow:hidden;background:#fff;color:#111;font-family:Arial,sans-serif;box-sizing:border-box;${pageIndex < pages.length - 1 ? 'page-break-after:always;' : ''}">
+      const renderPage = (pageRows, pageIndex) => {
+        const rowHeightMm = tableBodyHeightMm / Math.max(pageRows.length, 1)
+        return `
+        <section style="width:210mm;height:290mm;padding:6mm 7mm;overflow:hidden;background:#fff;color:#111;font-family:Arial,sans-serif;box-sizing:border-box;break-inside:avoid;page-break-inside:avoid;${pageIndex < pages.length - 1 ? 'break-after:page;page-break-after:always;' : ''}">
           <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid #178b58;padding-bottom:4px;margin-bottom:5px">
             <img src="/taskin-takip-sistemi-logo.png" style="width:34px;height:34px;object-fit:contain">
             <div style="flex:1">
@@ -1069,6 +1074,7 @@ export default function StudentsPage() {
             <tbody>${pageRows.map(row => `<tr>${columns.map(([key]) => `<td style="border:1px solid #999;padding:${padding}px;height:${rowHeightMm}mm;text-align:${['sequence','number','class','gender'].includes(key) ? 'center' : 'left'};overflow-wrap:anywhere">${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('')}</tbody>
           </table>
         </section>`
+      }
 
       const container = document.createElement('div')
       container.style.cssText = 'background:#fff;'
@@ -1081,7 +1087,7 @@ export default function StudentsPage() {
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'] }
+          pagebreak: { mode: ['css'], before: [], after: [], avoid: ['section'] }
         }).from(container).save()
       } finally {
         container.remove()
