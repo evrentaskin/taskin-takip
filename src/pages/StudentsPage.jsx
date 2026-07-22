@@ -1046,99 +1046,112 @@ export default function StudentsPage() {
       const pages = []
       for (let index = 0; index < rows.length; index += pageSize) pages.push(rows.slice(index, index + pageSize))
 
+      // PDF sayfaları önce Canvas üzerinde çizilir. Böylece Türkçe karakterler
+      // tarayıcının Unicode fontuyla doğru görünür ve jsPDF kaynaklı boş sayfa oluşmaz.
       const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true })
-      const pageWidth = 210
-      const pageHeight = 297
-      const marginX = 7
-      const tableTop = 23
-      const tableBottom = 291
-      const headerHeight = 6
-      const usableWidth = pageWidth - (marginX * 2)
-      const bodyHeight = tableBottom - tableTop - headerHeight
+      const pageWidthPx = 794
+      const pageHeightPx = 1123
+      const renderScale = 2
+      const marginX = 30
+      const tableTop = 116
+      const tableBottom = 1092
+      const headerHeight = 28
+      const rowsPerPage = 45
+      const rowHeight = (tableBottom - tableTop - headerHeight) / rowsPerPage
+      const usableWidth = pageWidthPx - (marginX * 2)
       const baseWidths = {
         sequence: 7, number: 9, name: 28, class: 10, gender: 10, blank1: 14, blank2: 14, lastLogin: 18
       }
       const widthTotal = columns.reduce((sum, [key]) => sum + (baseWidths[key] || 12), 0)
       const columnWidths = columns.map(([key]) => usableWidth * ((baseWidths[key] || 12) / widthTotal))
 
-      const fitText = (value, maxWidth) => {
+      const loadImage = src => new Promise(resolve => {
+        if (!src) return resolve(null)
+        const img = new Image()
+        img.onload = () => resolve(img)
+        img.onerror = () => resolve(null)
+        img.src = src
+      })
+
+      let logoImage = null
+      try {
+        logoImage = await loadImage('/taskin-takip-sistemi-logo.png')
+      } catch {
+        logoImage = null
+      }
+
+      const fitCanvasText = (ctx, value, maxWidth) => {
         let text = String(value ?? '')
-        if (doc.getTextWidth(text) <= maxWidth) return text
-        while (text.length > 1 && doc.getTextWidth(`${text}…`) > maxWidth) text = text.slice(0, -1)
+        if (ctx.measureText(text).width <= maxWidth) return text
+        while (text.length > 1 && ctx.measureText(`${text}…`).width > maxWidth) text = text.slice(0, -1)
         return `${text}…`
       }
 
-      let logoData = null
-      try {
-        logoData = await new Promise(resolve => {
-          const img = new Image()
-          img.onload = () => {
-            try {
-              const canvas = document.createElement('canvas')
-              canvas.width = img.naturalWidth || 200
-              canvas.height = img.naturalHeight || 200
-              const ctx = canvas.getContext('2d')
-              ctx.drawImage(img, 0, 0)
-              resolve(canvas.toDataURL('image/png'))
-            } catch { resolve(null) }
-          }
-          img.onerror = () => resolve(null)
-          img.src = '/taskin-takip-sistemi-logo.png'
-        })
-      } catch { logoData = null }
-
       pages.forEach((pageRows, pageIndex) => {
-        if (pageIndex > 0) doc.addPage('a4', 'portrait')
+        const canvas = document.createElement('canvas')
+        canvas.width = pageWidthPx * renderScale
+        canvas.height = pageHeightPx * renderScale
+        const ctx = canvas.getContext('2d')
+        ctx.scale(renderScale, renderScale)
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, pageWidthPx, pageHeightPx)
 
-        if (logoData) doc.addImage(logoData, 'PNG', marginX, 5, 11, 11)
-        doc.setTextColor(20, 38, 33)
-        doc.setFont('helvetica', 'bold')
-        doc.setFontSize(13)
-        doc.text(`${selectedClassName} Sınıf Listesi`, logoData ? 20 : marginX, 10)
-        doc.setFont('helvetica', 'normal')
-        doc.setFontSize(6.7)
-        doc.setTextColor(90, 90, 90)
+        if (logoImage) ctx.drawImage(logoImage, marginX, 18, 48, 48)
+
+        ctx.fillStyle = '#142621'
+        ctx.font = '700 22px Arial, sans-serif'
+        ctx.textBaseline = 'alphabetic'
+        ctx.fillText(`${selectedClassName} Sınıf Listesi`, logoImage ? 88 : marginX, 43)
+
+        ctx.fillStyle = '#5a5a5a'
+        ctx.font = '400 11px Arial, sans-serif'
         const pageInfo = pages.length > 1 ? ` • Sayfa ${pageIndex + 1}/${pages.length}` : ''
-        doc.text(`Taşkın Takip • ${new Date().toLocaleDateString('tr-TR')} • ${rows.length} öğrenci${pageInfo}`, logoData ? 20 : marginX, 14)
-        doc.setDrawColor(23, 139, 88)
-        doc.setLineWidth(0.7)
-        doc.line(marginX, 18, pageWidth - marginX, 18)
+        ctx.fillText(`Taşkın Takip • ${new Date().toLocaleDateString('tr-TR')} • ${rows.length} öğrenci${pageInfo}`, logoImage ? 88 : marginX, 61)
+
+        ctx.strokeStyle = '#178b58'
+        ctx.lineWidth = 3
+        ctx.beginPath()
+        ctx.moveTo(marginX, 79)
+        ctx.lineTo(pageWidthPx - marginX, 79)
+        ctx.stroke()
 
         let x = marginX
-        doc.setFillColor(234, 244, 239)
-        doc.setDrawColor(100, 100, 100)
-        doc.setLineWidth(0.15)
-        doc.setFont('helvetica', 'bold')
-        doc.setFontSize(6.4)
-        columns.forEach(([key, label], columnIndex) => {
+        ctx.font = '700 11px Arial, sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        columns.forEach(([, label], columnIndex) => {
           const width = columnWidths[columnIndex]
-          doc.rect(x, tableTop, width, headerHeight, 'FD')
-          doc.text(fitText(label, width - 1.4), x + width / 2, tableTop + 3.9, { align: 'center' })
+          ctx.fillStyle = '#eaf4ef'
+          ctx.fillRect(x, tableTop, width, headerHeight)
+          ctx.strokeStyle = '#666666'
+          ctx.lineWidth = 1
+          ctx.strokeRect(x, tableTop, width, headerHeight)
+          ctx.fillStyle = '#142621'
+          ctx.fillText(fitCanvasText(ctx, label, width - 10), x + width / 2, tableTop + headerHeight / 2)
           x += width
         })
 
-        const rowHeight = bodyHeight / Math.max(pageRows.length, 1)
-        const fontSize = Math.min(7.2, Math.max(5.6, rowHeight * 1.12))
-        doc.setFont('helvetica', 'normal')
-        doc.setFontSize(fontSize)
-        doc.setTextColor(20, 20, 20)
-
+        ctx.font = '400 10.5px Arial, sans-serif'
         pageRows.forEach((row, rowIndex) => {
           const y = tableTop + headerHeight + (rowIndex * rowHeight)
           x = marginX
           columns.forEach(([key], columnIndex) => {
             const width = columnWidths[columnIndex]
-            doc.rect(x, y, width, rowHeight)
+            ctx.strokeStyle = '#707070'
+            ctx.lineWidth = 0.8
+            ctx.strokeRect(x, y, width, rowHeight)
             const centered = ['sequence', 'number', 'class', 'gender'].includes(key)
-            const text = fitText(row[key], width - 1.6)
-            const textY = y + (rowHeight / 2) + (fontSize * 0.12)
-            doc.text(text, centered ? x + width / 2 : x + 0.8, textY, {
-              align: centered ? 'center' : 'left',
-              baseline: 'middle'
-            })
+            ctx.fillStyle = '#111111'
+            ctx.textAlign = centered ? 'center' : 'left'
+            const text = fitCanvasText(ctx, row[key], width - 10)
+            ctx.fillText(text, centered ? x + width / 2 : x + 5, y + rowHeight / 2)
             x += width
           })
         })
+
+        const imageData = canvas.toDataURL('image/jpeg', 0.96)
+        if (pageIndex > 0) doc.addPage('a4', 'portrait')
+        doc.addImage(imageData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST')
       })
 
       doc.save(`${selectedClassName}_Sinif_Listesi.pdf`)
