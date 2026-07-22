@@ -6,7 +6,7 @@ import {
 } from '@mui/material'
 import {
   Assignment, BarChart, CalendarMonth, LockReset, Logout, PictureAsPdf, Quiz,
-  School, Settings, TrendingUp
+  School, Settings
 } from '@mui/icons-material'
 import { supabase } from '../services/supabase'
 import { useSharedCloudState } from '../services/useSharedCloudState'
@@ -103,7 +103,7 @@ export default function PrivateStudentHomePage({ session, profile }) {
     setSaving(false)
     if (error) return alert(error.message)
     if (rpc?.payload) setCloudData(rpc.payload)
-    setSolve(null); setAnswers({}); setTab(2)
+    setSolve(null); setAnswers({}); setTab(3)
   }
 
   async function changePassword() {
@@ -145,10 +145,6 @@ export default function PrivateStudentHomePage({ session, profile }) {
           <Chip label="ÖZEL DERS PANELİ" size="small" className="private-student-hero-chip" />
           <Typography variant="h3" fontWeight={950}>Hoş geldin, {student.fullName?.split(' ')[0]} 👋</Typography>
           <Typography>Ödevlerini tamamla, online denemelerine katıl ve gelişimini tek ekrandan takip et.</Typography>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2} sx={{ mt: 2.5 }}>
-            <Button variant="contained" startIcon={<Assignment />} onClick={() => setTab(0)}>Ödevlerime Git</Button>
-            <Button variant="outlined" startIcon={<TrendingUp />} onClick={() => setTab(2)}>Gelişimimi Gör</Button>
-          </Stack>
         </Box>
         <Box className="private-student-hero-logo"><img src="/taskin-takip-sistemi-logo.png" alt="Taşkın Takip" /></Box>
       </Paper>
@@ -169,7 +165,11 @@ export default function PrivateStudentHomePage({ session, profile }) {
           <span className="private-student-section-icon exam"><Quiz /></span>
           <span><b>Online Denemeler</b><small>Aktif denemelere katıl</small></span>
         </button>
-        <button type="button" className={`private-student-section-card ${tab === 2 ? 'active' : ''}`} onClick={() => setTab(2)}>
+        <button type="button" className={`private-student-section-card school ${tab === 2 ? 'active' : ''}`} onClick={() => setTab(2)}>
+          <span className="private-student-section-icon school"><School /></span>
+          <span><b>Okul Denemeleri</b><small>Okul sonuçlarını görüntüle</small></span>
+        </button>
+        <button type="button" className={`private-student-section-card analysis ${tab === 3 ? 'active' : ''}`} onClick={() => setTab(3)}>
           <span className="private-student-section-icon analysis"><BarChart /></span>
           <span><b>Deneme Analizi</b><small>Sonuçlarını ve gelişimini gör</small></span>
         </button>
@@ -184,7 +184,9 @@ export default function PrivateStudentHomePage({ session, profile }) {
             return <Paper key={a.id} variant="outlined" className="private-student-list-card"><Box className="private-student-list-icon blue"><Quiz /></Box><Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }} sx={{ flex: 1 }}><Box sx={{ flex: 1 }}><Typography fontWeight={950}>{e?.name || 'Deneme'}</Typography><Typography variant="body2" color="text.secondary">{fmt(a.startAt)} – {fmt(a.endAt)}</Typography></Box>{e?.attachment?.url && <Button startIcon={<PictureAsPdf />} href={e.attachment.url} target="_blank">Dosyayı Aç</Button>}{a.result ? <Chip color="success" label={`${Number(a.result.net).toFixed(2)} net`} /> : <Button variant="contained" disabled={!isActive} onClick={() => { setSolve(a); setAnswers(a.answers || {}) }}>{before ? 'Henüz Başlamadı' : isActive ? 'Denemeye Başla' : 'Süresi Bitti'}</Button>}</Stack></Paper>
           })}</Stack>}
 
-          {tab === 2 && <Stack spacing={2}><Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}><Chip label={`Toplam deneme: ${results.length}`} /><Chip color="primary" label={`Ortalama net: ${avg.toFixed(2)}`} /></Stack>{results.length === 0 ? <Alert severity="info">Henüz deneme sonucu bulunmuyor.</Alert> : results.map((x, i) => <Paper key={`${x.type}-${x.id}`} variant="outlined" className="private-student-result-card"><Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}><Box sx={{ flex: 1 }}><Typography fontWeight={950}>{i + 1}. {x.name}</Typography><Typography variant="caption">{x.type}</Typography></Box><Chip label={`${x.correct || 0} Doğru`} sx={{ bgcolor: '#dcfce7' }} /><Chip label={`${x.wrong || 0} Yanlış`} sx={{ bgcolor: '#fee2e2' }} /><Chip label={`${x.blank || 0} Boş`} sx={{ bgcolor: '#fef3c7' }} /><Chip color="primary" label={`${Number(x.net || 0).toFixed(2)} Net`} /></Stack>{x.type === 'Online' && <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(10,minmax(26px,1fr))', gap: .5, mt: 1.5 }}>{Array.from({ length: 20 }, (_, i) => i + 1).map(q => { const a = x.answers?.[q] || '', k = x.answerKey?.[q] || '', bg = !a ? '#f59e0b' : a === k ? '#16a34a' : '#dc2626'; return <Box key={q} sx={{ bgcolor: bg, color: '#fff', borderRadius: 1, textAlign: 'center', py: .5, fontWeight: 900 }}>{q}</Box> })}</Box>}</Paper>)}<Paper variant="outlined" className="private-student-chart-card"><Typography variant="h6" fontWeight={950}>Son 10 Denemenin Net Grafiği</Typography><Chart items={results.slice(-10)} /></Paper></Stack>}
+          {tab === 2 && <Stack spacing={1.5}>{(student.schoolExams || []).length === 0 ? <Alert severity="info">Henüz okul denemesi sonucu bulunmuyor.</Alert> : [...(student.schoolExams || [])].sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)).map((x, i) => <Paper key={x.id || i} variant="outlined" className="private-student-list-card"><Box className="private-student-list-icon school"><School /></Box><Box sx={{ flex: 1 }}><Typography fontWeight={950}>{x.name || `Okul Denemesi ${i+1}`}</Typography><Typography variant="body2" color="text.secondary">{x.date ? new Date(`${x.date}T12:00:00`).toLocaleDateString('tr-TR') : 'Tarih yok'}</Typography></Box><Chip label={`${x.correct || 0} Doğru`} sx={{ bgcolor: '#dcfce7' }} /><Chip label={`${x.wrong || 0} Yanlış`} sx={{ bgcolor: '#fee2e2' }} /><Chip color="secondary" label={`${Number(x.net ?? netOf(x.correct,x.wrong)).toFixed(2)} Net`} /></Paper>)}</Stack>}
+
+          {tab === 3 && <Stack spacing={2}><Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}><Chip label={`Toplam deneme: ${results.length}`} /><Chip color="primary" label={`Ortalama net: ${avg.toFixed(2)}`} /></Stack>{results.length === 0 ? <Alert severity="info">Henüz deneme sonucu bulunmuyor.</Alert> : results.map((x, i) => <Paper key={`${x.type}-${x.id}`} variant="outlined" className="private-student-result-card"><Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}><Box sx={{ flex: 1 }}><Typography fontWeight={950}>{i + 1}. {x.name}</Typography><Typography variant="caption">{x.type}</Typography></Box><Chip label={`${x.correct || 0} Doğru`} sx={{ bgcolor: '#dcfce7' }} /><Chip label={`${x.wrong || 0} Yanlış`} sx={{ bgcolor: '#fee2e2' }} /><Chip label={`${x.blank || 0} Boş`} sx={{ bgcolor: '#fef3c7' }} /><Chip color="primary" label={`${Number(x.net || 0).toFixed(2)} Net`} /></Stack>{x.type === 'Online' && <Box className="private-student-question-strip">{Array.from({ length: 20 }, (_, i) => i + 1).map(q => { const a = x.answers?.[q] || '', k = x.answerKey?.[q] || '', bg = !a ? '#f59e0b' : a === k ? '#16a34a' : '#dc2626'; return <Box key={q} sx={{ bgcolor: bg }}>{q}</Box> })}</Box>}</Paper>)}<Paper variant="outlined" className="private-student-chart-card"><Typography variant="h6" fontWeight={950}>Son 10 Denemenin Net Grafiği</Typography><Chart items={results.slice(-10)} /></Paper></Stack>}
         </Box>
       </Paper>
     </Box>

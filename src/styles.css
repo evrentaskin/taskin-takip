@@ -2290,3 +2290,21 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
   .private-student-section-icon{width:43px;height:43px;flex-basis:43px;border-radius:13px}
   .private-student-section-card small{white-space:normal}
 }
+
+/* V10.0.6.19 - Özel ders paneli görünürlük, renkli menüler ve tek satır soru analizi */
+.private-student-hero-copy .MuiTypography-h3{color:#fff!important;text-shadow:0 2px 8px rgba(0,0,0,.22)}
+.private-student-hero-copy>p{color:rgba(255,255,255,.92)!important;font-weight:600}
+.private-student-section-cards{grid-template-columns:repeat(4,minmax(0,1fr))}
+.private-student-section-card{border:0;color:#fff;box-shadow:0 10px 24px rgba(20,58,78,.13)}
+.private-student-section-card:nth-child(1){background:linear-gradient(135deg,#15965d,#20b875)}
+.private-student-section-card:nth-child(2){background:linear-gradient(135deg,#1769a4,#258dcc)}
+.private-student-section-card.school{background:linear-gradient(135deg,#d97706,#f59e0b)}
+.private-student-section-card.analysis{background:linear-gradient(135deg,#6d45b8,#8b5bd1)}
+.private-student-section-card small{color:rgba(255,255,255,.84)}
+.private-student-section-card.active{border:3px solid rgba(255,255,255,.95);background:inherit;box-shadow:0 15px 30px rgba(20,58,78,.22),inset 0 0 0 2px rgba(0,0,0,.08)}
+.private-student-section-icon,.private-student-section-icon.homework,.private-student-section-icon.exam,.private-student-section-icon.school,.private-student-section-icon.analysis{background:rgba(255,255,255,.2);color:#fff}
+.private-student-list-icon.school{background:#fff0d7;color:#c26708}
+.private-student-question-strip{display:grid;grid-template-columns:repeat(20,minmax(38px,1fr));gap:5px;margin-top:12px;overflow-x:auto;padding-bottom:3px}
+.private-student-question-strip>div{min-width:38px;color:#fff;border-radius:10px;text-align:center;padding:8px 2px;font-weight:950;line-height:1}
+@media(max-width:900px){.private-student-section-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.private-student-section-cards{grid-template-columns:1fr 1fr}.private-student-section-card{min-height:76px}.private-student-section-card small{display:none}.private-student-question-strip{grid-template-columns:repeat(20,38px)}}
