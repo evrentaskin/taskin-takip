@@ -1047,16 +1047,16 @@ export default function StudentsPage() {
       const pageSize = 45
       const pages = []
       for (let index = 0; index < rows.length; index += pageSize) pages.push(rows.slice(index, index + pageSize))
-      const fontSize = 6.4
-      const padding = 1.25
-      const rowHeight = 12.2
+      const fontSize = 7.2
+      const padding = 1.1
+      const rowHeightMm = 5.25
       const widths = {
         sequence: 7, number: 9, name: 28, class: 10, gender: 10, blank1: 14, blank2: 14, lastLogin: 18
       }
       const totalWidth = columns.reduce((sum, [key]) => sum + (widths[key] || 12), 0)
 
       const renderPage = (pageRows, pageIndex) => `
-        <section style="width:210mm;min-height:297mm;padding:6mm 7mm;background:#fff;color:#111;font-family:Arial,sans-serif;box-sizing:border-box;${pageIndex < pages.length - 1 ? 'page-break-after:always;' : ''}">
+        <section style="width:210mm;height:297mm;padding:6mm 7mm;overflow:hidden;background:#fff;color:#111;font-family:Arial,sans-serif;box-sizing:border-box;${pageIndex < pages.length - 1 ? 'page-break-after:always;' : ''}">
           <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid #178b58;padding-bottom:4px;margin-bottom:5px">
             <img src="/taskin-takip-sistemi-logo.png" style="width:34px;height:34px;object-fit:contain">
             <div style="flex:1">
@@ -1066,7 +1066,7 @@ export default function StudentsPage() {
           </div>
           <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:${fontSize}px;line-height:1.02">
             <thead><tr>${columns.map(([key, label]) => `<th style="border:1px solid #667;padding:${padding}px;background:#eaf4ef;width:${((widths[key] || 12) / totalWidth * 100).toFixed(2)}%;text-align:center">${escapeHtml(label)}</th>`).join('')}</tr></thead>
-            <tbody>${pageRows.map(row => `<tr>${columns.map(([key]) => `<td style="border:1px solid #999;padding:${padding}px;height:${rowHeight}px;text-align:${['sequence','number','class','gender'].includes(key) ? 'center' : 'left'};overflow-wrap:anywhere">${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('')}</tbody>
+            <tbody>${pageRows.map(row => `<tr>${columns.map(([key]) => `<td style="border:1px solid #999;padding:${padding}px;height:${rowHeightMm}mm;text-align:${['sequence','number','class','gender'].includes(key) ? 'center' : 'left'};overflow-wrap:anywhere">${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('')}</tbody>
           </table>
         </section>`
 
@@ -1081,7 +1081,7 @@ export default function StudentsPage() {
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'], after: 'section' }
+          pagebreak: { mode: ['css', 'legacy'] }
         }).from(container).save()
       } finally {
         container.remove()
