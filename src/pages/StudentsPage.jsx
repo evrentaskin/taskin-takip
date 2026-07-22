@@ -1000,7 +1000,7 @@ export default function StudentsPage() {
     setStudentListPdfGenerating(true)
     setError('')
     try {
-      const html2pdf = (await import('html2pdf.js')).default
+      const { jsPDF } = await import('jspdf')
       const studentIds = students.map(student => student.id)
       const authUserIds = students.map(student => student.auth_user_id).filter(Boolean)
 
@@ -1042,56 +1042,106 @@ export default function StudentsPage() {
           lastLogin: formatPdfLoginDate(lastLoginByUser.get(student.auth_user_id))
         }))
 
-      const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]))
-      const rowCount = rows.length
       const pageSize = 45
       const pages = []
       for (let index = 0; index < rows.length; index += pageSize) pages.push(rows.slice(index, index + pageSize))
-      const fontSize = 7.2
-      const padding = 1.1
-      // Her sayfadaki tablo alanını sayfanın altına kadar kullan.
-      // 45 öğrenci olduğunda 45 satır tam sayfayı doldurur; daha az öğrenci
-      // olduğunda satırlar eşit biçimde büyüyerek boş alan bırakmaz.
-      const tableBodyHeightMm = 252
-      const widths = {
+
+      const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true })
+      const pageWidth = 210
+      const pageHeight = 297
+      const marginX = 7
+      const tableTop = 23
+      const tableBottom = 291
+      const headerHeight = 6
+      const usableWidth = pageWidth - (marginX * 2)
+      const bodyHeight = tableBottom - tableTop - headerHeight
+      const baseWidths = {
         sequence: 7, number: 9, name: 28, class: 10, gender: 10, blank1: 14, blank2: 14, lastLogin: 18
       }
-      const totalWidth = columns.reduce((sum, [key]) => sum + (widths[key] || 12), 0)
+      const widthTotal = columns.reduce((sum, [key]) => sum + (baseWidths[key] || 12), 0)
+      const columnWidths = columns.map(([key]) => usableWidth * ((baseWidths[key] || 12) / widthTotal))
 
-      const renderPage = (pageRows, pageIndex) => {
-        const rowHeightMm = tableBodyHeightMm / Math.max(pageRows.length, 1)
-        return `
-        <section style="width:210mm;height:290mm;padding:6mm 7mm;overflow:hidden;background:#fff;color:#111;font-family:Arial,sans-serif;box-sizing:border-box;break-inside:avoid;page-break-inside:avoid;${pageIndex < pages.length - 1 ? 'break-after:page;page-break-after:always;' : ''}">
-          <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid #178b58;padding-bottom:4px;margin-bottom:5px">
-            <img src="/taskin-takip-sistemi-logo.png" style="width:34px;height:34px;object-fit:contain">
-            <div style="flex:1">
-              <div style="font-size:15px;font-weight:900">${escapeHtml(selectedClassName)} Sınıf Listesi</div>
-              <div style="font-size:8px;color:#555">Taşkın Takip • ${new Date().toLocaleDateString('tr-TR')} • ${rowCount} öğrenci${pages.length > 1 ? ` • Sayfa ${pageIndex + 1}/${pages.length}` : ''}</div>
-            </div>
-          </div>
-          <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:${fontSize}px;line-height:1.02">
-            <thead><tr>${columns.map(([key, label]) => `<th style="border:1px solid #667;padding:${padding}px;background:#eaf4ef;width:${((widths[key] || 12) / totalWidth * 100).toFixed(2)}%;text-align:center">${escapeHtml(label)}</th>`).join('')}</tr></thead>
-            <tbody>${pageRows.map(row => `<tr>${columns.map(([key]) => `<td style="border:1px solid #999;padding:${padding}px;height:${rowHeightMm}mm;text-align:${['sequence','number','class','gender'].includes(key) ? 'center' : 'left'};overflow-wrap:anywhere">${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('')}</tbody>
-          </table>
-        </section>`
+      const fitText = (value, maxWidth) => {
+        let text = String(value ?? '')
+        if (doc.getTextWidth(text) <= maxWidth) return text
+        while (text.length > 1 && doc.getTextWidth(`${text}…`) > maxWidth) text = text.slice(0, -1)
+        return `${text}…`
       }
 
-      const container = document.createElement('div')
-      container.style.cssText = 'background:#fff;'
-      container.innerHTML = pages.map(renderPage).join('')
-      document.body.appendChild(container)
+      let logoData = null
       try {
-        await html2pdf().set({
-          margin: 0,
-          filename: `${selectedClassName}_Sinif_Listesi.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css'], before: [], after: [], avoid: ['section'] }
-        }).from(container).save()
-      } finally {
-        container.remove()
-      }
+        logoData = await new Promise(resolve => {
+          const img = new Image()
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas')
+              canvas.width = img.naturalWidth || 200
+              canvas.height = img.naturalHeight || 200
+              const ctx = canvas.getContext('2d')
+              ctx.drawImage(img, 0, 0)
+              resolve(canvas.toDataURL('image/png'))
+            } catch { resolve(null) }
+          }
+          img.onerror = () => resolve(null)
+          img.src = '/taskin-takip-sistemi-logo.png'
+        })
+      } catch { logoData = null }
+
+      pages.forEach((pageRows, pageIndex) => {
+        if (pageIndex > 0) doc.addPage('a4', 'portrait')
+
+        if (logoData) doc.addImage(logoData, 'PNG', marginX, 5, 11, 11)
+        doc.setTextColor(20, 38, 33)
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(13)
+        doc.text(`${selectedClassName} Sınıf Listesi`, logoData ? 20 : marginX, 10)
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(6.7)
+        doc.setTextColor(90, 90, 90)
+        const pageInfo = pages.length > 1 ? ` • Sayfa ${pageIndex + 1}/${pages.length}` : ''
+        doc.text(`Taşkın Takip • ${new Date().toLocaleDateString('tr-TR')} • ${rows.length} öğrenci${pageInfo}`, logoData ? 20 : marginX, 14)
+        doc.setDrawColor(23, 139, 88)
+        doc.setLineWidth(0.7)
+        doc.line(marginX, 18, pageWidth - marginX, 18)
+
+        let x = marginX
+        doc.setFillColor(234, 244, 239)
+        doc.setDrawColor(100, 100, 100)
+        doc.setLineWidth(0.15)
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(6.4)
+        columns.forEach(([key, label], columnIndex) => {
+          const width = columnWidths[columnIndex]
+          doc.rect(x, tableTop, width, headerHeight, 'FD')
+          doc.text(fitText(label, width - 1.4), x + width / 2, tableTop + 3.9, { align: 'center' })
+          x += width
+        })
+
+        const rowHeight = bodyHeight / Math.max(pageRows.length, 1)
+        const fontSize = Math.min(7.2, Math.max(5.6, rowHeight * 1.12))
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(fontSize)
+        doc.setTextColor(20, 20, 20)
+
+        pageRows.forEach((row, rowIndex) => {
+          const y = tableTop + headerHeight + (rowIndex * rowHeight)
+          x = marginX
+          columns.forEach(([key], columnIndex) => {
+            const width = columnWidths[columnIndex]
+            doc.rect(x, y, width, rowHeight)
+            const centered = ['sequence', 'number', 'class', 'gender'].includes(key)
+            const text = fitText(row[key], width - 1.6)
+            const textY = y + (rowHeight / 2) + (fontSize * 0.12)
+            doc.text(text, centered ? x + width / 2 : x + 0.8, textY, {
+              align: centered ? 'center' : 'left',
+              baseline: 'middle'
+            })
+            x += width
+          })
+        })
+      })
+
+      doc.save(`${selectedClassName}_Sinif_Listesi.pdf`)
       setStudentListPdfOpen(false)
       setMessage(`${selectedClassName} sınıf listesi PDF olarak hazırlandı.`)
     } catch (err) {
