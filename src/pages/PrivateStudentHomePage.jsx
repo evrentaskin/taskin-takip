@@ -18,6 +18,12 @@ const POOL_LOCAL_KEY = 'taskin-private-science-exam-pool-v1'
 const ANSWERS = ['A', 'B', 'C', 'D']
 const fmt = v => v ? new Date(v).toLocaleString('tr-TR') : '—'
 const netOf = (d, y) => Number(d || 0) - Number(y || 0) / 3
+const homeworkStatuses = {
+  pending: { label: 'Kontrol Edilmedi', color: 'default', bg: '#f1f5f9' },
+  done: { label: 'Yaptı', color: 'success', bg: '#dcfce7' },
+  partial: { label: 'Kısmen Yaptı', color: 'warning', bg: '#fef3c7' },
+  not_done: { label: 'Yapmadı', color: 'error', bg: '#fee2e2' }
+}
 
 function Chart({ items }) {
   if (!items.length) return <Alert severity="info">Grafik için henüz sonuç yok.</Alert>
@@ -85,7 +91,7 @@ export default function PrivateStudentHomePage({ session, profile }) {
   const now = Date.now()
   const active = assignments.filter(a => !a.archived && !a.result && new Date(a.startAt).getTime() <= now && new Date(a.endAt).getTime() >= now)
   const avg = results.length ? results.reduce((t, x) => t + Number(x.net || 0), 0) / results.length : 0
-  const pendingHomework = homeworks.filter(h => !h.completed && !h.done).length
+  const pendingHomework = homeworks.filter(h => (h.status || 'pending') === 'pending').length
   const initials = (student.fullName || profile?.full_name || username || 'Ö').split(' ').filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase()
 
   async function submit() {
@@ -177,7 +183,7 @@ export default function PrivateStudentHomePage({ session, profile }) {
 
       <Paper className="private-student-main-card" elevation={0}>
         <Box sx={{ p: { xs: 1.5, md: 3 } }}>
-          {tab === 0 && (homeworks.length ? <Stack spacing={1.5}>{homeworks.map(h => <Paper key={h.id} variant="outlined" className="private-student-list-card"><Box className="private-student-list-icon"><Assignment /></Box><Box sx={{ flex: 1 }}><Typography fontWeight={950}>{h.title || h.name}</Typography><Typography color="text.secondary" sx={{ my: .5 }}>{h.description || 'Açıklama yok.'}</Typography><Chip size="small" label={h.dueDate ? `Son tarih: ${new Date(h.dueDate).toLocaleDateString('tr-TR')}` : 'Son tarih yok'} /></Box></Paper>)}</Stack> : <Alert severity="info">Henüz verilmiş ödev bulunmuyor.</Alert>)}
+          {tab === 0 && (homeworks.length ? <Stack spacing={1.5}>{[...homeworks].sort((a,b)=>new Date(b.assignedDate||b.createdAt||0)-new Date(a.assignedDate||a.createdAt||0)).map(h => { const state = homeworkStatuses[h.status || 'pending'] || homeworkStatuses.pending; return <Paper key={h.id} variant="outlined" className="private-student-list-card" sx={{ bgcolor: state.bg }}><Box className="private-student-list-icon"><Assignment /></Box><Box sx={{ flex: 1 }}><Typography fontWeight={950}>{h.title || h.name}</Typography><Typography color="text.secondary" sx={{ my: .5 }}>{h.description || 'Açıklama yok.'}</Typography><Stack direction={{xs:'column',sm:'row'}} spacing={1} alignItems={{sm:'center'}}><Chip size="small" label={h.assignedDate ? `Veriliş: ${new Date(`${h.assignedDate}T12:00:00`).toLocaleDateString('tr-TR')}` : 'Veriliş tarihi yok'} /><Chip size="small" label={h.dueDate ? `Son tarih: ${new Date(`${h.dueDate}T12:00:00`).toLocaleDateString('tr-TR')}` : 'Son tarih yok'} /><Chip size="small" color={state.color} label={state.label} /></Stack></Box></Paper> })}</Stack> : <Alert severity="info">Henüz verilmiş ödev bulunmuyor.</Alert>)}
 
           {tab === 1 && <Stack spacing={1.5}>{assignments.filter(a => !a.archived).length === 0 ? <Alert severity="info">Atanmış online deneme bulunmuyor.</Alert> : assignments.filter(a => !a.archived).map(a => {
             const e = exams.find(x => x.id === a.examId), isActive = active.some(x => x.id === a.id), before = Date.now() < new Date(a.startAt).getTime()
