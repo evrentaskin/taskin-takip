@@ -133,17 +133,21 @@ export default function StudentsPage() {
   const [importResult, setImportResult] = useState(null)
   const fileInputRef = useRef(null)
 
-  useEffect(() => { loadClasses(); loadTodayLogins(); loadProfileTags() }, [])
+  useEffect(() => { loadClasses(); loadProfileTags() }, [])
   useEffect(() => {
-    const refresh = () => loadTodayLogins()
+    const refresh = () => { if (selectedClass) { loadTodayLogins(selectedClass); loadInactiveStudents([selectedClass]) } }
     const timer = window.setInterval(refresh, 60000)
     window.addEventListener('focus', refresh)
     return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh) }
-  }, [])
-  useEffect(() => { if (selectedClass) loadStudents(selectedClass) }, [selectedClass])
-  useEffect(() => { if (activeClasses.length) loadInactiveStudents(activeClasses.map(item => item.id)) }, [activeClasses])
+  }, [selectedClass])
+  useEffect(() => {
+    if (!selectedClass) return
+    loadStudents(selectedClass)
+    loadTodayLogins(selectedClass)
+    loadInactiveStudents([selectedClass])
+  }, [selectedClass])
 
-  async function loadTodayLogins() {
+  async function loadTodayLogins(classId = selectedClass) {
     setTodayLoginsLoading(true)
     try {
       const start = new Date()
@@ -165,10 +169,10 @@ export default function StudentsPage() {
       }
 
       const userIds = [...new Set((events || []).map(item => item.user_id).filter(Boolean))]
-      if (!userIds.length) { setTodayLogins([]); return }
+      if (!userIds.length || !classId) { setTodayLogins([]); return }
 
       const [{ data: studentRows, error: studentError }, { data: classRows }] = await Promise.all([
-        supabase.from('students').select('id,auth_user_id,student_number,first_name,last_name,class_id,is_active').in('auth_user_id', userIds).eq('is_active', true),
+        supabase.from('students').select('id,auth_user_id,student_number,first_name,last_name,class_id,is_active').in('auth_user_id', userIds).eq('class_id', classId).eq('is_active', true),
         supabase.from('classes').select('id,name')
       ])
       if (studentError) throw studentError
@@ -269,7 +273,7 @@ export default function StudentsPage() {
       }
       const classById = new Map(activeClasses.map(item => [item.id, item.name]))
       const now = Date.now()
-      const threshold = 5 * 24 * 60 * 60 * 1000
+      const threshold = 7 * 24 * 60 * 60 * 1000
       const rows = (studentRows || []).map(student => {
         const last = latestByUser.get(student.auth_user_id) || null
         const elapsed = last ? now - new Date(last).getTime() : Number.POSITIVE_INFINITY
@@ -1154,6 +1158,24 @@ export default function StudentsPage() {
         </Stack>
       </Box>
 
+      <Paper variant="outlined" sx={{ p: 1.5, mb: 2, borderRadius: 3, background: '#f8fbfa' }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', sm: 'center' }}>
+          <Typography fontWeight={950} sx={{ minWidth: 'max-content' }}>Aktif Sınıfım</Typography>
+          <TextField
+            select
+            size="small"
+            value={selectedClass}
+            onChange={e => setSelectedClass(e.target.value)}
+            sx={{ minWidth: { xs: '100%', sm: 240 } }}
+          >
+            {activeClasses.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+          </TextField>
+          <Typography variant="body2" color="text.secondary">
+            Giriş kartları ve öğrenci listesi seçtiğin aktif sınıfa göre güncellenir.
+          </Typography>
+        </Stack>
+      </Paper>
+
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2, mb: 2 }}>
         <Paper variant="outlined" sx={{ p: 2, borderRadius: 4, borderColor: '#c9d8e8', background: '#fff' }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
@@ -1168,7 +1190,7 @@ export default function StudentsPage() {
               </Typography>
             </Box>
             <Stack direction="row" spacing={1}>
-              <IconButton aria-label="Girişleri yenile" onClick={() => { loadTodayLogins(); loadInactiveStudents(activeClasses.map(item => item.id)) }} disabled={todayLoginsLoading}><Refresh /></IconButton>
+              <IconButton aria-label="Girişleri yenile" onClick={() => { loadTodayLogins(selectedClass); loadInactiveStudents([selectedClass]) }} disabled={todayLoginsLoading}><Refresh /></IconButton>
               <Button variant="contained" onClick={() => setTodayLoginsOpen(true)} disabled={!todayLogins.length}>Tümünü Gör</Button>
             </Stack>
           </Stack>
@@ -1178,10 +1200,10 @@ export default function StudentsPage() {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
             <Avatar sx={{ bgcolor: '#fee2e2', color: '#c62828', width: 54, height: 54 }}><WarningAmber /></Avatar>
             <Box sx={{ flex: 1 }}>
-              <Typography fontWeight={950}>5 Gündür Giriş Yapmayanlar</Typography>
+              <Typography fontWeight={950}>1 Haftadır Giriş Yapmayanlar</Typography>
               <Typography variant="h4" fontWeight={950} color="error.main">{inactiveStudentsLoading ? '…' : inactiveStudents.length}</Typography>
               <Typography variant="body2" color="text.secondary">
-                {inactiveStudents.length ? 'Aktif sınıflardaki öğrenciler kontrol edildi.' : 'Takip gerektiren öğrenci bulunmuyor.'}
+                {inactiveStudents.length ? 'Seçili aktif sınıftaki öğrenciler kontrol edildi.' : 'Takip gerektiren öğrenci bulunmuyor.'}
               </Typography>
             </Box>
             <Button color="error" variant="contained" onClick={() => setInactiveStudentsOpen(true)} disabled={!inactiveStudents.length}>Tümünü Gör</Button>
@@ -1192,7 +1214,7 @@ export default function StudentsPage() {
       {error && <Alert severity="error" onClose={() => setError('')} sx={{ mb: 2 }}>{error}</Alert>}
 
       <Box className="glass filter">
-        <TextField select label={`Aktif Sınıf (${activeClasses.length})`} value={selectedClass} onChange={e => setSelectedClass(e.target.value)}>
+        <TextField select label={`Öğrenci Listesi Sınıfı (${activeClasses.length})`} value={selectedClass} onChange={e => setSelectedClass(e.target.value)}>
           {activeClasses.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
         </TextField>
         <TextField label="Öğrenci ara" value={search} onChange={e => setSearch(e.target.value)} />
@@ -1233,7 +1255,7 @@ export default function StudentsPage() {
       )}
 
       <Dialog open={todayLoginsOpen} onClose={() => setTodayLoginsOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle fontWeight={950}>Bugün Giriş Yapan Öğrenciler ({todayLogins.length})
+        <DialogTitle fontWeight={950}>{selectedClassName} — Bugün Giriş Yapan Öğrenciler ({todayLogins.length})
           <IconButton onClick={() => setTodayLoginsOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><Close /></IconButton>
         </DialogTitle>
         <DialogContent>
@@ -1262,7 +1284,7 @@ export default function StudentsPage() {
         maxWidth="md"
         PaperProps={{ sx: { height: 'min(92vh, 860px)', maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
       >
-        <DialogTitle fontWeight={950} sx={{ flex: '0 0 auto', pr: 7 }}>5 Gündür Giriş Yapmayan Öğrenciler ({inactiveStudents.length})
+        <DialogTitle fontWeight={950} sx={{ flex: '0 0 auto', pr: 7 }}>{selectedClassName} — 1 Haftadır Giriş Yapmayan Öğrenciler ({inactiveStudents.length})
           <IconButton onClick={() => setInactiveStudentsOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><Close /></IconButton>
         </DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', pt: 1 }}>
