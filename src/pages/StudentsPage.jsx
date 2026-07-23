@@ -1226,13 +1226,13 @@ export default function StudentsPage() {
         const density = Math.max(rowCount / 28, columnCount / 18)
         const fontSize = Math.max(4.2, Math.min(7.5, 7.5 / Math.max(1, density)))
         const cellPadding = density > 1.55 ? 1 : density > 1.15 ? 1.5 : 2
-        const logoSize = rowCount > 34 ? 34 : 42
+        const logoSize = rowCount > 34 ? 36 : 46
         const container = document.createElement('div')
         container.style.cssText = 'width:287mm;max-height:200mm;padding:4mm;background:#fff;color:#111;font-family:Arial,sans-serif;box-sizing:border-box;overflow:hidden;'
         const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]))
         container.innerHTML = `
           <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid #178b58;padding-bottom:4px;margin-bottom:5px">
-            <img src="/taskin-logo-horizontal.png" style="width:${logoSize}px;height:${logoSize}px;object-fit:contain">
+            <img src="/taskin-logo-symbol.png" style="width:${logoSize}px;height:${logoSize}px;object-fit:contain;flex:0 0 auto">
             <div style="flex:1"><div style="font-size:14px;font-weight:900">${escapeHtml(selectedClassName)} Öğrenci Tanıma Raporu</div><div style="font-size:7px;color:#555">TAŞKIN • ${new Date().toLocaleDateString('tr-TR')} • ${rowCount} öğrenci</div></div>
           </div>
           <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:${fontSize}px;line-height:1.02">
