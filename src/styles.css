@@ -2441,3 +2441,109 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
     align-items: center !important;
   }
 }
+
+/* V10.0.6.33 — canlı lila/mor sol menü ve daha akıcı arayüz */
+:root {
+  --taskin-sidebar-bg-top: #e9ddff;
+  --taskin-sidebar-bg-bottom: #d8c6f4;
+  --taskin-sidebar-text: #35205f;
+  --taskin-sidebar-icon: #57378b;
+  --taskin-sidebar-hover: rgba(255,255,255,.50);
+  --taskin-sidebar-border: #c9afea;
+}
+
+.drawer {
+  background: linear-gradient(180deg, var(--taskin-sidebar-bg-top) 0%, #e2d3f8 48%, var(--taskin-sidebar-bg-bottom) 100%) !important;
+  color: var(--taskin-sidebar-text) !important;
+  border-right: 1px solid var(--taskin-sidebar-border) !important;
+  box-shadow: none !important;
+}
+.drawer .brand .MuiTypography-root,
+.drawer .brand .MuiTypography-caption,
+.drawer .nav-item .MuiListItemText-primary,
+.drawer .nav-item .MuiTypography-root {
+  color: var(--taskin-sidebar-text) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-shadow: none !important;
+}
+.drawer .brand .MuiTypography-root:first-of-type {
+  color: #2c164f !important;
+}
+.drawer .MuiDivider-root {
+  border-color: rgba(73,39,116,.18) !important;
+}
+.drawer .nav-item {
+  color: var(--taskin-sidebar-text) !important;
+  border: 1px solid transparent !important;
+}
+.drawer .nav-item .MuiListItemIcon-root,
+.drawer .nav-item .MuiSvgIcon-root {
+  color: var(--taskin-sidebar-icon) !important;
+}
+.drawer .nav-item:hover {
+  background: var(--taskin-sidebar-hover) !important;
+  border-color: rgba(101,66,145,.16) !important;
+  color: #29154c !important;
+  transform: none !important;
+}
+.drawer .nav-item.Mui-selected,
+.drawer .nav-item.Mui-selected:hover {
+  background: linear-gradient(135deg, #e98218, #f39b38) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 14px rgba(174,88,10,.20) !important;
+}
+.drawer .nav-item.Mui-selected .MuiListItemText-primary,
+.drawer .nav-item.Mui-selected .MuiTypography-root,
+.drawer .nav-item.Mui-selected .MuiListItemIcon-root,
+.drawer .nav-item.Mui-selected .MuiSvgIcon-root {
+  color: #fff !important;
+}
+
+/* Yoğun gölge, blur ve hareketleri hafifleterek mobil kaydırmayı akıcı tutar. */
+.glass,
+.module-card,
+.dashboard-stat,
+.home-student-card,
+.exam-item,
+.exam-card,
+.settings-card,
+.private-student-result-card,
+.private-student-chart-card {
+  box-shadow: 0 5px 14px rgba(31,58,88,.07) !important;
+}
+.module-card:hover,
+.dashboard-stat:hover,
+.home-student-card:hover,
+.exam-item:hover {
+  transform: none !important;
+  box-shadow: 0 7px 17px rgba(31,58,88,.10) !important;
+}
+.topbar,
+.student-topbar {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.nav-item,
+.module-card,
+.dashboard-stat,
+.home-student-card,
+.exam-item,
+.exam-card {
+  transition-duration: .12s !important;
+}
+
+@media (max-width: 700px) {
+  .drawer {
+    background: linear-gradient(180deg, #eadfff 0%, #d9c7f2 100%) !important;
+  }
+  .glass,
+  .module-card,
+  .dashboard-stat,
+  .home-student-card,
+  .exam-item,
+  .exam-card {
+    box-shadow: 0 3px 10px rgba(31,58,88,.06) !important;
+  }
+}
