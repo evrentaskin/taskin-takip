@@ -2606,3 +2606,85 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
 }
 .report-meta,.report-letterhead{color:#1f2937!important}
 .report-footer{color:#4b5563!important}
+
+/* V10.0.6.40 — Rapor üst bilgi yerleşimi ve analiz renk okunabilirliği */
+.report-stats-summary{
+  display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  align-items:stretch;
+  gap:10px!important;
+  width:100%;
+  box-sizing:border-box;
+  padding:12px 14px!important;
+  margin:12px 0!important;
+}
+.report-stats-summary .MuiChip-root{
+  width:100%;
+  min-width:0;
+  height:40px;
+  justify-content:center;
+  border-radius:20px!important;
+}
+.report-stats-summary .MuiChip-label{
+  width:100%;
+  padding-left:8px!important;
+  padding-right:8px!important;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.report-stats-summary .MuiChip-icon{
+  margin-left:10px!important;
+  margin-right:-2px!important;
+}
+
+/* Analiz kutuları: daha açık zemin, daha koyu ve net yazı */
+.question-box{
+  border:1px solid transparent;
+  box-shadow:none!important;
+}
+.question-box.good{
+  background:#ccefdc!important;
+  border-color:#83cfa5!important;
+  color:#105f38!important;
+}
+.question-box.mid{
+  background:#ffe5a3!important;
+  border-color:#efbd3c!important;
+  color:#704b00!important;
+}
+.question-box.bad{
+  background:#ffd2d2!important;
+  border-color:#e99a9a!important;
+  color:#8b2020!important;
+}
+.question-box b,
+.question-box span,
+.question-box small{
+  color:inherit!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+.question-box span{font-weight:950!important}
+.question-box small{font-weight:800!important}
+
+@media(max-width:1100px){
+  .report-stats-summary{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:650px){
+  .report-stats-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important;padding:10px!important}
+  .report-stats-summary .MuiChip-root{height:38px}
+  .report-stats-summary .MuiChip-label{font-size:12px}
+}
+
+@media print{
+  .report-stats-summary{
+    grid-template-columns:repeat(6,minmax(0,1fr))!important;
+    gap:5px!important;
+    padding:8px!important;
+  }
+  .report-stats-summary .MuiChip-root{height:32px!important}
+  .report-stats-summary .MuiChip-label{font-size:9px!important;padding-left:3px!important;padding-right:3px!important}
+  .report-stats-summary .MuiChip-icon{font-size:15px!important;margin-left:5px!important}
+}
