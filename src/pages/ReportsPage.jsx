@@ -20,7 +20,19 @@ const dateOf = e => e.date || e.startAt || e.createdAt || ''
 const monthStart = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1) }
 const monthEnd = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59) }
 const inRange = (value, start, end) => { if (!value) return false; const d = new Date(value); return d >= start && d <= end }
-const menuProps = { disablePortal: true, PaperProps: { sx: { maxHeight: 360, maxWidth: 'calc(100vw - 24px)' } } }
+const menuProps = {
+  disablePortal: false,
+  disableScrollLock: true,
+  anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+  transformOrigin: { vertical: 'top', horizontal: 'left' },
+  PaperProps: {
+    sx: {
+      maxHeight: 360,
+      maxWidth: 'calc(100vw - 24px)',
+      zIndex: 1600
+    }
+  }
+}
 
 const cards = [
   ['fen', 'Fen Denemeleri', 'Tek ve toplu fen denemesi raporları', Science],
