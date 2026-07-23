@@ -2688,3 +2688,36 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
   .report-stats-summary .MuiChip-label{font-size:9px!important;padding-left:3px!important;padding-right:3px!important}
   .report-stats-summary .MuiChip-icon{font-size:15px!important;margin-left:5px!important}
 }
+
+
+/* V10.0.6.41 — Online deneme PDF son sayfa özeti */
+.pdf-final-stats .report-stats-summary{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:10px!important;
+  margin:8px 0 12px!important;
+  padding:12px!important;
+}
+.pdf-final-stats .report-stats-summary .MuiChip-root{
+  min-height:44px!important;
+  height:44px!important;
+}
+.pdf-final-stats .report-stats-summary .MuiChip-label{
+  font-size:12px!important;
+  font-weight:900!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+@media print{
+  .pdf-final-stats .report-stats-summary{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:7px!important;
+    padding:9px!important;
+  }
+  .pdf-final-stats .report-stats-summary .MuiChip-root{
+    height:36px!important;
+    min-height:36px!important;
+  }
+  .pdf-final-stats .report-stats-summary .MuiChip-label{
+    font-size:9.5px!important;
+  }
+}

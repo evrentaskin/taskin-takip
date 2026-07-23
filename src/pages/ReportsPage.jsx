@@ -302,14 +302,15 @@ export default function ReportsPage() {
     const easy = [...qa].sort((a,b)=>b.pct-a.pct).slice(0,5)
     const stats = singleExamStats(rows, Number(selectedExam?.questionCount || selectedExam?.question_count || 20))
     const table = (data, pageIndex) => <>
-      {pageIndex === 0 && <StatsSummary stats={stats}/>} 
       <ReportTable headers={['Sıra','No','Öğrenci','Doğru','Yanlış','Net']} rows={data.map((r,i)=>[pageIndex * pageSize + i + 1,r.number,r.name,r.correct,r.wrong,fmt(r.net)])}/>
     </>
     const analysisPage = rowPages.length + 1
     return <>
       {rowPages.map((pageRows, i)=><ReportPage key={`students-${i}`} page={i+1}>{table(pageRows, i)}</ReportPage>)}
       <ReportPage page={analysisPage}>
-        <Typography variant="h6" fontWeight={950} sx={{mb:1}}>Soru Analizi</Typography>
+        <Typography variant="h6" fontWeight={950} sx={{mb:1}}>Sınav Özeti</Typography>
+        <Box className="pdf-final-stats"><StatsSummary stats={stats}/></Box>
+        <Typography variant="h6" fontWeight={950} sx={{mt:1.5,mb:1}}>Soru Analizi</Typography>
         <Box className="question-grid">{qa.map(x=><Box key={x.q} className={`question-box ${x.pct>=80?'good':x.pct>=50?'mid':'bad'}`}><b>{x.q}</b><span>%{x.pct}</span><small>{x.correct}D / {x.wrong}Y</small></Box>)}</Box>
         <Box className="analysis-pair"><MiniList title="En Zor 5 Soru" rows={hard.map(x=>({name:`${x.q}. soru`,diff:`%${x.pct}`}))}/><MiniList title="En Kolay 5 Soru" rows={easy.map(x=>({name:`${x.q}. soru`,diff:`%${x.pct}`}))}/></Box>
         <MoverPanels/>
