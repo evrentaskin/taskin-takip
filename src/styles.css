@@ -2797,3 +2797,125 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
   .private-student-brand-wide { width: 132px !important; height: 42px !important; }
   .report-logo-wide { width: 145px !important; height: 50px !important; flex-basis: 145px !important; }
 }
+
+/* V10.0.6.44 — öğrenci panellerinde açık turuncu kartlar ve lila menü */
+:root {
+  --student-lilac-top: #eadfff;
+  --student-lilac-mid: #e2d3f8;
+  --student-lilac-bottom: #d9c7f2;
+  --student-lilac-text: #35205f;
+  --student-lilac-icon: #57378b;
+  --student-orange-card: #fff3df;
+  --student-orange-card-soft: #fff8ec;
+  --student-orange-border: #efc27b;
+  --student-orange-border-soft: #f3d7a8;
+}
+
+/* Normal öğrenci paneli sol menüsü */
+.student-drawer {
+  background: linear-gradient(180deg,var(--student-lilac-top) 0%,var(--student-lilac-mid) 48%,var(--student-lilac-bottom) 100%) !important;
+  color: var(--student-lilac-text) !important;
+  border-right: 1px solid #c9afea !important;
+}
+.student-drawer .MuiTypography-root,
+.student-drawer .MuiListItemText-primary,
+.student-drawer .MuiListItemIcon-root,
+.student-drawer .MuiSvgIcon-root,
+.student-drawer .MuiButton-root {
+  color: var(--student-lilac-text) !important;
+}
+.student-drawer .MuiDivider-root { border-color: rgba(73,39,116,.18) !important; }
+.student-drawer .MuiListItemButton-root {
+  color: var(--student-lilac-text) !important;
+  border: 1px solid transparent !important;
+}
+.student-drawer .MuiListItemButton-root:hover {
+  background: rgba(255,255,255,.52) !important;
+  border-color: rgba(101,66,145,.16) !important;
+}
+.student-drawer .MuiListItemButton-root.Mui-selected,
+.student-drawer .MuiListItemButton-root.Mui-selected:hover {
+  background: linear-gradient(135deg,#e98218,#f39b38) !important;
+  color: #fff !important;
+  box-shadow: 0 6px 14px rgba(174,88,10,.20) !important;
+}
+.student-drawer .MuiListItemButton-root.Mui-selected .MuiListItemText-primary,
+.student-drawer .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root,
+.student-drawer .MuiListItemButton-root.Mui-selected .MuiSvgIcon-root { color:#fff !important; }
+.student-drawer-brand img { border:1px solid rgba(91,55,139,.18); }
+
+/* Normal öğrenci paneli kartları */
+.student-summary-card,
+.student-action-card,
+.student-info-card,
+.student-chart-card,
+.student-table-card,
+.student-report-card {
+  background: linear-gradient(145deg,var(--student-orange-card-soft),var(--student-orange-card)) !important;
+  border: 1px solid var(--student-orange-border) !important;
+  box-shadow: 0 7px 18px rgba(149,92,26,.09) !important;
+}
+.student-action-card.online { background: linear-gradient(145deg,#fff8ec,#ffefcf) !important; }
+.student-ai-card {
+  background: linear-gradient(135deg,#fff5e5,#f7edff) !important;
+  border:1px solid #e4c69b !important;
+}
+.student-summary-card .MuiTypography-root,
+.student-action-card .MuiTypography-root,
+.student-info-card .MuiTypography-root,
+.student-chart-card .MuiTypography-root { color:#263244; }
+.student-action-card .MuiTypography-colorTextSecondary,
+.student-info-card .MuiTypography-colorTextSecondary { color:#5d5144 !important; }
+
+/* LGS öğrenci paneli sol menüsü */
+.lgs-student-sidebar {
+  background: linear-gradient(180deg,var(--student-lilac-top) 0%,var(--student-lilac-mid) 48%,var(--student-lilac-bottom) 100%) !important;
+  color: var(--student-lilac-text) !important;
+  border-right:1px solid #c9afea;
+}
+.lgs-student-sidebar .brand,
+.lgs-student-sidebar .MuiTypography-root,
+.lgs-student-sidebar .MuiListItemIcon-root,
+.lgs-student-sidebar .MuiButton-root { color:var(--student-lilac-text) !important; }
+.lgs-student-sidebar .MuiListItemButton-root {
+  color:var(--student-lilac-text) !important;
+  border:1px solid transparent;
+}
+.lgs-student-sidebar .MuiListItemButton-root:hover { background:rgba(255,255,255,.52) !important; }
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected,
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected:hover {
+  background:linear-gradient(135deg,#e98218,#f39b38) !important;
+  color:#fff !important;
+}
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected .MuiTypography-root,
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root,
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected .MuiSvgIcon-root { color:#fff !important; }
+
+/* LGS öğrenci kartları */
+.lgs-metric,
+.lgs-panel,
+.lgs-list-panel,
+.lgs-chart-card,
+.lgs-countdown-card,
+.lgs-dashboard-page .action-card,
+.lgs-dashboard-page .metric-card {
+  background:linear-gradient(145deg,var(--student-orange-card-soft),var(--student-orange-card)) !important;
+  border:1px solid var(--student-orange-border) !important;
+  box-shadow:0 7px 18px rgba(149,92,26,.09) !important;
+}
+
+/* Özel ders öğrenci paneli kartları da aynı sıcak görünümde */
+.private-student-stat,
+.private-student-main-card,
+.private-student-list-card,
+.private-student-result-card,
+.private-student-chart-card {
+  background:linear-gradient(145deg,var(--student-orange-card-soft),var(--student-orange-card)) !important;
+  border-color:var(--student-orange-border-soft) !important;
+}
+
+@media(max-width:700px){
+  .student-drawer,.lgs-student-sidebar {
+    background:linear-gradient(180deg,#eadfff 0%,#d9c7f2 100%) !important;
+  }
+}
