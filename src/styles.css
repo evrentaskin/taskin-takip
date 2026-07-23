@@ -2308,3 +2308,74 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
 .private-student-question-strip>div{min-width:38px;color:#fff;border-radius:10px;text-align:center;padding:8px 2px;font-weight:950;line-height:1}
 @media(max-width:900px){.private-student-section-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.private-student-section-cards{grid-template-columns:1fr 1fr}.private-student-section-card{min-height:76px}.private-student-section-card small{display:none}.private-student-question-strip{grid-template-columns:repeat(20,38px)}}
+
+/* V10.0.6.31 — okunaklı açık menü, belirgin butonlar ve kartlar */
+:root {
+  --taskin-navy: #173b63;
+  --taskin-blue: #2563a9;
+  --taskin-orange: #e98218;
+  --taskin-green: #278a55;
+  --taskin-red: #c63d43;
+  --taskin-purple: #7550a6;
+  --taskin-surface: #ffffff;
+  --taskin-page: #f3f6fa;
+  --taskin-border: #dce4ed;
+}
+.app, .login-page, .student-home {
+  background: linear-gradient(145deg, #f7f9fc, #edf2f7) !important;
+}
+.drawer {
+  background: #f7f9fc !important;
+  border-right: 1px solid var(--taskin-border);
+}
+.brand { color: var(--taskin-navy); }
+.nav-item {
+  color: #294866 !important;
+  border: 1px solid transparent !important;
+}
+.nav-item .MuiListItemIcon-root { color: #315d84 !important; }
+.nav-item:hover {
+  background: #e9f0f7 !important;
+  border-color: #d7e2ec !important;
+}
+.nav-item.Mui-selected {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #e98218, #f39b38) !important;
+  box-shadow: 0 8px 18px rgba(210, 111, 18, .22);
+}
+.nav-item.Mui-selected .MuiListItemIcon-root { color: #ffffff !important; }
+.glass, .MuiPaper-root {
+  border-color: var(--taskin-border);
+}
+.glass {
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 12px 30px rgba(31, 58, 88, .09);
+}
+.module-card, .dashboard-stat, .home-student-card, .exam-item, .exam-card,
+.settings-card, .private-student-result-card, .private-student-chart-card {
+  background: var(--taskin-surface) !important;
+  border: 1px solid var(--taskin-border) !important;
+  box-shadow: 0 8px 22px rgba(31, 58, 88, .08) !important;
+}
+.module-card:hover, .dashboard-stat:hover, .home-student-card:hover, .exam-item:hover {
+  box-shadow: 0 12px 28px rgba(31, 58, 88, .14) !important;
+}
+.dashboard-icon, .module-icon, .exam-icon {
+  background: linear-gradient(135deg, #2563a9, #3685c7) !important;
+}
+.MuiButton-containedPrimary, .MuiButton-contained:not(.MuiButton-containedError):not(.MuiButton-containedSuccess) {
+  background: linear-gradient(135deg, #2563a9, #347fc0) !important;
+  color: #fff !important;
+}
+.MuiButton-containedSuccess { background: #278a55 !important; }
+.MuiButton-containedError { background: #c63d43 !important; }
+.MuiButton-outlinedPrimary { border-color: #3477ad !important; color: #245f91 !important; }
+.MuiButton-root { font-weight: 800 !important; border-radius: 11px !important; }
+.MuiChip-colorPrimary { background: #2563a9 !important; color: white !important; }
+.MuiTabs-indicator { background-color: var(--taskin-orange) !important; }
+.MuiTab-root.Mui-selected { color: #b85d08 !important; font-weight: 900 !important; }
+.home-class-chip.active {
+  background: linear-gradient(135deg, #e98218, #f39b38) !important;
+}
+.home-student-card strong { color: var(--taskin-navy) !important; }
+.topbar { border-bottom: 1px solid var(--taskin-border); }

@@ -20,6 +20,26 @@ const todayIso = () => new Date().toISOString().slice(0, 10)
 const formatDate = value => value ? new Intl.DateTimeFormat('tr-TR').format(new Date(`${value}T00:00:00`)) : '-'
 const calcNet = (correct, wrong) => Number((Number(correct || 0) - Number(wrong || 0) / 3).toFixed(2))
 
+const recalculateScienceAttempt = (attempt, answerKey) => {
+  if (!attempt?.finishedAt && !attempt?.locked) return attempt
+  let correct = 0
+  let wrong = 0
+  for (let q = 1; q <= 20; q += 1) {
+    const selected = attempt?.answers?.[q] ?? attempt?.answers?.[String(q)]
+    if (!selected) continue
+    if (selected === (answerKey?.[q] ?? answerKey?.[String(q)])) correct += 1
+    else wrong += 1
+  }
+  return {
+    ...attempt,
+    correct,
+    wrong,
+    blank: 20 - correct - wrong,
+    net: calcNet(correct, wrong),
+    recalculatedAt: new Date().toISOString()
+  }
+}
+
 function loadStored() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') } catch { return [] }
 }
@@ -159,8 +179,15 @@ export default function ExamsPage() {
         if (previous?.path) await removeOnlineExamFile(previous).catch(() => {})
       }
       if (editing) {
-        setExams(list => list.map(e => e.id === editing.id ? { ...e, ...onlineForm, attachment, name: onlineForm.name.trim() } : e))
-        setMessage('Online deneme güncellendi.')
+        setExams(list => list.map(e => {
+          if (e.id !== editing.id) return e
+          const attempts = Object.fromEntries(Object.entries(e.attempts || {}).map(([studentId, attempt]) => [
+            studentId,
+            recalculateScienceAttempt(attempt, onlineForm.answers)
+          ]))
+          return { ...e, ...onlineForm, attachment, attempts, name: onlineForm.name.trim() }
+        }))
+        setMessage('Online deneme ve tamamlanmış öğrenci sonuçları yeni cevap anahtarına göre güncellendi.')
       } else {
         setExams(list => [{
           id: examId, kind: 'online', classId: selectedClass,

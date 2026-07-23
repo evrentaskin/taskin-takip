@@ -63,6 +63,61 @@ const calculateLgsOnlineScore = participant => {
     (net('math') * 4.6) + (net('science') * 4.2)
 }
 const onlineTotalNet = participant => lessonDefs.reduce((sum, lesson) => sum + (Number(onlineValue(participant, lesson.key, 'net')) || 0), 0)
+
+const recalculateLgsParticipant = (participant, answerKey, bookletMap) => {
+  if (liveStatusKey(participant) !== 'finished') return participant
+  const group = String(participant?.bookletGroup || 'A').toUpperCase()
+  const answers = participant?.answers || {}
+  const lessonResults = {}
+  let totalCorrect = 0
+  let totalWrong = 0
+  let totalBlank = 0
+  let totalNet = 0
+
+  lessonDefs.forEach(lesson => {
+    let correct = 0
+    let wrong = 0
+    let blank = 0
+    for (let q = 1; q <= lesson.count; q += 1) {
+      const participantKey = `${lesson.key}-${q}`
+      const selected = answers?.[participantKey] ?? answers?.[lesson.key]?.[q] ?? answers?.[lesson.key]?.[String(q)]
+      let aQuestion = q
+      if (group === 'B') {
+        const mappedAKey = Object.keys(bookletMap || {}).find(key => key.startsWith(`${lesson.key}-`) && Number(bookletMap?.[key]) === q)
+        if (mappedAKey) aQuestion = Number(mappedAKey.split('-').at(-1))
+      }
+      const correctAnswer = answerKey?.[`${lesson.key}-${aQuestion}`]
+      if (!selected) blank += 1
+      else if (selected === correctAnswer) correct += 1
+      else wrong += 1
+    }
+    const net = correct - wrong / 3
+    lessonResults[lesson.key] = { correct, wrong, blank, net }
+    totalCorrect += correct
+    totalWrong += wrong
+    totalBlank += blank
+    totalNet += net
+  })
+
+  const updated = {
+    ...participant,
+    lessonResults,
+    results: lessonResults,
+    totalCorrect,
+    totalWrong,
+    totalBlank,
+    totalNet,
+    recalculatedAt: new Date().toISOString(),
+    ...Object.fromEntries(lessonDefs.flatMap(lesson => [
+      [`${lesson.key}_correct`, lessonResults[lesson.key].correct],
+      [`${lesson.key}_wrong`, lessonResults[lesson.key].wrong],
+      [`${lesson.key}_blank`, lessonResults[lesson.key].blank],
+      [`${lesson.key}_net`, lessonResults[lesson.key].net]
+    ]))
+  }
+  updated.score = calculateLgsOnlineScore(updated)
+  return updated
+}
 const countAnsweredQuestions = participant => {
   const answers = participant?.answers || {}
   return Object.values(answers).reduce((total, value) => {
@@ -519,10 +574,20 @@ export default function LgsPage() {
         attachment = await uploadOnlineExamFile(onlineFile, 'lgs', examId)
         if (previous?.path) await removeOnlineExamFile(previous).catch(()=>{})
       }
-      const item = { id:examId, ...onlineForm, attachment, answerKey, bookletMap, participants:old?.participants || [] }
+      const recalculatedParticipants = (old?.participants || []).map(participant =>
+        recalculateLgsParticipant(participant, answerKey, bookletMap)
+      )
+      const finished = recalculatedParticipants.filter(participant => liveStatusKey(participant) === 'finished')
+        .sort((a, b) => Number(b.score || 0) - Number(a.score || 0))
+      const participants = recalculatedParticipants.map(participant => {
+        if (liveStatusKey(participant) !== 'finished') return participant
+        const rank = finished.findIndex(item => String(item.studentId) === String(participant.studentId)) + 1
+        return { ...participant, rank }
+      })
+      const item = { id:examId, ...onlineForm, attachment, answerKey, bookletMap, participants }
       const next = editingOnlineId ? onlineExams.map(x=>x.id===editingOnlineId?item:x) : [item, ...onlineExams]
       setOnlineExams(next); localStorage.setItem('lgsOnlineExams', JSON.stringify(next)); window.dispatchEvent(new Event('taskin-lgs-online-updated'))
-      setMessage(editingOnlineId ? 'Online deneme güncellendi.' : 'Online deneme kaydedildi.'); setOnlineOpen(false); setOnlineFile(null)
+      setMessage(editingOnlineId ? 'Online deneme ve tamamlanan sonuçlar yeni cevap anahtarına göre güncellendi.' : 'Online deneme kaydedildi.'); setOnlineOpen(false); setOnlineFile(null)
     } catch (err) { setError(`Deneme dosyası yüklenemedi: ${err?.message || err}`) }
     finally { setOnlineUploading(false) }
   }
