@@ -2919,3 +2919,66 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
     background:linear-gradient(180deg,#eadfff 0%,#d9c7f2 100%) !important;
   }
 }
+
+/* V10.0.6.45 — lila sol menülerde koyu ve okunaklı yazılar */
+:root{
+  --student-sidebar-readable-text:#2f2a36;
+  --student-sidebar-readable-icon:#4a4352;
+}
+
+/* Normal öğrenci paneli */
+.student-drawer,
+.student-drawer .MuiTypography-root,
+.student-drawer .MuiListItemText-primary,
+.student-drawer .MuiListItemText-secondary,
+.student-drawer .MuiListItemIcon-root,
+.student-drawer .MuiSvgIcon-root,
+.student-drawer .MuiButton-root{
+  color:var(--student-sidebar-readable-text)!important;
+}
+.student-drawer .MuiListItemIcon-root,
+.student-drawer .MuiSvgIcon-root{
+  color:var(--student-sidebar-readable-icon)!important;
+}
+.student-drawer .MuiListItemButton-root{
+  color:var(--student-sidebar-readable-text)!important;
+  font-weight:750!important;
+}
+.student-drawer .MuiListItemButton-root.Mui-selected,
+.student-drawer .MuiListItemButton-root.Mui-selected:hover,
+.student-drawer .MuiListItemButton-root.Mui-selected .MuiTypography-root,
+.student-drawer .MuiListItemButton-root.Mui-selected .MuiListItemText-primary,
+.student-drawer .MuiListItemButton-root.Mui-selected .MuiListItemText-secondary,
+.student-drawer .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root,
+.student-drawer .MuiListItemButton-root.Mui-selected .MuiSvgIcon-root{
+  color:#fff!important;
+}
+
+/* LGS öğrenci paneli */
+.lgs-student-sidebar,
+.lgs-student-sidebar .brand,
+.lgs-student-sidebar .MuiTypography-root,
+.lgs-student-sidebar .MuiListItemText-primary,
+.lgs-student-sidebar .MuiListItemText-secondary,
+.lgs-student-sidebar .MuiListItemIcon-root,
+.lgs-student-sidebar .MuiSvgIcon-root,
+.lgs-student-sidebar .MuiButton-root{
+  color:var(--student-sidebar-readable-text)!important;
+}
+.lgs-student-sidebar .MuiListItemIcon-root,
+.lgs-student-sidebar .MuiSvgIcon-root{
+  color:var(--student-sidebar-readable-icon)!important;
+}
+.lgs-student-sidebar .MuiListItemButton-root{
+  color:var(--student-sidebar-readable-text)!important;
+  font-weight:750!important;
+}
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected,
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected:hover,
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected .MuiTypography-root,
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected .MuiListItemText-primary,
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected .MuiListItemText-secondary,
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root,
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected .MuiSvgIcon-root{
+  color:#fff!important;
+}
