@@ -282,8 +282,8 @@ export default function ReportsPage() {
   </Box>
 
 
-  function ReportHeader() { return <Box className="report-letterhead"><Box className="report-logo"><img src="/taskin-takip-sistemi-logo.png" alt="Taşkın Takip Sistemi logosu"/></Box><Box><Typography variant="h5" fontWeight={950}>TAŞKIN</Typography><Typography variant="caption" fontWeight={900} color="success.main">TAKİP SİSTEMİ</Typography><Typography fontWeight={800}>{reportTitle}</Typography></Box><Box className="report-meta"><b>{classInfo?.name}</b><span>{selectedExam?.name || ''}</span><span>{new Date().toLocaleDateString('tr-TR')}</span></Box></Box> }
-  function ReportPage({page, children}) { return <Box className="pdf-report-page"><ReportHeader/><Box className="pdf-page-content">{children}</Box><Box className="report-footer">Taşkın Takip Sistemi • Oluşturulma: {new Date().toLocaleString('tr-TR')} • Sayfa {page}</Box></Box> }
+  function ReportHeader() { return <Box className="report-letterhead"><Box className="report-logo report-logo-wide"><img src="/taskin-logo-horizontal.png" alt="TAŞKIN logosu"/></Box><Box><Typography fontWeight={800}>{reportTitle}</Typography></Box><Box className="report-meta"><b>{classInfo?.name}</b><span>{selectedExam?.name || ''}</span><span>{new Date().toLocaleDateString('tr-TR')}</span></Box></Box> }
+  function ReportPage({page, children}) { return <Box className="pdf-report-page"><ReportHeader/><Box className="pdf-page-content">{children}</Box><Box className="report-footer">TAŞKIN • Oluşturulma: {new Date().toLocaleString('tr-TR')} • Sayfa {page}</Box></Box> }
   function renderOnlinePages() {
     if (mode === 'all') {
       const rows = onlineCollectiveRows()

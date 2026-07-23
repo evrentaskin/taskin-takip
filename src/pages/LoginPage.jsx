@@ -52,10 +52,8 @@ export default function LoginPage() {
   return (
     <Box className="login-page">
       <Box className="login-card">
-        <img className="login-brand-logo" src="/taskin-takip-sistemi-logo.png" alt="Taşkın Takip Sistemi logosu" />
-        <Typography variant="h4" fontWeight={950}>TAŞKIN</Typography>
-        <Typography fontWeight={800} color="success.main">TAKİP SİSTEMİ</Typography>
-        <Typography color="text.secondary" sx={{ mb: 3, mt: .5 }}>Öğrenciyi takip et • Gelişimi görünür kıl</Typography>
+        <img className="login-brand-logo" src="/taskin-logo-full.png" alt="TAŞKIN logosu" />
+        <Typography color="text.secondary" sx={{ mb: 3, mt: .5 }}>Eğitim yönetimi ve öğrenci gelişimi</Typography>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 

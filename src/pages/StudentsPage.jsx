@@ -1075,7 +1075,7 @@ export default function StudentsPage() {
 
       let logoImage = null
       try {
-        logoImage = await loadImage('/taskin-takip-sistemi-logo.png')
+        logoImage = await loadImage('/taskin-logo-horizontal.png')
       } catch {
         logoImage = null
       }
@@ -1106,7 +1106,7 @@ export default function StudentsPage() {
         ctx.fillStyle = '#5a5a5a'
         ctx.font = '400 11px Arial, sans-serif'
         const pageInfo = pages.length > 1 ? ` • Sayfa ${pageIndex + 1}/${pages.length}` : ''
-        ctx.fillText(`Taşkın Takip • ${new Date().toLocaleDateString('tr-TR')} • ${rows.length} öğrenci${pageInfo}`, logoImage ? 88 : marginX, 61)
+        ctx.fillText(`TAŞKIN • ${new Date().toLocaleDateString('tr-TR')} • ${rows.length} öğrenci${pageInfo}`, logoImage ? 88 : marginX, 61)
 
         ctx.strokeStyle = '#178b58'
         ctx.lineWidth = 3
@@ -1232,8 +1232,8 @@ export default function StudentsPage() {
         const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]))
         container.innerHTML = `
           <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid #178b58;padding-bottom:4px;margin-bottom:5px">
-            <img src="/taskin-takip-sistemi-logo.png" style="width:${logoSize}px;height:${logoSize}px;object-fit:contain">
-            <div style="flex:1"><div style="font-size:14px;font-weight:900">${escapeHtml(selectedClassName)} Öğrenci Tanıma Raporu</div><div style="font-size:7px;color:#555">Taşkın Takip • ${new Date().toLocaleDateString('tr-TR')} • ${rowCount} öğrenci</div></div>
+            <img src="/taskin-logo-horizontal.png" style="width:${logoSize}px;height:${logoSize}px;object-fit:contain">
+            <div style="flex:1"><div style="font-size:14px;font-weight:900">${escapeHtml(selectedClassName)} Öğrenci Tanıma Raporu</div><div style="font-size:7px;color:#555">TAŞKIN • ${new Date().toLocaleDateString('tr-TR')} • ${rowCount} öğrenci</div></div>
           </div>
           <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:${fontSize}px;line-height:1.02">
             <thead><tr>${keys.map(k=>`<th style="border:1px solid #777;padding:${cellPadding}px;background:#eaf4ef;overflow-wrap:anywhere">${escapeHtml(k)}</th>`).join('')}</tr></thead>

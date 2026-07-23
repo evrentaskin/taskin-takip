@@ -126,11 +126,8 @@ export default function PrivateStudentHomePage({ session, profile }) {
     <AppBar position="sticky" elevation={0} className="private-student-appbar">
       <Toolbar className="private-student-toolbar">
         <Box className="private-student-brand">
-          <img src="/taskin-takip-sistemi-logo.png" alt="Taşkın Takip Sistemi" />
-          <Box>
-            <Typography fontWeight={950} lineHeight={1}>TAŞKIN TAKİP</Typography>
-            <Typography variant="caption">Özel Ders Öğrenci Paneli</Typography>
-          </Box>
+          <img className="private-student-brand-wide" src="/taskin-logo-horizontal.png" alt="TAŞKIN logosu" />
+          <Typography variant="caption">Özel Ders Öğrenci Paneli</Typography>
         </Box>
         <Box sx={{ flex: 1 }} />
         <Box className="private-student-user">
@@ -152,7 +149,7 @@ export default function PrivateStudentHomePage({ session, profile }) {
           <Typography variant="h3" fontWeight={950}>Hoş geldin, {student.fullName?.split(' ')[0]} 👋</Typography>
           <Typography>Ödevlerini tamamla, online denemelerine katıl ve gelişimini tek ekrandan takip et.</Typography>
         </Box>
-        <Box className="private-student-hero-logo"><img src="/taskin-takip-sistemi-logo.png" alt="Taşkın Takip" /></Box>
+        <Box className="private-student-hero-logo"><img src="/taskin-logo-symbol.png" alt="TAŞKIN" /></Box>
       </Paper>
 
       <Box className="private-student-stats">

@@ -2721,3 +2721,79 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
     font-size:9.5px!important;
   }
 }
+
+/* V10.0.6.42 — TAŞKIN yeni kurumsal logo */
+.brand-logo-image,
+.student-drawer-brand img,
+.private-student-hero-logo img {
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+.login-brand-logo {
+  width: min(360px, 82vw) !important;
+  height: 250px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  margin: 0 auto 4px !important;
+}
+
+.home-brand-logo-wide {
+  width: clamp(145px, 15vw, 215px) !important;
+  height: 52px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+.home-brand-date { white-space: nowrap; }
+
+.private-student-brand { gap: 10px !important; }
+.private-student-brand-wide {
+  width: clamp(135px, 18vw, 205px) !important;
+  height: 48px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+
+.report-logo-wide {
+  width: 190px !important;
+  height: 62px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  overflow: visible !important;
+  flex: 0 0 190px !important;
+}
+.report-logo-wide img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+
+/* PDF ve yazdırma başlıklarında logonun sağdan/ soldan kesilmesini önler. */
+.brand-pdf-logo {
+  width: 175px !important;
+  height: 58px !important;
+  max-width: 100% !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+.student-report-letter img {
+  width: 190px !important;
+  height: 62px !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+
+@media (max-width: 600px) {
+  .login-brand-logo { width: min(290px, 86vw) !important; height: 205px !important; }
+  .home-brand-logo-wide { width: 138px !important; height: 42px !important; }
+  .home-brand-date { display: none; }
+  .private-student-brand-wide { width: 132px !important; height: 42px !important; }
+  .report-logo-wide { width: 145px !important; height: 50px !important; flex-basis: 145px !important; }
+}

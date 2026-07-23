@@ -83,7 +83,7 @@ export default function StudentDetailPage({ studentId, onBack }) {
 
     <Box ref={reportRef} className="student-detail-report">
       <Box className="student-detail-header">
-        <img src="/taskin-takip-sistemi-logo.png" alt="Taşkın Takip Sistemi" />
+        <img src="/taskin-logo-horizontal.png" alt="TAŞKIN" />
         <Box><Typography variant="h4" fontWeight={950}>{fullName}</Typography><Typography color="text.secondary">Öğrenci Durum Raporu</Typography></Box>
         <Box className="student-detail-meta"><b>No: {student.student_number}</b><span>{student.classes?.name || 'Sınıf belirtilmedi'}</span><span>{new Date().toLocaleDateString('tr-TR')}</span></Box>
       </Box>

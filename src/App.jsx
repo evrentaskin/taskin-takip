@@ -174,10 +174,10 @@ export default function App() {
   const drawer = (
     <Box className="drawer">
       <Box className="brand">
-        <img className="brand-logo-image" src="/taskin-takip-sistemi-logo.png" alt="Taşkın Takip Sistemi logosu" />
+        <img className="brand-logo-image" src="/taskin-logo-symbol.png" alt="TAŞKIN logosu" />
         <Box>
           <Typography fontWeight={900}>TAŞKIN</Typography>
-          <Typography variant="caption">Takip Sistemi</Typography>
+          <Typography variant="caption">Eğitim Yönetimi</Typography>
         </Box>
       </Box>
       <Divider sx={{ my: 1.5 }} />

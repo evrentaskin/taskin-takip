@@ -633,7 +633,7 @@ export default function LgsPage() {
     const chunks=participants.length ? Array.from({length:Math.ceil(participants.length/pageSize)},(_,i)=>participants.slice(i*pageSize,(i+1)*pageSize)) : [[]]
     const dateText=exam.date?new Date(`${exam.date}T00:00:00`).toLocaleDateString('tr-TR'):'-'
     const reportDate=new Date().toLocaleDateString('tr-TR')
-    const header=(subtitle)=>`<div class="report-head"><div class="brand-lock"><img class="brand-pdf-logo" src="/taskin-takip-sistemi-logo.png" alt="Taşkın Takip Sistemi"><div><div class="brand-name">TAŞKIN</div><div class="brand-sub">TAKİP SİSTEMİ • ${subtitle}</div></div></div><div class="report-center"><h1>${escapeHtml(exam.name)}</h1><b>LGS Grubu</b></div><div class="report-meta"><div><b>Deneme:</b> ${escapeHtml(exam.name)}</div><div><b>Deneme Tarihi:</b> ${dateText}</div><div><b>Rapor Tarihi:</b> ${reportDate}</div></div></div>`
+    const header=(subtitle)=>`<div class="report-head"><div class="brand-lock"><img class="brand-pdf-logo" src="/taskin-logo-horizontal.png" alt="TAŞKIN"><div><div class="brand-sub">${subtitle}</div></div></div><div class="report-center"><h1>${escapeHtml(exam.name)}</h1><b>LGS Grubu</b></div><div class="report-meta"><div><b>Deneme:</b> ${escapeHtml(exam.name)}</div><div><b>Deneme Tarihi:</b> ${dateText}</div><div><b>Rapor Tarihi:</b> ${reportDate}</div></div></div>`
     const resultPages=chunks.map((chunk,pageIndex)=>{
       const rows=chunk.map((p,i)=>{
         const cells=lessonDefs.map(lesson=>`<td>${formatNumber(onlineValue(p,lesson.key,'correct'))}</td><td>${formatNumber(onlineValue(p,lesson.key,'net'))}</td>`).join('')
@@ -911,7 +911,7 @@ export default function LgsPage() {
   async function printStudentReport(student, detailed=true) {
     const reportDate=new Date().toLocaleDateString('tr-TR')
     const fullName=`${student.first_name} ${student.last_name}`.trim()
-    const header=(subtitle)=>`<div class="report-head"><div class="brand-lock"><img class="brand-pdf-logo" src="/taskin-takip-sistemi-logo.png" alt="Taşkın Takip Sistemi"><div><div class="brand-name">TAŞKIN</div><div class="brand-sub">TAKİP SİSTEMİ • ${subtitle}</div></div></div><div class="report-center"><h1>${escapeHtml(fullName)}</h1><b>LGS Grubu</b></div><div class="report-meta"><div><b>Öğrenci No:</b> ${escapeHtml(student.student_number||'-')}</div><div><b>Grup:</b> LGS Grubu</div><div><b>Rapor Tarihi:</b> ${reportDate}</div></div></div>`
+    const header=(subtitle)=>`<div class="report-head"><div class="brand-lock"><img class="brand-pdf-logo" src="/taskin-logo-horizontal.png" alt="TAŞKIN"><div><div class="brand-sub">${subtitle}</div></div></div><div class="report-center"><h1>${escapeHtml(fullName)}</h1><b>LGS Grubu</b></div><div class="report-meta"><div><b>Öğrenci No:</b> ${escapeHtml(student.student_number||'-')}</div><div><b>Grup:</b> LGS Grubu</div><div><b>Rapor Tarihi:</b> ${reportDate}</div></div></div>`
     const resultRows=student.results||[]
     const pageSize=13
     const chunks=resultRows.length?Array.from({length:Math.ceil(resultRows.length/pageSize)},(_,i)=>resultRows.slice(i*pageSize,(i+1)*pageSize)):[[]]

@@ -424,11 +424,8 @@ export default function DashboardPage({ onNavigate, onOpenStudent, onOpenMenu, o
       <Box className="home-topbar glass">
         <Stack direction="row" spacing={1.5} alignItems="center">
           <IconButton onClick={onOpenMenu} className="home-menu-button"><Menu /></IconButton>
-          <img className="home-brand-logo" src="/taskin-takip-sistemi-logo.png" alt="Taşkın Takip Sistemi logosu" />
-          <Box>
-            <Typography fontWeight={950}>TAŞKIN • Takip Sistemi</Typography>
-            <Typography variant="caption" color="text.secondary">{nowText}</Typography>
-          </Box>
+          <img className="home-brand-logo home-brand-logo-wide" src="/taskin-logo-horizontal.png" alt="TAŞKIN logosu" />
+          <Typography variant="caption" color="text.secondary" className="home-brand-date">{nowText}</Typography>
         </Stack>
 
         <Stack direction="row" spacing={1} alignItems="center" className="home-search-area">
