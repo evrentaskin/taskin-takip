@@ -2560,3 +2560,9 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
   .report-toolbar>.MuiBox-root{display:none}
   .report-table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
 }
+
+/* V10.0.6.37 — Rapor PDF tablo hizalama standardı */
+.report-table th,
+.report-table td{text-align:center}
+.report-table th.student-name-cell,
+.report-table td.student-name-cell{text-align:left!important;padding-left:10px!important}

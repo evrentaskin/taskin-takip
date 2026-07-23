@@ -133,27 +133,27 @@ export default function ReportsPage() {
   const exportRows = getExportRows()
 
   function getExportRows() {
-    if (section === 'homework') return homeworkRows().map(r => {
-      const row = { 'Öğrenci No': r.number, 'Ad Soyad': r.name }
+    if (section === 'homework') return homeworkRows().map((r,i) => {
+      const row = { Sıra: i + 1, 'Öğrenci No': r.number, 'Ad Soyad': r.name }
       r.items.forEach((v,i) => row[classHomeworks()[i]?.title || `Ödev ${i+1}`] = v)
       row['Yaptı'] = r.done; row['Yapmadı'] = r.missing; row['Gelmedi'] = r.absent
       return row
     })
     if (section === 'monthly' || section === 'term') return scoreRows(section).map((r,i)=>({ Sıra:i+1,'Öğrenci No':r.number,'Ad Soyad':r.name,Puan:r.score }))
-    if (mode === 'all' && section !== 'online') return collectiveRows().map(r => {
-      const row = { 'Öğrenci No': r.number, 'Ad Soyad': r.name }
+    if (mode === 'all' && section !== 'online') return collectiveRows().map((r,i) => {
+      const row = { Sıra: i + 1, 'Öğrenci No': r.number, 'Ad Soyad': r.name }
       relevantExams.forEach((e,i)=>row[e.name || `Deneme ${i+1}`]=r.nets[i] == null ? 'Girmedi' : r.nets[i])
       row['Toplam Net']=r.total; row['Ortalama Net']=r.avg; return row
     })
-    if (section === 'online' && mode === 'all') return onlineCollectiveRows().map(r => {
-      const row = { 'Öğrenci No': r.number, 'Ad Soyad': r.name }
+    if (section === 'online' && mode === 'all') return onlineCollectiveRows().map((r,i) => {
+      const row = { Sıra: i + 1, 'Öğrenci No': r.number, 'Ad Soyad': r.name }
       selectedOnlineExams().forEach((e,i) => row[e.name || `Deneme ${i+1}`] = r.nets[i] == null ? 'Girmedi' : r.nets[i])
       row['Girilen Deneme'] = `${r.enteredCount}/${selectedOnlineExams().length}`
       row['Ortalama Net'] = r.avg
       return row
     })
-    if (section === 'online') return onlineRows().map(r=>({'Öğrenci No':r.number,'Ad Soyad':r.name,Doğru:r.correct,Yanlış:r.wrong,Net:r.net,Durum:r.entered?'Girdi':'Girmedi'}))
-    return normalRows.map(r=>({'Öğrenci No':r.number,'Ad Soyad':r.name,Doğru:r.correct,Yanlış:r.wrong,Net:r.net}))
+    if (section === 'online') return onlineRows().map((r,i)=>({Sıra:i+1,'Öğrenci No':r.number,'Ad Soyad':r.name,Doğru:r.correct,Yanlış:r.wrong,Net:r.net,Durum:r.entered?'Girdi':'Girmedi'}))
+    return normalRows.map((r,i)=>({Sıra:i+1,'Öğrenci No':r.number,'Ad Soyad':r.name,Doğru:r.correct,Yanlış:r.wrong,Net:r.net}))
   }
 
   function classHomeworks() { return homeworks.filter(h => h.classId === selectedClass).sort((a,b)=>String(a.createdAt).localeCompare(String(b.createdAt))) }
@@ -261,7 +261,7 @@ export default function ReportsPage() {
     if (mode === 'all') {
       const rows = onlineCollectiveRows()
       const chosen = selectedOnlineExams()
-      return <ReportPage page={1}><Box className="report-summary"><Chip icon={<Groups/>} label={`${rows.length} öğrenci`}/><Chip label={`${chosen.length} deneme`}/><Chip label={scope==='all'?'Sınıfın tamamı':'En az bir denemeye girenler'}/></Box><ReportTable headers={['No','Öğrenci',...chosen.map(e=>e.name),'Girilen','Ortalama']} rows={rows.map(r=>[r.number,r.name,...r.nets.map(v=>v==null?'Girmedi':fmt(v)),`${r.enteredCount}/${chosen.length}`,fmt(r.avg)])}/></ReportPage>
+      return <ReportPage page={1}><Box className="report-summary"><Chip icon={<Groups/>} label={`${rows.length} öğrenci`}/><Chip label={`${chosen.length} deneme`}/><Chip label={scope==='all'?'Sınıfın tamamı':'En az bir denemeye girenler'}/></Box><ReportTable headers={['Sıra','No','Öğrenci',...chosen.map(e=>e.name),'Girilen','Ortalama']} rows={rows.map((r,i)=>[i+1,r.number,r.name,...r.nets.map(v=>v==null?'Girmedi':fmt(v)),`${r.enteredCount}/${chosen.length}`,fmt(r.avg)])}/></ReportPage>
     }
     const rows = onlineRows()
     const pageSize = 25
@@ -274,7 +274,7 @@ export default function ReportsPage() {
     const avg = rows.length ? rows.reduce((a,b)=>a+b.net,0) / rows.length : 0
     const table = (data, pageIndex) => <>
       {pageIndex === 0 && <Box className="report-summary"><Chip icon={<Groups/>} label={`${rows.length} öğrenci`}/><Chip label={`Sınıf ortalaması: ${fmt(avg)} net`}/></Box>}
-      <ReportTable headers={['No','Öğrenci','Doğru','Yanlış','Net']} rows={data.map(r=>[r.number,r.name,r.correct,r.wrong,fmt(r.net)])}/>
+      <ReportTable headers={['Sıra','No','Öğrenci','Doğru','Yanlış','Net']} rows={data.map((r,i)=>[pageIndex * pageSize + i + 1,r.number,r.name,r.correct,r.wrong,fmt(r.net)])}/>
     </>
     const analysisPage = rowPages.length + 1
     return <>
@@ -289,15 +289,15 @@ export default function ReportsPage() {
   }
 
   function renderContent() {
-    if(section==='homework') return <ReportTable statusColors headers={['No','Öğrenci',...classHomeworks().map(h=>h.title),'Yaptı','Yapmadı','Gelmedi']} rows={homeworkRows().map(r=>[r.number,r.name,...r.items,r.done,r.missing,r.absent])}/>
+    if(section==='homework') return <ReportTable statusColors headers={['Sıra','No','Öğrenci',...classHomeworks().map(h=>h.title),'Yaptı','Yapmadı','Gelmedi']} rows={homeworkRows().map((r,i)=>[i+1,r.number,r.name,...r.items,r.done,r.missing,r.absent])}/>
     if(section==='monthly'||section==='term') { const rows=scoreRows(section); return <><Box className="report-summary"><Chip icon={<EmojiEvents/>} label={`Lider: ${rows[0]?.name||'-'} • ${rows[0]?.score||0} puan`}/><Chip label={`${rows.length} öğrenci`}/></Box><ReportTable headers={['Sıra','No','Öğrenci','Puan']} rows={rows.map((r,i)=>[i+1,r.number,r.name,r.score])}/></> }
-    if(mode==='all'&&section!=='online') { const rows=collectiveRows(); return <ReportTable headers={['No','Öğrenci',...relevantExams.map(e=>e.name),'Girilen','Toplam','Ortalama']} rows={rows.map(r=>[r.number,r.name,...r.nets.map(v=>v==null?'Girmedi':fmt(v)),`${r.enteredCount}/${relevantExams.length}`,fmt(r.total),fmt(r.avg)])}/> }
+    if(mode==='all'&&section!=='online') { const rows=collectiveRows(); return <ReportTable headers={['Sıra','No','Öğrenci',...relevantExams.map(e=>e.name),'Girilen','Toplam','Ortalama']} rows={rows.map((r,i)=>[i+1,r.number,r.name,...r.nets.map(v=>v==null?'Girmedi':fmt(v)),`${r.enteredCount}/${relevantExams.length}`,fmt(r.total),fmt(r.avg)])}/> }
     if(section==='online') return null
     const avg=normalRows.length?normalRows.reduce((a,b)=>a+b.net,0)/normalRows.length:0
-    return <><Box className="report-summary"><Chip icon={<Groups/>} label={`Sınıf ortalaması: ${fmt(avg)} net`}/><Chip label={`${normalRows.length} öğrenci`}/></Box><ReportTable headers={['No','Öğrenci','Doğru','Yanlış','Net','Hedef Durumu']} rows={normalRows.map(r=>{ const target=Number(selectedExam?.targets?.[r.studentId]); return [r.number,r.name,r.correct,r.wrong,fmt(r.net),Number.isFinite(target)&&target>0?(r.net>=target?'Hedefi Geçti ✓':'Hedefin Altında ✕'):'Hedef Yok'] })}/><MoverPanels/></>
+    return <><Box className="report-summary"><Chip icon={<Groups/>} label={`Sınıf ortalaması: ${fmt(avg)} net`}/><Chip label={`${normalRows.length} öğrenci`}/></Box><ReportTable headers={['Sıra','No','Öğrenci','Doğru','Yanlış','Net','Hedef Durumu']} rows={normalRows.map((r,i)=>{ const target=Number(selectedExam?.targets?.[r.studentId]); return [i+1,r.number,r.name,r.correct,r.wrong,fmt(r.net),Number.isFinite(target)&&target>0?(r.net>=target?'Hedefi Geçti ✓':'Hedefin Altında ✕'):'Hedef Yok'] })}/><MoverPanels/></>
   }
   function MoverPanels(){return <Box className="analysis-pair"><MiniList title="En Çok Yükselen 5 Öğrenci" icon={<TrendingUp/>} rows={movers.up.map(x=>({name:`${x.number} • ${x.name}`,diff:`+${fmt(x.diff)}`}))}/><MiniList title="En Fazla Düşüş Yaşayan 5 Öğrenci" icon={<TrendingDown/>} rows={movers.down.map(x=>({name:`${x.number} • ${x.name}`,diff:fmt(x.diff)}))}/></Box>}
 }
 
-function ReportTable({headers,rows,statusColors=false}) { const statusClass=v=>statusColors&&v==='Yaptı'?'status-done':statusColors&&v==='Yapmadı'?'status-missing':statusColors&&v==='Gelmedi'?'status-absent':''; return <Box className="report-table-wrap"><table className="report-table"><thead><tr>{headers.map((h,i)=><th key={i}>{h}</th>)}</tr></thead><tbody>{rows.length?rows.map((r,i)=><tr key={i}>{r.map((v,j)=><td className={statusClass(v)} key={j}>{v}</td>)}</tr>):<tr><td colSpan={headers.length}>Raporlanacak kayıt bulunamadı.</td></tr>}</tbody></table></Box> }
+function ReportTable({headers,rows,statusColors=false}) { const statusClass=v=>statusColors&&v==='Yaptı'?'status-done':statusColors&&v==='Yapmadı'?'status-missing':statusColors&&v==='Gelmedi'?'status-absent':''; const isStudentName=h=>h==='Öğrenci'||h==='Ad Soyad'; return <Box className="report-table-wrap"><table className="report-table"><thead><tr>{headers.map((h,i)=><th className={isStudentName(h)?'student-name-cell':''} key={i}>{h}</th>)}</tr></thead><tbody>{rows.length?rows.map((r,i)=><tr key={i}>{r.map((v,j)=><td className={`${statusClass(v)} ${isStudentName(headers[j])?'student-name-cell':''}`.trim()} key={j}>{v}</td>)}</tr>):<tr><td colSpan={headers.length}>Raporlanacak kayıt bulunamadı.</td></tr>}</tbody></table></Box> }
 function MiniList({title,rows,icon}) { return <Paper className="mini-analysis" elevation={0}><Typography fontWeight={950}>{icon} {title}</Typography>{rows.length?rows.map((r,i)=><Box key={i}><span>{r.name}</span><b>{r.diff}</b></Box>):<Typography variant="caption" color="text.secondary">Karşılaştırma için önceki deneme bulunamadı.</Typography>}</Paper> }
