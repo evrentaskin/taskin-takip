@@ -2982,3 +2982,80 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
 .lgs-student-sidebar .MuiListItemButton-root.Mui-selected .MuiSvgIcon-root{
   color:#fff!important;
 }
+
+/* V10.0.6.46 — öğrenci sol menülerinde kesin koyu yazı düzeltmesi */
+:root{
+  --student-menu-dark:#25212b;
+  --student-menu-icon-dark:#3f3849;
+}
+
+/* Drawer kağıdının kendisine tema ver: iç kutu seçicisine bağlı kalmasın. */
+.student-drawer-paper,
+.student-drawer-paper .student-drawer,
+.lgs-student-sidebar{
+  background:linear-gradient(180deg,#eadfff 0%,#e2d3f8 48%,#d9c7f2 100%)!important;
+  color:var(--student-menu-dark)!important;
+}
+
+/* Normal öğrenci paneli: yazı ve ikonların tamamı koyu. */
+.student-drawer-paper .student-drawer-brand,
+.student-drawer-paper .student-drawer-brand *,
+.student-drawer-paper .MuiList-root,
+.student-drawer-paper .MuiListItemButton-root,
+.student-drawer-paper .MuiListItemText-root,
+.student-drawer-paper .MuiListItemText-primary,
+.student-drawer-paper .MuiListItemText-secondary,
+.student-drawer-paper .MuiTypography-root,
+.student-drawer-paper .MuiButton-root{
+  color:var(--student-menu-dark)!important;
+  -webkit-text-fill-color:var(--student-menu-dark)!important;
+  opacity:1!important;
+}
+.student-drawer-paper .MuiListItemIcon-root,
+.student-drawer-paper .MuiSvgIcon-root{
+  color:var(--student-menu-icon-dark)!important;
+  fill:currentColor!important;
+  opacity:1!important;
+}
+.student-drawer-paper .MuiListItemText-primary{
+  font-weight:800!important;
+  letter-spacing:.01em;
+}
+
+/* LGS öğrenci paneli: aynı kesin koyu renkler. */
+.lgs-student-sidebar .brand,
+.lgs-student-sidebar .brand *,
+.lgs-student-sidebar .MuiList-root,
+.lgs-student-sidebar .MuiListItemButton-root,
+.lgs-student-sidebar .MuiListItemText-root,
+.lgs-student-sidebar .MuiListItemText-primary,
+.lgs-student-sidebar .MuiListItemText-secondary,
+.lgs-student-sidebar .MuiTypography-root,
+.lgs-student-sidebar .MuiButton-root{
+  color:var(--student-menu-dark)!important;
+  -webkit-text-fill-color:var(--student-menu-dark)!important;
+  opacity:1!important;
+}
+.lgs-student-sidebar .MuiListItemIcon-root,
+.lgs-student-sidebar .MuiSvgIcon-root{
+  color:var(--student-menu-icon-dark)!important;
+  fill:currentColor!important;
+  opacity:1!important;
+}
+.lgs-student-sidebar .MuiListItemText-primary{
+  font-weight:800!important;
+}
+
+/* Seçili turuncu menüde beyaz kontrast korunsun. */
+.student-drawer-paper .MuiListItemButton-root.Mui-selected,
+.student-drawer-paper .MuiListItemButton-root.Mui-selected *,
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected,
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected *{
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+}
+.student-drawer-paper .MuiListItemButton-root.Mui-selected .MuiSvgIcon-root,
+.lgs-student-sidebar .MuiListItemButton-root.Mui-selected .MuiSvgIcon-root{
+  color:#fff!important;
+  fill:currentColor!important;
+}

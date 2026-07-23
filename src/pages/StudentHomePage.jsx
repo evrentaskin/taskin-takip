@@ -413,10 +413,10 @@ export default function StudentHomePage({ session, profile }) {
   </Box>
 
   return <Box className="student-portal">
-    <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { width: 260 } }}>
+    <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} PaperProps={{ className: 'student-drawer-paper' }} sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { width: 260 } }}>
       <StudentDrawer />
     </Drawer>
-    <Drawer variant="permanent" sx={{ display: { xs: 'none', md: 'block' }, '& .MuiDrawer-paper': { width: 260, border: 0 } }}><StudentDrawer /></Drawer>
+    <Drawer variant="permanent" PaperProps={{ className: 'student-drawer-paper' }} sx={{ display: { xs: 'none', md: 'block' }, '& .MuiDrawer-paper': { width: 260, border: 0 } }}><StudentDrawer /></Drawer>
 
     <Box className="student-portal-main">
       <Toolbar className="student-topbar">
