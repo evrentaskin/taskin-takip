@@ -2547,3 +2547,16 @@ button, .MuiButton-root, .MuiIconButton-root, .MuiListItemButton-root { touch-ac
     box-shadow: 0 3px 10px rgba(31,58,88,.06) !important;
   }
 }
+
+/* V10.0.6.34 - Rapor filtreleri ve mobil açılır menü düzeltmesi */
+.report-toolbar{min-width:0;overflow:visible}
+.report-toolbar .MuiFormControl-root{max-width:100%}
+.report-toolbar .MuiSelect-select{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exam-multi-select{min-width:210px!important}
+@media(max-width:700px){
+  .reports-page{min-width:0;overflow-x:hidden}
+  .report-toolbar{display:grid;grid-template-columns:minmax(0,1fr);width:100%;box-sizing:border-box;overflow:visible}
+  .report-toolbar .MuiFormControl-root,.report-toolbar .MuiButton-root,.exam-multi-select{width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box}
+  .report-toolbar>.MuiBox-root{display:none}
+  .report-table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+}

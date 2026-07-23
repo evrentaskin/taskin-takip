@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert, Box, Button, Chip, CircularProgress, FormControl, InputLabel,
-  MenuItem, Paper, Select, Stack, Typography
+  Checkbox, ListItemText, MenuItem, Paper, Select, Stack, Typography
 } from '@mui/material'
 import {
   Assessment, AssignmentTurnedIn, EmojiEvents, FileDownload, Groups,
@@ -20,6 +20,7 @@ const dateOf = e => e.date || e.startAt || e.createdAt || ''
 const monthStart = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1) }
 const monthEnd = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59) }
 const inRange = (value, start, end) => { if (!value) return false; const d = new Date(value); return d >= start && d <= end }
+const menuProps = { disablePortal: true, PaperProps: { sx: { maxHeight: 360, maxWidth: 'calc(100vw - 24px)' } } }
 
 const cards = [
   ['fen', 'Fen Denemeleri', 'Tek ve toplu fen denemesi raporları', Science],
@@ -38,6 +39,8 @@ export default function ReportsPage() {
   const [examId, setExamId] = useState('')
   const [mode, setMode] = useState('single')
   const [sort, setSort] = useState('number')
+  const [scope, setScope] = useState('entered')
+  const [selectedExamIds, setSelectedExamIds] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const reportRef = useRef(null)
@@ -78,19 +81,25 @@ export default function ReportsPage() {
     section === 'online' ? e.kind === 'online' : e.kind === 'normal' && e.type === section
   )).sort((a,b) => String(dateOf(a)).localeCompare(String(dateOf(b)))), [exams, selectedClass, section])
 
-  useEffect(() => { setExamId(relevantExams.at(-1)?.id || '') }, [section, selectedClass, relevantExams.length])
+  useEffect(() => {
+    setExamId(relevantExams.at(-1)?.id || '')
+    setSelectedExamIds(relevantExams.map(e => e.id))
+  }, [section, selectedClass, relevantExams.length])
   const selectedExam = relevantExams.find(e => e.id === examId)
 
   const baseStudents = useMemo(() => [...students].sort((a,b) => Number(a.student_number) - Number(b.student_number)), [students])
   const normalRows = useMemo(() => {
     if (!selectedExam) return []
-    const rows = baseStudents.map(s => ({
-      number: s.student_number, name: `${s.first_name} ${s.last_name}`,
-      correct: Number(selectedExam.results?.[s.id]?.correct || 0), wrong: Number(selectedExam.results?.[s.id]?.wrong || 0),
-      net: Number(selectedExam.results?.[s.id]?.net || 0), studentId: s.id
-    }))
+    const rows = baseStudents.map(s => {
+      const result = selectedExam.results?.[s.id]
+      return {
+        number: s.student_number, name: `${s.first_name} ${s.last_name}`,
+        correct: result ? Number(result.correct || 0) : 0, wrong: result ? Number(result.wrong || 0) : 0,
+        net: result ? Number(result.net || 0) : 0, studentId: s.id, entered: Boolean(result)
+      }
+    }).filter(r => scope === 'all' || r.entered)
     return sort === 'net' ? rows.sort((a,b) => b.net-a.net) : rows
-  }, [selectedExam, baseStudents, sort])
+  }, [selectedExam, baseStudents, sort, scope])
 
   const movers = useMemo(() => {
     if (!selectedExam) return { up: [], down: [] }
@@ -121,10 +130,17 @@ export default function ReportsPage() {
     if (section === 'monthly' || section === 'term') return scoreRows(section).map((r,i)=>({ Sıra:i+1,'Öğrenci No':r.number,'Ad Soyad':r.name,Puan:r.score }))
     if (mode === 'all' && section !== 'online') return collectiveRows().map(r => {
       const row = { 'Öğrenci No': r.number, 'Ad Soyad': r.name }
-      relevantExams.forEach((e,i)=>row[e.name || `Deneme ${i+1}`]=r.nets[i])
+      relevantExams.forEach((e,i)=>row[e.name || `Deneme ${i+1}`]=r.nets[i] == null ? 'Girmedi' : r.nets[i])
       row['Toplam Net']=r.total; row['Ortalama Net']=r.avg; return row
     })
-    if (section === 'online') return onlineRows().map(r=>({'Öğrenci No':r.number,'Ad Soyad':r.name,Doğru:r.correct,Yanlış:r.wrong,Net:r.net}))
+    if (section === 'online' && mode === 'all') return onlineCollectiveRows().map(r => {
+      const row = { 'Öğrenci No': r.number, 'Ad Soyad': r.name }
+      selectedOnlineExams().forEach((e,i) => row[e.name || `Deneme ${i+1}`] = r.nets[i] == null ? 'Girmedi' : r.nets[i])
+      row['Girilen Deneme'] = `${r.enteredCount}/${selectedOnlineExams().length}`
+      row['Ortalama Net'] = r.avg
+      return row
+    })
+    if (section === 'online') return onlineRows().map(r=>({'Öğrenci No':r.number,'Ad Soyad':r.name,Doğru:r.correct,Yanlış:r.wrong,Net:r.net,Durum:r.entered?'Girdi':'Girmedi'}))
     return normalRows.map(r=>({'Öğrenci No':r.number,'Ad Soyad':r.name,Doğru:r.correct,Yanlış:r.wrong,Net:r.net}))
   }
 
@@ -137,13 +153,37 @@ export default function ReportsPage() {
     })
   }
   function collectiveRows() {
-    const rows = baseStudents.map(s => { const nets=relevantExams.map(e=>Number(e.results?.[s.id]?.net||0)); const total=nets.reduce((a,b)=>a+b,0); return {number:s.student_number,name:`${s.first_name} ${s.last_name}`,nets,total,avg:relevantExams.length?total/relevantExams.length:0} })
-    return sort === 'net' ? rows.sort((a,b)=>b.total-a.total) : rows
+    const rows = baseStudents.map(s => {
+      const nets = relevantExams.map(e => e.results?.[s.id] ? Number(e.results[s.id].net || 0) : null)
+      const entered = nets.filter(v => v != null)
+      const total = entered.reduce((a,b)=>a+b,0)
+      return {number:s.student_number,name:`${s.first_name} ${s.last_name}`,nets,total,avg:entered.length?total/entered.length:0,enteredCount:entered.length}
+    }).filter(r => scope === 'all' || r.enteredCount > 0)
+    return sort === 'net' ? rows.sort((a,b)=>b.avg-a.avg) : rows
   }
   function onlineRows() {
     if (!selectedExam) return []
-    const rows=baseStudents.map(s=>{const a=selectedExam.attempts?.[s.id]||{};return {studentId:s.id,number:s.student_number,name:`${s.first_name} ${s.last_name}`,correct:Number(a.correct||0),wrong:Number(a.wrong||0),net:Number((Number(a.correct||0)-Number(a.wrong||0)/3).toFixed(2)),answers:a.answers||a.responses||{}}})
+    const rows=baseStudents.map(s=>{
+      const attempt=selectedExam.attempts?.[s.id]
+      const a=attempt||{}
+      return {studentId:s.id,number:s.student_number,name:`${s.first_name} ${s.last_name}`,correct:Number(a.correct||0),wrong:Number(a.wrong||0),net:Number((Number(a.net ?? (Number(a.correct||0)-Number(a.wrong||0)/3))).toFixed(2)),answers:a.answers||a.responses||{},entered:Boolean(attempt)}
+    }).filter(r=>scope==='all'||r.entered)
     return sort==='net'?rows.sort((a,b)=>b.net-a.net):rows
+  }
+  function selectedOnlineExams() { return relevantExams.filter(e => selectedExamIds.includes(e.id)) }
+  function onlineCollectiveRows() {
+    const chosen = selectedOnlineExams()
+    const rows = baseStudents.map(s => {
+      const nets = chosen.map(e => {
+        const a = e.attempts?.[s.id]
+        if (!a) return null
+        return Number(Number(a.net ?? (Number(a.correct||0)-Number(a.wrong||0)/3)).toFixed(2))
+      })
+      const entered = nets.filter(v => v != null)
+      const total = entered.reduce((a,b)=>a+b,0)
+      return {number:s.student_number,name:`${s.first_name} ${s.last_name}`,nets,enteredCount:entered.length,avg:entered.length?total/entered.length:0}
+    }).filter(r => scope === 'all' || r.enteredCount > 0)
+    return sort === 'net' ? rows.sort((a,b)=>b.avg-a.avg) : rows
   }
   function scoreRows(kind) {
     const start = kind === 'monthly' ? monthStart() : new Date(localStorage.getItem('taskin-akademi-v64-term-start') || '2000-01-01')
@@ -189,10 +229,12 @@ export default function ReportsPage() {
     {error && <Alert severity="error" sx={{mb:2}}>{error}</Alert>}
     <Box className="report-card-grid">{cards.map(([id,title,desc,Icon])=><Paper key={id} className={`glass report-menu-card ${section===id?'active':''}`} onClick={()=>{setSection(id);setMode('single')}} elevation={0}><Icon/><Box><Typography fontWeight={950}>{title}</Typography><Typography variant="caption" color="text.secondary">{desc}</Typography></Box></Paper>)}</Box>
     <Paper className="glass report-toolbar" elevation={0}>
-      <FormControl size="small"><InputLabel>Aktif sınıf</InputLabel><Select value={selectedClass} label="Aktif sınıf" onChange={e=>setSelectedClass(e.target.value)}>{classes.map(c=><MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}</Select></FormControl>
-      {['fen','general'].includes(section)&&<FormControl size="small"><InputLabel>Rapor tipi</InputLabel><Select value={mode} label="Rapor tipi" onChange={e=>setMode(e.target.value)}><MenuItem value="single">Tek Deneme</MenuItem><MenuItem value="all">Toplu Denemeler</MenuItem></Select></FormControl>}
-      {['fen','general','online'].includes(section)&&mode==='single'&&<FormControl size="small"><InputLabel>Deneme</InputLabel><Select value={examId} label="Deneme" onChange={e=>setExamId(e.target.value)}>{relevantExams.map(e=><MenuItem key={e.id} value={e.id}>{e.name}</MenuItem>)}</Select></FormControl>}
-      {!['monthly','term'].includes(section)&&<FormControl size="small"><InputLabel>Sıralama</InputLabel><Select value={sort} label="Sıralama" onChange={e=>setSort(e.target.value)}><MenuItem value="number">Öğrenci numarası</MenuItem><MenuItem value="net">Net / başarı</MenuItem></Select></FormControl>}
+      <FormControl size="small"><InputLabel>Aktif sınıf</InputLabel><Select MenuProps={menuProps} value={selectedClass} label="Aktif sınıf" onChange={e=>setSelectedClass(e.target.value)}>{classes.map(c=><MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}</Select></FormControl>
+      {['fen','general','online'].includes(section)&&<FormControl size="small"><InputLabel>Rapor tipi</InputLabel><Select MenuProps={menuProps} value={mode} label="Rapor tipi" onChange={e=>setMode(e.target.value)}><MenuItem value="single">Tek Deneme</MenuItem><MenuItem value="all">Toplu Denemeler</MenuItem></Select></FormControl>}
+      {['fen','general','online'].includes(section)&&mode==='single'&&<FormControl size="small"><InputLabel>Deneme</InputLabel><Select MenuProps={menuProps} value={examId} label="Deneme" onChange={e=>setExamId(e.target.value)}>{relevantExams.map(e=><MenuItem key={e.id} value={e.id}>{e.name}</MenuItem>)}</Select></FormControl>}
+      {section==='online'&&mode==='all'&&<FormControl size="small" className="exam-multi-select"><InputLabel>Denemeler</InputLabel><Select multiple MenuProps={menuProps} value={selectedExamIds} label="Denemeler" onChange={e=>setSelectedExamIds(typeof e.target.value==='string'?e.target.value.split(','):e.target.value)} renderValue={ids=>`${ids.length} deneme seçildi`}>{relevantExams.map(e=><MenuItem key={e.id} value={e.id}><Checkbox checked={selectedExamIds.includes(e.id)}/><ListItemText primary={e.name}/></MenuItem>)}</Select></FormControl>}
+      {['fen','general','online'].includes(section)&&<FormControl size="small"><InputLabel>Öğrenci kapsamı</InputLabel><Select MenuProps={menuProps} value={scope} label="Öğrenci kapsamı" onChange={e=>setScope(e.target.value)}><MenuItem value="entered">Denemeye girenler</MenuItem><MenuItem value="all">Sınıfın tamamı</MenuItem></Select></FormControl>}
+      {!['monthly','term'].includes(section)&&<FormControl size="small"><InputLabel>Sıralama</InputLabel><Select MenuProps={menuProps} value={sort} label="Sıralama" onChange={e=>setSort(e.target.value)}><MenuItem value="number">Öğrenci numarası</MenuItem><MenuItem value="net">Net / başarı</MenuItem></Select></FormControl>}
       <Box sx={{flex:1}}/><Button startIcon={<PictureAsPdf/>} onClick={exportPdf}>PDF</Button><Button startIcon={<FileDownload/>} onClick={exportExcel}>Excel</Button><Button startIcon={<Print/>} onClick={()=>window.print()}>Yazdır</Button>
     </Paper>
     <Box ref={reportRef} className={`print-report ${section==='online'?'online-pdf-report':''}`}>
@@ -204,6 +246,11 @@ export default function ReportsPage() {
   function ReportHeader() { return <Box className="report-letterhead"><Box className="report-logo"><img src="/taskin-takip-sistemi-logo.png" alt="Taşkın Takip Sistemi logosu"/></Box><Box><Typography variant="h5" fontWeight={950}>TAŞKIN</Typography><Typography variant="caption" fontWeight={900} color="success.main">TAKİP SİSTEMİ</Typography><Typography fontWeight={800}>{reportTitle}</Typography></Box><Box className="report-meta"><b>{classInfo?.name}</b><span>{selectedExam?.name || ''}</span><span>{new Date().toLocaleDateString('tr-TR')}</span></Box></Box> }
   function ReportPage({page, children}) { return <Box className="pdf-report-page"><ReportHeader/><Box className="pdf-page-content">{children}</Box><Box className="report-footer">Taşkın Takip Sistemi • Oluşturulma: {new Date().toLocaleString('tr-TR')} • Sayfa {page}</Box></Box> }
   function renderOnlinePages() {
+    if (mode === 'all') {
+      const rows = onlineCollectiveRows()
+      const chosen = selectedOnlineExams()
+      return <ReportPage page={1}><Box className="report-summary"><Chip icon={<Groups/>} label={`${rows.length} öğrenci`}/><Chip label={`${chosen.length} deneme`}/><Chip label={scope==='all'?'Sınıfın tamamı':'En az bir denemeye girenler'}/></Box><ReportTable headers={['No','Öğrenci',...chosen.map(e=>e.name),'Girilen','Ortalama']} rows={rows.map(r=>[r.number,r.name,...r.nets.map(v=>v==null?'Girmedi':fmt(v)),`${r.enteredCount}/${chosen.length}`,fmt(r.avg)])}/></ReportPage>
+    }
     const rows = onlineRows()
     const pageSize = 25
     const rowPages = rows.length
@@ -232,7 +279,7 @@ export default function ReportsPage() {
   function renderContent() {
     if(section==='homework') return <ReportTable statusColors headers={['No','Öğrenci',...classHomeworks().map(h=>h.title),'Yaptı','Yapmadı','Gelmedi']} rows={homeworkRows().map(r=>[r.number,r.name,...r.items,r.done,r.missing,r.absent])}/>
     if(section==='monthly'||section==='term') { const rows=scoreRows(section); return <><Box className="report-summary"><Chip icon={<EmojiEvents/>} label={`Lider: ${rows[0]?.name||'-'} • ${rows[0]?.score||0} puan`}/><Chip label={`${rows.length} öğrenci`}/></Box><ReportTable headers={['Sıra','No','Öğrenci','Puan']} rows={rows.map((r,i)=>[i+1,r.number,r.name,r.score])}/></> }
-    if(mode==='all'&&section!=='online') { const rows=collectiveRows(); return <ReportTable headers={['No','Öğrenci',...relevantExams.map(e=>e.name),'Toplam','Ortalama']} rows={rows.map(r=>[r.number,r.name,...r.nets.map(fmt),fmt(r.total),fmt(r.avg)])}/> }
+    if(mode==='all'&&section!=='online') { const rows=collectiveRows(); return <ReportTable headers={['No','Öğrenci',...relevantExams.map(e=>e.name),'Girilen','Toplam','Ortalama']} rows={rows.map(r=>[r.number,r.name,...r.nets.map(v=>v==null?'Girmedi':fmt(v)),`${r.enteredCount}/${relevantExams.length}`,fmt(r.total),fmt(r.avg)])}/> }
     if(section==='online') return null
     const avg=normalRows.length?normalRows.reduce((a,b)=>a+b.net,0)/normalRows.length:0
     return <><Box className="report-summary"><Chip icon={<Groups/>} label={`Sınıf ortalaması: ${fmt(avg)} net`}/><Chip label={`${normalRows.length} öğrenci`}/></Box><ReportTable headers={['No','Öğrenci','Doğru','Yanlış','Net','Hedef Durumu']} rows={normalRows.map(r=>{ const target=Number(selectedExam?.targets?.[r.studentId]); return [r.number,r.name,r.correct,r.wrong,fmt(r.net),Number.isFinite(target)&&target>0?(r.net>=target?'Hedefi Geçti ✓':'Hedefin Altında ✕'):'Hedef Yok'] })}/><MoverPanels/></>
