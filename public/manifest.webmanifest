@@ -1,26 +1,39 @@
 {
-  "name": "TAŞKIN Eğitim Yönetimi",
+  "id": "/?app=taskin-v47",
+  "name": "TAŞKIN",
   "short_name": "TAŞKIN",
-  "description": "Öğretmen, öğrenci, ödev ve deneme yönetim sistemi",
-  "start_url": "/",
+  "description": "TAŞKIN eğitim yönetim sistemi",
+  "start_url": "/?app=taskin-v47",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#eef3f1",
+  "background_color": "#ffffff",
   "theme_color": "#163f5f",
   "lang": "tr",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/icons/taskin-icon-192-v47.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/taskin-icon-512-v47.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/taskin-maskable-192-v47.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/taskin-maskable-512-v47.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

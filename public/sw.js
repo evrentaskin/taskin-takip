@@ -1,5 +1,14 @@
-const CACHE_NAME = 'taskin-takip-v8-mobile-1'
-const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png']
+const CACHE_NAME = 'taskin-v10-0-6-47-branding'
+const APP_SHELL = [
+  '/',
+  '/index.html',
+  '/manifest.webmanifest?v=10.0.6.47',
+  '/favicon.png?v=10.0.6.47',
+  '/icons/taskin-icon-192-v47.png',
+  '/icons/taskin-icon-512-v47.png',
+  '/icons/taskin-maskable-192-v47.png',
+  '/icons/taskin-maskable-512-v47.png'
+]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()))
@@ -23,10 +32,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
+    fetch(event.request).then((response) => {
       const copy = response.clone()
       caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy))
       return response
-    }))
+    }).catch(() => caches.match(event.request))
   )
 })
