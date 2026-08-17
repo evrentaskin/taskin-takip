@@ -1,0 +1,16 @@
+V10.0.6.6 ÖZEL DERS RENK VE PDF KESİN DÜZELTME
+
+- Yapılan ders: açık yeşil
+- Yapılmayan ders: açık kırmızı
+- Telafi: açık sarı
+- Seçilen öğrenci kartı: turuncu zemin + koyu turuncu çerçeve
+- PDF oluşturma tamamen yenilendi; görünür geçici HTML üzerinden oluşturulur, boş/beyaz PDF sorunu giderildi.
+- Proje npm run build ile başarıyla test edildi.
+
+Kurulum:
+1) ZIP içindeki src/pages/PrivateLessonsPage.jsx dosyasını projenizdeki aynı konuma kopyalayın.
+2) Mevcut dosyanın üzerine yazın.
+3) npm run build
+4) git add .
+5) git commit -m "V10.0.6.6 özel ders renk ve PDF kesin düzeltme"
+6) git push

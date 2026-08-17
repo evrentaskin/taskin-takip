@@ -1,0 +1,10 @@
+V10.0.6.8 PDF POPUPSUZ KESIN DUZELTME
+
+1) src/pages/PrivateLessonsPage.jsx dosyasini ana projedeki ayni konuma kopyalayip uzerine yazin.
+2) Ardindan:
+   npm run build
+   git add .
+   git commit -m "V10.0.6.8 PDF popupsuz kesin duzeltme"
+   git push
+
+Bu surum acilir pencere kullanmaz. PDF dogrudan indirilir.

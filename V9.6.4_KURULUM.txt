@@ -1,0 +1,19 @@
+V9.6.4 FINAL YAMASI
+
+1) ZIP içeriğini mevcut proje kök klasörüne kopyalayın.
+2) Dosya değiştirme sorusunda "Değiştir / Üzerine yaz" seçin.
+3) CMD'yi proje klasöründe açıp çalıştırın:
+
+npm install
+npm run build
+git add .
+git commit -m "V9.6.4 final online deneme duzenlemeleri"
+git push
+
+SQL çalıştırılması gerekmez.
+
+Yapılanlar:
+- 5, 6, 7, 8 ve LGS öğrenci online cevap ekranları sıkı tek satır düzene getirildi.
+- Aynı şıkka ikinci kez basınca cevap boş bırakılır.
+- LGS B kitapçığı cevapları soru analizinde A kitapçığı soru sırasına çevrilir.
+- Öğretmen cevap detayında A soru numarası ve ilgili B soru numarası birlikte gösterilir.
